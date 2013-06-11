@@ -68,7 +68,7 @@
 	#define _DRV_L1_MIPI				1
 	
     // UART interface config
-    #define UART0_BAUD_RATE             115200
+    #define UART0_BAUD_RATE             115200//9600
 
     /* free customer define */
     #define DPF_1024x768            0
@@ -156,7 +156,9 @@
 	//#define	__OV2643_DRV_C__ 
 	//#define	__OID_SENSOR_DRV_C__ 
 	//#define	__BF3710_DRV_C__ 
-	//#define	__OV3640_MIPI_DRV_C__	
+	//#define	__OV3640_MIPI_DRV_C__
+	//#define	__MT9V112_DRV_C__
+	//#define	__GC0308_DRV_C__
 
    	#if (defined MCU_VERSION) && (MCU_VERSION < GPL326XX)
 		#define CSI_IRQ_MODE			CSI_IRQ_PPU_IRQ 

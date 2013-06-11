@@ -1,31 +1,33 @@
 #include "application.h"
 
+#define UART_MSG			1
+
 #define MainTaskStackSize 1024
 
 //define the demo code
-#define AUDIO_DECODE		      0
-#define AUDIO_ENCODE		      0
-#define IMAGE_CODEC				  0
-#define VIDEO_DECODE		      0
-#define	VIDEO_ENCODE		      0
-#define MULTIMEDIA_DEMO		      0
-#define	SACM_DECODE			      0
-#define	SACM_ENCODE			      0
-#define	USB_DEMO			      0
-#define	USB_WEB_CAM_DEMO	      0
-#define IMAGE_ENCODE_BLOCK_RW	  0
-#define IMAGE_ENCODE_BLOCK_READ	  0
-#define GP326XXX_PPU_DEMO		  0
-#define DYNAMICALLY_CLOCK_DEMO    0
-#define ID3_TAG_DEMO              0
-#define GPID_DEMO                 0
-#define USBH_ISO_DEMO             0
-#define FACE_DETECT_DEMO          1
-#define	COMAIR_RX_DEMO            0
+#define AUDIO_DECODE			0
+#define AUDIO_ENCODE			0
+#define IMAGE_CODEC			0
+#define VIDEO_DECODE			0
+#define	VIDEO_ENCODE			0
+#define MULTIMEDIA_DEMO			0
+#define	SACM_DECODE			0
+#define	SACM_ENCODE			0
+#define	USB_DEMO			0
+#define	USB_WEB_CAM_DEMO		0
+#define IMAGE_ENCODE_BLOCK_RW		0
+#define IMAGE_ENCODE_BLOCK_READ		0
+#define GP326XXX_PPU_DEMO		0
+#define DYNAMICALLY_CLOCK_DEMO		0
+#define ID3_TAG_DEMO			0
+#define GPID_DEMO			0
+#define USBH_ISO_DEMO			0
+#define FACE_DETECT_DEMO		1
+#define	COMAIR_RX_DEMO			0
 
-#define PRINT_OUTPUT_NONE	0x00 
-#define PRINT_OUTPUT_UART	0x01
-#define PRINT_OUTPUT_USB	0x02
+#define PRINT_OUTPUT_NONE		0x00 
+#define PRINT_OUTPUT_UART		0x01
+#define PRINT_OUTPUT_USB		0x02
 
 extern void Audio_Decode_Demo(void);
 extern void Audio_Encode_Demo(void);
@@ -46,15 +48,16 @@ extern void id3_tag_demo(void);
 extern void gpid_demo(void);
 extern void USBH_ISO_Demo(void);
 extern void set_print_output_type(INT32U type);
-extern void Face_Detect_demo(void);
+extern void fd_demo(void);
 extern void Comair_RX_Demo(void);
+
 
 INT32U free_memory_start, free_memory_end;
 INT32U MainTaskStack[MainTaskStackSize];
 
 void Main_task_entry(void *para)
 {
-	
+
 #if AUDIO_DECODE	
 	Audio_Decode_Demo();
 #endif
@@ -107,7 +110,9 @@ void Main_task_entry(void *para)
 	gpid_demo();
 #endif
 #if FACE_DETECT_DEMO
-	Face_Detect_demo();
+	DBG_PRINT("free memory start = 0x%08x\r\n", free_memory_start);
+	DBG_PRINT("free memory end   = 0x%08x\r\n", free_memory_end);
+	fd_demo();
 #endif
 #if	COMAIR_RX_DEMO
 	Comair_RX_Demo();
@@ -142,13 +147,17 @@ void Main(void *free_memory)
 	Debug_UART_Port_Enable();
 	
 	//Configure the output type of debug message, NONE, UART, USB or both
+#if (UART_MSG == 1)
 	set_print_output_type(PRINT_OUTPUT_UART | PRINT_OUTPUT_USB);
-	
+#else
+	set_print_output_type(PRINT_OUTPUT_NONE);
+#endif
+
 	// Initialize platform
 	platform_entrance(free_memory);
 	
 	// Create a user-defined task
-	OSTaskCreate(Main_task_entry, (void *) 0, &MainTaskStack[MainTaskStackSize - 1], 32); 
+	OSTaskCreate(Main_task_entry, (void *) 0, &MainTaskStack[MainTaskStackSize - 1], 42); 
 	
 	// Start running
 	OSStart();

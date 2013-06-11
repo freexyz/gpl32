@@ -64,7 +64,7 @@
 #define R_FUNPOS2					(*((volatile INT32U *) 0xC0000174))
 #endif
 
-#if MCU_VERSION >= GPL326XXB
+#if (MCU_VERSION >= GPL326XXB) || (MCU_VERSION < GPL327XX)
 #define R_IOI_I_DATA	            (*((volatile INT32U *) 0xC0000180))
 #define R_IOI_O_DATA	            (*((volatile INT32U *) 0xC0000184))
 #define R_IOI_DIR	                (*((volatile INT32U *) 0xC0000188))
@@ -462,15 +462,15 @@
  ******************************************************************************/
 #define SPI0_BASE	0xC0080000
 
-#if MCU_VERSION == GPL326XXB
+#if MCU_VERSION == GPL326XXB || MCU_VERSION == GP326XXXA
 #define SPI1_BASE	0xC0150000
 #else
 #define SPI1_BASE	0xC0090000
 #endif
 
-#define P_SPI0_CTRL       		    ((volatile INT32U *) SPI0_BASE + 0x00)
-#define P_SPI0_TX_DATA       		((volatile INT32U *) SPI0_BASE + 0x08)
-#define P_SPI0_RX_DATA       		((volatile INT32U *) SPI0_BASE + 0x10)
+#define P_SPI0_CTRL			((volatile INT32U *) (SPI0_BASE + 0x00))
+#define P_SPI0_TX_DATA			((volatile INT32U *) (SPI0_BASE + 0x08))
+#define P_SPI0_RX_DATA			((volatile INT32U *) (SPI0_BASE + 0x10))
 
 #define R_SPI0_CTRL          		(*((volatile INT32U *) SPI0_BASE + 0x00))
 #define R_SPI0_TX_STATUS     		(*((volatile INT32U *) SPI0_BASE + 0x04))
@@ -479,9 +479,9 @@
 #define R_SPI0_RX_DATA       		(*((volatile INT32U *) SPI0_BASE + 0x10))
 #define R_SPI0_MISC          		(*((volatile INT32U *) SPI0_BASE + 0x14))
 
-#define P_SPI1_CTRL       		    ((volatile INT32U *) SPI1_BASE + 0x00)
-#define P_SPI1_TX_DATA       		((volatile INT32U *) SPI1_BASE + 0x08)
-#define P_SPI1_RX_DATA       		((volatile INT32U *) SPI1_BASE + 0x10)
+#define P_SPI1_CTRL			((volatile INT32U *) (SPI1_BASE + 0x00))
+#define P_SPI1_TX_DATA			((volatile INT32U *) (SPI1_BASE + 0x08))
+#define P_SPI1_RX_DATA			((volatile INT32U *) (SPI1_BASE + 0x10))
 
 #define R_SPI1_CTRL          		(*((volatile INT32U *) SPI1_BASE + 0x00))
 #define R_SPI1_TX_STATUS     		(*((volatile INT32U *) SPI1_BASE + 0x04))
@@ -817,7 +817,7 @@
 #define R_INT_IRQMASK				(*((volatile INT32U *) 0xD0100030))
 #define R_INT_FIQMASK				(*((volatile INT32U *) 0xD0100034))
 #define R_INT_GMASK					(*((volatile INT32U *) 0xD0100038))
-
+#define R_INT_FIQMASK2				(*((volatile INT32U *) 0xD010003C))
 
 /******************************************************************************
  * Session: Memory control SFR

@@ -1,4 +1,5 @@
 #include	"drv_l1_sensor.h"
+#include "gplib.h"
 
 #if (defined _DRV_L1_MIPI) && (_DRV_L1_MIPI == 1)  
 #include "drv_l1_mipi.h"
@@ -215,7 +216,7 @@ INT16U sccb_r_phase (INT8U phase)
 	// The 9th bit transmission
 	gpio_write_io(SCCB_SCL, DATA_LOW);						//SCL0
 	gpio_init_io(SCCB_SDA, GPIO_OUTPUT);					//SDA is output mode
-	if(phase == 2) {
+	if(phase) {
 		gpio_write_io(SCCB_SDA, DATA_LOW);					//SDA0, the nineth bit is ACK must be 1
 	} else {
 		gpio_write_io(SCCB_SDA, DATA_HIGH);					//SDA0, the nineth bit is NAK must be 1
@@ -6903,6 +6904,32 @@ OV3640_MIPI_Init(
 #endif //_DRV_L1_MIPI
 #endif //__OV3640_MIPI_DRV_C__
 
+#ifdef __MT9V112_DRV_C__
+//====================================================================================================
+// Description:	MT9V112 Initialization
+// Syntax: void mt9v112_init(
+//			INT16S nWidthH,			// Active H Width
+//			INT16S nWidthV,			// Active V Width
+//			INT16U uFlag			// Flag Type
+//			);
+// Return: None
+//====================================================================================================
+#include "mt9v112.c"
+#endif
+
+#ifdef __GC0308_DRV_C__
+//====================================================================================================
+// Description:	GC0308 Initialization
+// Syntax: void gc0308_init(
+//			INT16S nWidthH,			// Active H Width
+//			INT16S nWidthV,			// Active V Width
+//			INT16U uFlag			// Flag Type
+//			);
+// Return: None
+//====================================================================================================
+#include "gc0308.c"
+#endif
+
 //====================================================================================================
 //	Description:	Initial CMOS sensor
 //	Function:		CSI_Init (nWidthH, nWidthV, uFlag, uFrmBuf0, uFrmBuf1, uFrmBuf2)
@@ -6981,6 +7008,12 @@ void CSI_Init (
 #endif
 #ifdef	__OV3640_MIPI_DRV_C__
 	OV3640_MIPI_Init (nWidthH, nWidthV, uFlag);
+#endif
+#ifdef	__MT9V112_DRV_C__
+	mt9v112_init(nWidthH, nWidthV, uFlag);
+#endif
+#ifdef	__GC0308_DRV_C__
+	gc0308_init(nWidthH, nWidthV, uFlag);
 #endif
 }
 
