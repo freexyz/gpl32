@@ -1,0 +1,45 @@
+###################################
+# project config
+###################################
+
+SRC_TOP_PATH= X:
+MAKETOOLS_PATH= $(SRC_TOP_PATH)/tools/make_tools
+sinclude	$(MAKETOOLS_PATH)/project.utl
+
+ARM_INC          = arm.cs
+OS_CPU_A_S			 = os_cpu_a.cs
+
+###################################
+# cross-compiling tools
+###################################
+COMPILER        = __CS_COMPILER__
+CC              = gcc
+AS              = as
+LD              = ld
+AR              = ar
+OBJDUMP         = objdump
+OBJCOPY         = objcopy
+PREFIX          = arm-none-eabi-
+
+
+XCC             = $(PREFIX)$(CC)
+XAS             = $(PREFIX)$(CC)
+#XAS             = $(PREFIX)$(AS)
+XLD             = $(PREFIX)$(LD)
+XAR             = $(PREFIX)$(AR)
+XRANLIB         = $(PREFIX)$(RANLIB)
+XOBJDUMP        = $(PREFIX)$(OBJDUMP)
+
+CFLAGS_ARM_S    =  -msoft-float -mcpu=arm7tdmi -x assembler-with-cpp -c 
+
+####################################
+# perl tools
+####################################
+PERL            = perl
+
+####################################
+# shell tools
+####################################
+RM              = rm 
+CP              = cp 
+MKDIR						= mkdir
