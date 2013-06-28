@@ -47,6 +47,7 @@
 	#define C_AD_VALUE_8			1024
 #elif (MCU_VERSION >= GPL326XXB) && (BOARD_TYPE == BOARD_DEMO_GPL326XXB)
 
+/*
 	#define C_AD_VALUE_0			0
 	#define C_AD_VALUE_1			70
 	#define C_AD_VALUE_2			250+40
@@ -57,8 +58,16 @@
 	#define C_AD_VALUE_6			810+40
 	#define C_AD_VALUE_7			890+40
 	#define C_AD_VALUE_8			960+40
-
-
+*/
+	#define C_AD_VALUE_0			0
+	#define C_AD_VALUE_1			70
+	#define C_AD_VALUE_2			127+40
+	#define C_AD_VALUE_3			285+40
+	#define C_AD_VALUE_4			380+40
+	#define C_AD_VALUE_5			511+40
+	#define C_AD_VALUE_6			638+40
+	#define C_AD_VALUE_7			766+40
+	#define C_AD_VALUE_8			892+40
 
 #else
 	#define C_AD_VALUE_0			0
