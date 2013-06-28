@@ -40,21 +40,15 @@ static unsigned long		iobuf;
     #define _M(x)
 #endif
 
-// NAND or SPI version.
-#define ZTKF_SPI
-
 // Status IO assignment.
-#ifdef ZTKF_SPI
-#define GPIO0			IO_A12
-#define GPIO1			IO_A13
-#define GPIO2			IO_A14
-#define GPIO3			IO_A15
-#else // ZTKF_SPI
-#define GPIO0			IO_C1
-#define GPIO1			IO_C2
-#define GPIO2			IO_C3
-#define GPIO3			IO_C4
-#endif // ZTKF_SPI
+#define GPIO0			IO_A8
+#define GPIO1			IO_A9
+#define GPIO2			IO_A10
+#define GPIO3			IO_A11
+#define GPIO4			IO_A12
+#define GPIO5			IO_A13
+#define GPIO6			IO_A14
+#define GPIO7			IO_A15
 
 
 /*
@@ -96,11 +90,11 @@ void frio_set(unsigned long n, unsigned long mask)
  *	|3|3|2|2|2|2|2|2|2|2|2|2|1|1|1|1|1|1|1|1|1|1|0|0|0|0|0|0|0|0|0|0|
  *	|1|0|9|8|7|6|5|4|3|2|1|0|9|8|7|6|5|4|3|2|1|0|9|8|7|6|5|4|3|2|1|0|
  *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *	| | | | | | | | | | | | | | | | | | | | | | | | | | | | |G|G|G|G|
- *	| | | | | | | | | | | | | | | | | | | | | | | | | | | | |P|P|P|P|
- *	| | | | | | | | | | | | | | | | | | | | | | | | | | | | |I|I|I|I|
- *	| | | | | | | | | | | | | | | | | | | | | | | | | | | | |O|O|O|O|
- *	| | | | | | | | | | | | | | | | | | | | | | | | | | | | |3|2|1|O|
+ *	| | | | | | | | | | | | | | | | | | | | | | | | |G|G|G|G|G|G|G|G|
+ *	| | | | | | | | | | | | | | | | | | | | | | | | |P|P|P|P|P|P|P|P|
+ *	| | | | | | | | | | | | | | | | | | | | | | | | |I|I|I|I|I|I|I|I|
+ *	| | | | | | | | | | | | | | | | | | | | | | | | |O|O|O|O|O|O|O|O|
+ *	| | | | | | | | | | | | | | | | | | | | | | | | |7|6|5|4|3|2|1|O|
  *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  *****************************************************************************
@@ -114,11 +108,17 @@ static void task_frio(void *para)
 	gpio_init_io(GPIO1, GPIO_OUTPUT);
 	gpio_init_io(GPIO2, GPIO_OUTPUT);
 	gpio_init_io(GPIO3, GPIO_OUTPUT);
+	gpio_init_io(GPIO4, GPIO_OUTPUT);
+	gpio_init_io(GPIO5, GPIO_OUTPUT);
+	gpio_init_io(GPIO6, GPIO_OUTPUT);
 
 	gpio_drving_init_io(GPIO0, (IO_DRV_LEVEL) IO_DRIVING_16mA);	// IO_DRIVING_16mA
 	gpio_drving_init_io(GPIO1, (IO_DRV_LEVEL) IO_DRIVING_16mA);	// IO_DRIVING_16mA
 	gpio_drving_init_io(GPIO2, (IO_DRV_LEVEL) IO_DRIVING_16mA);	// IO_DRIVING_16mA
 	gpio_drving_init_io(GPIO3, (IO_DRV_LEVEL) IO_DRIVING_16mA);	// IO_DRIVING_16mA
+	gpio_drving_init_io(GPIO4, (IO_DRV_LEVEL) IO_DRIVING_16mA);	// IO_DRIVING_16mA
+	gpio_drving_init_io(GPIO5, (IO_DRV_LEVEL) IO_DRIVING_16mA);	// IO_DRIVING_16mA
+	gpio_drving_init_io(GPIO6, (IO_DRV_LEVEL) IO_DRIVING_16mA);	// IO_DRIVING_16mA
 
 	frio = OSMboxCreate(NULL);
 	if (!frio) {
@@ -126,7 +126,7 @@ static void task_frio(void *para)
 		return;
 	}
 
-	iobuf = FRIO_GPIO0 | FRIO_GPIO3;
+	iobuf = 0;
 	tmp   = &iobuf;
 	while (1) {
 		_M(DBG_PRINT("iobuf = 0x%08x\r\n", *tmp));
@@ -134,6 +134,9 @@ static void task_frio(void *para)
 		gpio_write_io(GPIO1, ((*tmp & FRIO_GPIO1) ? 1 : 0));
 		gpio_write_io(GPIO2, ((*tmp & FRIO_GPIO2) ? 1 : 0));
 		gpio_write_io(GPIO3, ((*tmp & FRIO_GPIO3) ? 1 : 0));
+		gpio_write_io(GPIO4, ((*tmp & FRIO_GPIO4) ? 1 : 0));
+		gpio_write_io(GPIO5, ((*tmp & FRIO_GPIO5) ? 1 : 0));
+		gpio_write_io(GPIO6, ((*tmp & FRIO_GPIO6) ? 1 : 0));
 
 		tmp = (unsigned long *) OSMboxPend(frio, 0, &err);
 	}

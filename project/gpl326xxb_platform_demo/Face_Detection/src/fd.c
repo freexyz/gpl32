@@ -678,20 +678,16 @@ INT32U face_train_set(INT32U frame_buffer)
 	imgIn.format	= IMG_FMT_UYVY;
 	imgIn.ptr	= (unsigned char *) frame_buffer;
 
-	frio_lo(FRIO_GPIO1 | FRIO_GPIO2);
+	frio_lo(FRIO_GPIO2 | FRIO_GPIO3);
 	nRet = faceRoiDetect(&imgIn, &Face[0], Count);
 	if (nRet) {
-		serial_send(STA_TRKH, Face[0].x / 10);
-		serial_send(STA_TRKV, Face[0].y / 10);
-		serial_send(STA_TRKAREA, ((unsigned long) Face[0].width * (unsigned long) Face[0].height) / 1800);
-
-		frio_hi(FRIO_GPIO1);
+		frio_hi(FRIO_GPIO2);
 
 		FaceIdentify_Train(&imgIn, &Face[0], ownerULBP, sensor_frame, fiMem);
 		_TRAIN(DBG_PRINT("(Train) train frame = %d\r\n", sensor_frame));
 		sensor_frame++;
 
-		frio_hi(FRIO_GPIO2);
+		frio_hi(FRIO_GPIO3);
 
 	} else {
 //		_TRAIN(DBG_PRINT("(Train) No Face Founded : %d \r\n",nRet));
@@ -720,6 +716,8 @@ static void task_ftrain(void *para)
 {
 	INT8U	err;
 	INT32U	msg;
+	int	i, n;
+
 
 	ft_start_q = OSQCreate(ft_start_q_stack, QUEUE_FTRAIN);
 	if (!ft_start_q)
@@ -738,10 +736,22 @@ static void task_ftrain(void *para)
 			continue;
 
 		if (face_train_set(msg) >= 20) {
-			frio_lo(FRIO_GPIO1 | FRIO_GPIO2 | FRIO_GPIO3);
+			frio_hi(FRIO_GPIO4);
 			frdb_store(frdb_get_curr());
 			_TRAIN(DBG_PRINT("(Train) frdb store\r\n"));
-			frio_hi(FRIO_GPIO3);
+
+			for (i=0, n=0; i<FRDB_NUM; i++) {
+				if (frdb_is_valid(i)) {
+					n++;
+				}
+			}
+			if (n == 0) {
+				frio_set(0,			FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
+			} else if (n == FRDB_NUM) {
+				frio_set(FRIO_GPIO5|FRIO_GPIO6, FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
+			} else {
+				frio_set(FRIO_GPIO5,		FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
+			}
 
 			serial_send(STA_TRAIN, (1 << frdb_get_curr()));
 
@@ -780,24 +790,22 @@ INT32U face_verify_set(INT32U frame_buffer)
 	imgIn.format	= IMG_FMT_UYVY;
 	imgIn.ptr	= (unsigned char*) frame_buffer;
 
-	frio_lo(FRIO_GPIO1 | FRIO_GPIO2);
+	frio_lo(FRIO_GPIO2);
 	nRet = faceRoiDetect(&imgIn, Face, Count);
 	if (nRet) {
-		serial_send(STA_TRKH, Face[0].x / 10);
-		serial_send(STA_TRKV, Face[0].y / 10);
-		serial_send(STA_TRKAREA, ((unsigned long) Face[0].width) * ((unsigned long) Face[0].height) / 1800);
-
-		frio_hi(FRIO_GPIO1);
-
 #if FACE_IDENTIFY_EN == 1
+		frio_hi(FRIO_GPIO2);
+
 		if (face_verify_flag) {
+			frio_lo(FRIO_GPIO3);
+
 			nRet = FaceIdentify_Verify((gpImage *)&imgIn, (gpRect *)&Face[0],(void *)ownerULBP, (const int)adjustSecurity_get(), (void *)fiMem);
 			if (nRet) {
 				verify_fail = 0;
 				if (verify_pass++ > 1) {
 					_IDENT(DBG_PRINT("(Identify) OK\r\n"));
 
-					frio_hi(FRIO_GPIO2);
+					frio_hi(FRIO_GPIO3);
 				}
 			} else {
 				verify_pass = 0;
@@ -816,6 +824,10 @@ INT32U face_verify_set(INT32U frame_buffer)
 				}
 			}
 		} else {
+			serial_send(STA_TRKH, Face[0].x / 10);
+			serial_send(STA_TRKV, Face[0].y / 10);
+			serial_send(STA_TRKAREA, Face[0].width / 10);
+
 //			drawFace_flag = 1;
 			face_count    = nRet;
 			for (i=0; i<face_count; i++) {

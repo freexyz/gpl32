@@ -74,6 +74,9 @@
  */
 void fd_chg_mode(int mode)
 {
+	int	i, n;
+
+
 	switch (mode) {
 	case MODE_TRAIN:
 		face_verify_flag = 0;
@@ -85,7 +88,7 @@ void fd_chg_mode(int mode)
 		sensor_frame  = 0;
 		train_counter = 1;
 		ownerULBP     = (INT32U *) frdb_get_c_train();
-		frio_set(0, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3);
+		frio_set(FRIO_GPIO0, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3|FRIO_GPIO4);
 		break;
 
 	case MODE_IDENT:
@@ -99,7 +102,7 @@ void fd_chg_mode(int mode)
 		verify_pass	 = 0;
 		face_verify_flag = 1;
 		ownerULBP	 = (INT32U *) frdb_get_c_ident();
-		frio_set(FRIO_GPIO0|FRIO_GPIO3, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3);
+		frio_set(FRIO_GPIO1, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3|FRIO_GPIO4);
 		break;
 
 	case MODE_STANDBY:
@@ -111,15 +114,18 @@ void fd_chg_mode(int mode)
 		verify_fail	 = 0;
 		verify_pass	 = 0;
 
-#if FRDB_NUM == 1
-		if (frdb_is_valid(0)) {
-			frio_set(FRIO_GPIO0           , FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3);
-		} else {
-			frio_set(FRIO_GPIO0|FRIO_GPIO3, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3);
+		for (i=0, n=0; i<FRDB_NUM; i++) {
+			if (frdb_is_valid(i)) {
+				n++;
+			}
 		}
-#else
-		frio_set(FRIO_GPIO0|FRIO_GPIO3, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3);
-#endif
+		if (n == 0) {
+			frio_set(0,			FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
+		} else if (n == FRDB_NUM) {
+			frio_set(FRIO_GPIO5|FRIO_GPIO6, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
+		} else {
+			frio_set(FRIO_GPIO5,		FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
+		}
 		break;
 	}
 }
@@ -134,11 +140,15 @@ void fd_chg_mode(int mode)
 void fd_demo(void)
 {
 	VIDEO_ARGUMENT	arg;
-    	int	memSize;
-	int	adkey1 = 0;
-	int	adkey2 = 0;
-	int	adkey3 = 0;
-	int	adkey4 = 0;
+    	int		memSize;
+	int		c;
+	unsigned char	s;
+	int		adkey1 = 0;
+	int		adkey2 = 0;
+	int		adkey3 = 0;
+	int		adkey4 = 0;
+	int		adkey5 = 0;
+
 
 	// Create a user-defined task
 	fident_init(36);
@@ -226,6 +236,23 @@ void fd_demo(void)
 			}
 		} else {
 			adkey4 = 0;
+		}
+
+		/* erase */
+		if (ADKEY_IO5) {
+			if (adkey5 == 0) {
+				adkey5++;
+				c = 0xFF;
+				s = (unsigned char) (c & ~CMD_MASK);
+				for (c=0; c<FRDB_NUM; c++) {
+					if (s & 0x08) {
+						frdb_erase(c);
+					}
+					s >>= 1;
+				}
+			}
+		} else {
+			adkey5 = 0;
 		}
 	}
 }

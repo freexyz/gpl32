@@ -1,6 +1,6 @@
 #include "application.h"
 
-#define UART_MSG			1
+#define UART_MSG			0
 
 #define MainTaskStackSize 1024
 

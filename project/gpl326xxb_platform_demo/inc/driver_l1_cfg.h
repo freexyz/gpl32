@@ -68,7 +68,7 @@
 	#define _DRV_L1_MIPI				1
 	
     // UART interface config
-    #define UART0_BAUD_RATE             115200//9600
+    #define UART0_BAUD_RATE             9600//115200
 
     /* free customer define */
     #define DPF_1024x768            0

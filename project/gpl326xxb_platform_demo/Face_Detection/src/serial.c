@@ -40,7 +40,7 @@ static unsigned char	msg;
 /*
  * for debug
  */
-#define TRACE_MSG		1
+#define TRACE_MSG		0
 
 #if (TRACE_MSG)
     #define _MSG(x)		(x)

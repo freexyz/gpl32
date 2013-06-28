@@ -35,16 +35,10 @@ extern   "C" {
 #define FRIO_GPIO1		(0x00000002UL)
 #define FRIO_GPIO2		(0x00000004UL)
 #define FRIO_GPIO3		(0x00000008UL)
-
-#define frio_gpio0_lo()		frio_clr(FRIO_GPIO0)
-#define frio_gpio1_lo()		frio_clr(FRIO_GPIO1)
-#define frio_gpio2_lo()		frio_clr(FRIO_GPIO2)
-#define frio_gpio3_lo()		frio_clr(FRIO_GPIO3)
-
-#define frio_gpio0_hi()		frio_set(FRIO_GPIO0)
-#define frio_gpio1_hi()		frio_set(FRIO_GPIO1)
-#define frio_gpio2_hi()		frio_set(FRIO_GPIO2)
-#define frio_gpio3_hi()		frio_set(FRIO_GPIO3)
+#define FRIO_GPIO4		(0x00000010UL)
+#define FRIO_GPIO5		(0x00000020UL)
+#define FRIO_GPIO6		(0x00000040UL)
+#define FRIO_GPIO7		(0x00000080UL)
 
 extern void			frio_hi(unsigned long n);
 extern void			frio_lo(unsigned long n);
