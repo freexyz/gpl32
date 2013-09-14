@@ -1,6 +1,29 @@
+/*
+ ******************************************************************************
+ * main.c
+ *
+ * Copyright (c) 2013-2015 by ZealTek Electronic Co., Ltd.
+ *
+ * This software is copyrighted by and is the property of ZealTek
+ * Electronic Co., Ltd. All rights are reserved by ZealTek Electronic
+ * Co., Ltd. This software may only be used in accordance with the
+ * corresponding license agreement. Any unauthorized use, duplication,
+ * distribution, or disclosure of this software is expressly forbidden.
+ *
+ * This Copyright notice MUST not be removed or modified without prior
+ * written consent of ZealTek Electronic Co., Ltd.
+ *
+ * ZealTek Electronic Co., Ltd. reserves the right to modify this
+ * software without notice.
+ *
+ * History:
+ *	2013.06.03	T.C. Chiu <tc.chiu@zealtek.com.tw>
+ *
+ ******************************************************************************
+ */
 #include "application.h"
 
-#define UART_MSG			0
+#define UART_MSG			1
 
 #define MainTaskStackSize 1024
 
@@ -50,14 +73,13 @@ extern void USBH_ISO_Demo(void);
 extern void set_print_output_type(INT32U type);
 extern void fd_demo(void);
 extern void Comair_RX_Demo(void);
-
+extern void PowerDown_Mode(INT8U mode);
 
 INT32U free_memory_start, free_memory_end;
 INT32U MainTaskStack[MainTaskStackSize];
 
 void Main_task_entry(void *para)
 {
-
 #if AUDIO_DECODE	
 	Audio_Decode_Demo();
 #endif
@@ -112,6 +134,8 @@ void Main_task_entry(void *para)
 #if FACE_DETECT_DEMO
 	DBG_PRINT("free memory start = 0x%08x\r\n", free_memory_start);
 	DBG_PRINT("free memory end   = 0x%08x\r\n", free_memory_end);
+
+	PowerDown_Mode(0);
 	fd_demo();
 #endif
 #if	COMAIR_RX_DEMO

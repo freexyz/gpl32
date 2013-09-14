@@ -26,6 +26,7 @@
 
 #include "fd.h"
 #include "frdbm.h"
+#include "frio.h"
 #include "key.h"
 #include "serial.h"
 
@@ -40,7 +41,7 @@ static unsigned char	msg;
 /*
  * for debug
  */
-#define TRACE_MSG		0
+#define TRACE_MSG		1
 
 #if (TRACE_MSG)
     #define _MSG(x)		(x)
@@ -164,6 +165,7 @@ static void task_serial(void *para)
 				}
 				s >>= 1;
 			}
+			fd_chg_mode(MODE_STANDBY);
 			_MSG(DBG_PRINT("(frdb erase) Done\r\n"));
 			break;
 

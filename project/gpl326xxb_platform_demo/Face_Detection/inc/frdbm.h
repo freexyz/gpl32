@@ -36,8 +36,8 @@ extern   "C" {
 #define NAME_STRING_SZ		(256)		/* name string size */
 #define NAME_AUDIO_SZ		(1024)		/* name audio size */
 
-//#define FRDB_NUM		(1)		/* the number of face recognition database */
-#define FRDB_NUM		(3)		/* the number of face recognition database */
+#define FRDB_NUM		(1)		/* the number of face recognition database */
+//#define FRDB_NUM		(3)		/* the number of face recognition database */
 //#define FRDB_NUM		(5)		/* the number of face recognition database */
 #define FRDB_CARRIER_ALIGN	(4096)
 #define FRDB_ALIGN(addr)	(((addr) + (FRDB_CARRIER_ALIGN-1)) & ~(FRDB_CARRIER_ALIGN-1))

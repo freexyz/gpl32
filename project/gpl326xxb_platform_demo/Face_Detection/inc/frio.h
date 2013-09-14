@@ -44,6 +44,7 @@ extern void			frio_hi(unsigned long n);
 extern void			frio_lo(unsigned long n);
 extern void			frio_toggle(unsigned long n);
 extern void			frio_set(unsigned long n, unsigned long mask);
+extern void			frio_hi_latency(unsigned long n, unsigned long time);
 extern void			frio_init(unsigned char prio);
 
 

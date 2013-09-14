@@ -88,7 +88,7 @@ void fd_chg_mode(int mode)
 		sensor_frame  = 0;
 		train_counter = 1;
 		ownerULBP     = (INT32U *) frdb_get_c_train();
-		frio_set(FRIO_GPIO0, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3|FRIO_GPIO4);
+		frio_set(FRIO_GPIO0, FRIO_GPIO0|FRIO_GPIO1);
 		break;
 
 	case MODE_IDENT:
@@ -102,7 +102,7 @@ void fd_chg_mode(int mode)
 		verify_pass	 = 0;
 		face_verify_flag = 1;
 		ownerULBP	 = (INT32U *) frdb_get_c_ident();
-		frio_set(FRIO_GPIO1, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO3|FRIO_GPIO4);
+		frio_set(FRIO_GPIO1, FRIO_GPIO0|FRIO_GPIO1);
 		break;
 
 	case MODE_STANDBY:
@@ -114,17 +114,17 @@ void fd_chg_mode(int mode)
 		verify_fail	 = 0;
 		verify_pass	 = 0;
 
+		frio_set(FRIO_GPIO0|FRIO_GPIO1, FRIO_GPIO0|FRIO_GPIO1);
+
 		for (i=0, n=0; i<FRDB_NUM; i++) {
 			if (frdb_is_valid(i)) {
 				n++;
 			}
 		}
-		if (n == 0) {
-			frio_set(0,			FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
-		} else if (n == FRDB_NUM) {
-			frio_set(FRIO_GPIO5|FRIO_GPIO6, FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
+		if (n) {
+			frio_hi(FRIO_GPIO4);
 		} else {
-			frio_set(FRIO_GPIO5,		FRIO_GPIO0|FRIO_GPIO1|FRIO_GPIO2|FRIO_GPIO4|FRIO_GPIO5|FRIO_GPIO6);
+			frio_lo(FRIO_GPIO4);
 		}
 		break;
 	}
@@ -151,8 +151,12 @@ void fd_demo(void)
 
 
 	// Create a user-defined task
+	frio_init(30);
+	serial_init(41);
+
 	fident_init(36);
 	ftrain_init(37);
+
 
 	// Initialize display device
 //	tv_init();
@@ -187,9 +191,6 @@ void fd_demo(void)
 
 	frdb_init(3*1024*1024);
 	ownerULBP = (INT32U *) frdb_get_valid();
-
-	frio_init(30);
-	serial_init(41);
 
 	fd_chg_mode(MODE_STANDBY);
 
@@ -250,6 +251,7 @@ void fd_demo(void)
 					}
 					s >>= 1;
 				}
+				fd_chg_mode(MODE_STANDBY);
 			}
 		} else {
 			adkey5 = 0;
