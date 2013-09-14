@@ -130,7 +130,7 @@ static void ad_key_adc_isr(INT16U ad_val)
 		key = AD_KEY_3;
 	} else if(ad_val < C_AD_VALUE_4) {
 		key = AD_KEY_2;
- #elif BOARD_TYPE == BOARD_DEMO_GPL327XX
+ #elif (BOARD_TYPE == BOARD_DEMO_GPL327XX) || (BOARD_TYPE == BOARD_DEMO_GP327XXXA)
  	if(ad_val < C_AD_VALUE_0) {
  		key = C_INVALID_KEY;	// no key pressed
  	} else if(ad_val < C_AD_VALUE_1) {

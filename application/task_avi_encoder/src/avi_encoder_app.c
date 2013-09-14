@@ -1,8 +1,9 @@
 #include "avi_encoder_app.h"
 #include "jpeg_header.h"
 #include "font.h"
+#if (defined MCU_VERSION) && ((MCU_VERSION >= GPL326XXB)&& (MCU_VERSION < GPL327XX))
 #include "define.h"
-
+#endif
 /* global varaible */
 AviEncPara_t AviEncPara, *pAviEncPara;
 AviEncAudPara_t AviEncAudPara, *pAviEncAudPara;
@@ -40,17 +41,18 @@ static void scaler_unlock(void)
 	OSSemPost(scaler_hw_sem);
 }
 
+#if (defined MCU_VERSION) && ((MCU_VERSION >= GPL326XXB)&& (MCU_VERSION < GPL327XX))
 int Scaler_clip(gpImage *srcImg, gpImage *dstImg, gpRect *clip)
 {
 	return 0;
 }
-
+#endif
 int Scaler_wait_end(void)
 {
 
 	return 0;
 }
-
+#if (defined MCU_VERSION) && ((MCU_VERSION >= GPL326XXB)&& (MCU_VERSION < GPL327XX))
 int Scaler_Start( gpImage *src, gpImage *dst)
 {
 	// IMAGE Src, Dst;
@@ -132,7 +134,7 @@ int Scaler_Start( gpImage *src, gpImage *dst)
 	scaler_unlock();
 	return 0;
 }
-
+#endif
 void avi_encode_init(void)
 {
     pAviEncPara = &AviEncPara;
@@ -974,40 +976,127 @@ void avi_encode_set_display_scaler(void)
 	}
 }
 
-INT32S avi_encode_set_jpeg_quality(INT8U quality_value)
+INT32S jpeg_header_generate(INT8U q, INT16U w, INT16U h)
 {
-	INT8U *src;
-	INT32U i, header_size, video_frame;
+	INT16U *plum, *pchr;
+	INT32S i;
 	
-	switch(quality_value)
+	switch(q)
 	{
-	case 20: src = jpeg_422_q20_header; break;
-	case 25: src = jpeg_422_q25_header; break;
-	case 30: src = jpeg_422_q30_header; break;
-	case 40: src = jpeg_422_q40_header; break;
-	case 50: src = jpeg_422_q50_header; break;
-	case 70: src = jpeg_422_q70_header; break;
-	case 80: src = jpeg_422_q80_header; break;
-	case 90: src = jpeg_422_q90_header; break;
+	case 20: 
+		plum = (INT16U *)quant20_luminance_table; 
+		pchr = (INT16U *)quant20_chrominance_table;
+		break;
+		
+	case 25: 
+		plum = (INT16U *)quant25_luminance_table; 
+		pchr = (INT16U *)quant25_chrominance_table;
+		break;
+	
+	case 30:
+		plum = (INT16U *)quant30_luminance_table; 
+		pchr = (INT16U *)quant30_chrominance_table;
+		break;
+		
+	case 40: 
+		plum = (INT16U *)quant40_luminance_table; 
+		pchr = (INT16U *)quant40_chrominance_table;
+		break;
+	
+	case 50: 
+		plum = (INT16U *)quant50_luminance_table; 
+		pchr = (INT16U *)quant50_chrominance_table;
+		break;
+	
+	case 70: 
+		plum = (INT16U *)quant70_luminance_table; 
+		pchr = (INT16U *)quant70_chrominance_table;
+		break;
+	
+	case 80: 
+		plum = (INT16U *)quant80_luminance_table; 
+		pchr = (INT16U *)quant80_chrominance_table;
+		break;
+	
+	case 85: 
+		plum = (INT16U *)quant85_luminance_table; 
+		pchr = (INT16U *)quant85_chrominance_table;
+		break;
+	
+	case 90: 
+		plum = (INT16U *)quant90_luminance_table; 
+		pchr = (INT16U *)quant90_chrominance_table;
+		break;
+	
+	case 93: 
+		plum = (INT16U *)quant93_luminance_table; 
+		pchr = (INT16U *)quant93_chrominance_table;
+		break;
+	
+	case 95: 
+		plum = (INT16U *)quant95_luminance_table; 
+		pchr = (INT16U *)quant95_chrominance_table;
+		break;
+	
+	case 98: 
+		plum = (INT16U *)quant98_luminance_table; 
+		pchr = (INT16U *)quant98_chrominance_table;
+		break;
+	
+	case 100:
+		break;
+	
 	default: 
-		quality_value = 50;
-		src = jpeg_422_q50_header; 
+		q = 50;
+		plum = (INT16U *)quant50_luminance_table; 
+		pchr = (INT16U *)quant50_chrominance_table;
 		break;
 	}
-    
-    pAviEncVidPara->quality_value = quality_value; 
-    header_size = sizeof(jpeg_422_q50_header);
-	//set jpeg width and height to buffer
+	
+	if(q == 100) {
+		//Luminance
+		for(i=0; i<64; i++) {
+			jpeg_422_header[i+0x14] = 0x01; 
+		}
+
+		//Chrominance 
+		for(i=0; i<64; i++) {
+			jpeg_422_header[i+0x59] = 0x01;
+		}
+	} else {
+		//Luminance
+		for(i=0; i<64; i++) {
+			jpeg_422_header[i+0x14] = (INT8U) (*(plum + zigzag_scan[i]) & 0xFF); 
+		}
+
+		//Chrominance 
+		for(i=0; i<64; i++) {
+			jpeg_422_header[i+0x59] = (INT8U) (*(pchr + zigzag_scan[i]) & 0xFF); 
+		}
+	}
+	
+	jpeg_422_header[0x9E] = h >> 8;
+	jpeg_422_header[0x9F] = h & 0xFF;
+	jpeg_422_header[0xA0] = w >> 8;
+	jpeg_422_header[0xA1] = w & 0xFF; 
+	
+	return q;
+}
+
+INT32S avi_encode_set_jpeg_quality(INT8U quality_value)
+{
+	INT32U i, video_frame;
+	
+	pAviEncVidPara->quality_value = jpeg_header_generate(quality_value, 
+														pAviEncVidPara->encode_width, 
+														pAviEncVidPara->encode_height);
+    //copy to video buffer
     for(i = 0; i<AVI_ENCODE_VIDEO_BUFFER_NO; i++) {	
     	video_frame = pAviEncVidPara->video_encode_addr[i];
-    	gp_memcpy((INT8S*)video_frame, (INT8S*)src, header_size);
-    	src = (INT8U *)video_frame;
-		*(src+0x9E) = (pAviEncVidPara->encode_height >> 8);
-	    *(src+0x9F) = (pAviEncVidPara->encode_height & 0xFF);
-	    *(src+0xA0) = (pAviEncVidPara->encode_width >> 8);
-	    *(src+0xA1) = (pAviEncVidPara->encode_width & 0xFF); 
+    	gp_memcpy((INT8S*)video_frame, (INT8S*)jpeg_422_header, sizeof(jpeg_422_header));
     }
-	return header_size;
+    
+	return sizeof(jpeg_422_header);
 }
 
 INT32S avi_encode_set_mp4_resolution(INT16U encode_width, INT16U encode_height)
@@ -1213,7 +1302,7 @@ INT32S scaler_zoom_once(ScalerPara_t *pScale)
 	case C_SCALER_ZOOM_FIT_BUFFER:
 		scaler_input_pixels_set(pScale->input_x, pScale->input_y);
 		scaler_input_visible_pixels_set(pScale->input_x, pScale->input_y);	
-		ratio = pScale->output_x/pScale->input_x;
+		ratio = (FP32)pScale->output_x/pScale->input_x;
 		zoom_temp = 65536 / (ratio * pScale->scaler_factor);
 		scaler_output_pixels_set((int)zoom_temp, (int)zoom_temp, pScale->output_x, pScale->output_y);
 		zoom_temp = 1 - (1 / pScale->scaler_factor);

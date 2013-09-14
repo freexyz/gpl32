@@ -189,8 +189,6 @@ void rtc_schedule_set(INT8U freq)
 	R_RTC_CTRL |= RTC_RTCEN;
 	R_RTC_CTRL &= ~RTC_SCHSEL;
 	R_RTC_CTRL |= freq;
-	
-		
 }
 
 INT32U rtc_irq_flag_get(void)
@@ -212,11 +210,13 @@ BOOLEAN rtc_day_int_get(void)
 
 #else
 
-static void rtc_isr()
+static void rtc_isr(void)
 {
 	INT32U int_status = 0;
 	INT32U int_ctrl = 0;
-
+	INT32U int_en = 0;
+	
+	//internal RTC 
 	int_status = R_RTC_INT_STATUS;
 	int_ctrl = R_RTC_INT_CTRL;
 
@@ -229,101 +229,91 @@ static void rtc_isr()
 
 	if (int_status & RTC_SEC_IEN) {
 		R_RTC_INT_STATUS = RTC_SEC_IEN;
-		if (rtc_user_isr[RTC_SEC_INT_INDEX]&& (int_ctrl & RTC_SEC_IEN)) {
+		if (rtc_user_isr[RTC_SEC_INT_INDEX] && (int_ctrl & RTC_SEC_IEN)) {
 			(*rtc_user_isr[RTC_SEC_INT_INDEX])();
 		}
 	}
 
 	if (int_status & RTC_MIN_IEN) {
 		R_RTC_INT_STATUS = RTC_MIN_IEN;
-		if (rtc_user_isr[RTC_MIN_INT_INDEX]&& (int_ctrl & RTC_MIN_IEN)) {
+		if (rtc_user_isr[RTC_MIN_INT_INDEX] && (int_ctrl & RTC_MIN_IEN)) {
 			(*rtc_user_isr[RTC_MIN_INT_INDEX])();
 		}
 	}
 
 	if (int_status & RTC_HR_IEN) {
 		R_RTC_INT_STATUS = RTC_HR_IEN;
-		if (rtc_user_isr[RTC_HR_INT_INDEX]&& (int_ctrl & RTC_HR_IEN)) {
+		if (rtc_user_isr[RTC_HR_INT_INDEX] && (int_ctrl & RTC_HR_IEN)) {
 			(*rtc_user_isr[RTC_HR_INT_INDEX])();
 		}
 	}
 
 	if (int_status & RTC_DAY_IEN) {
 		R_RTC_INT_STATUS = RTC_DAY_IEN;
-		if (rtc_user_isr[RTC_DAY_INT_INDEX]&& (int_ctrl & RTC_DAY_IEN)) {
+		if (rtc_user_isr[RTC_DAY_INT_INDEX] && (int_ctrl & RTC_DAY_IEN)) {
 			(*rtc_user_isr[RTC_DAY_INT_INDEX])();
 		}
 	}
 
 	if (int_status & RTC_SCH_IEN) {
 		R_RTC_INT_STATUS = RTC_SCH_IEN;
-		if (rtc_user_isr[RTC_SCH_INT_INDEX]) {
+		if (rtc_user_isr[RTC_SCH_INT_INDEX] && (int_ctrl & RTC_SCH_IEN)) {
 			(*rtc_user_isr[RTC_SCH_INT_INDEX])();
 		}
 	}
 
 	if (int_status & RTC_ALM_IEN) {
 		R_RTC_INT_STATUS = RTC_ALM_IEN;
-		if (rtc_user_isr[RTC_ALM_INT_INDEX]) {
+		if (rtc_user_isr[RTC_ALM_INT_INDEX] && (int_ctrl & RTC_ALM_IEN)) {
 			(*rtc_user_isr[RTC_ALM_INT_INDEX])();
 		}
 	}
-#if 0
-	INT32U int_status = 0;
-	INT32U int_en = 0;
-
+	
+	//independ power RTC
 	int_status = gpx_rtc_read(0x9);
 	int_en = gpx_rtc_read(0xA);
 
 	if (int_status & GPX_RTC_HALF_SEC_IEN) {
-		gpx_rtc_write(0x9,GPX_RTC_HALF_SEC_IEN);
-		if (rtc_user_isr[RTC_HSEC_INT_INDEX] && (int_en & GPX_RTC_HALF_SEC_IEN)) {
-			(*rtc_user_isr[RTC_HSEC_INT_INDEX])();
+		gpx_rtc_write(0x9, GPX_RTC_HALF_SEC_IEN);
+		if (rtc_user_isr[IDP_RTC_HSEC_INT_INDEX] && (int_en & GPX_RTC_HALF_SEC_IEN)) {
+			(*rtc_user_isr[IDP_RTC_HSEC_INT_INDEX])();
 		}
 	}
 
 	if (int_status & GPX_RTC_SEC_IEN) {
-		gpx_rtc_write(0x9,GPX_RTC_SEC_IEN);
-		if (rtc_user_isr[RTC_SEC_INT_INDEX]&& (int_en & GPX_RTC_SEC_IEN)) {
-			(*rtc_user_isr[RTC_SEC_INT_INDEX])();
+		gpx_rtc_write(0x9, GPX_RTC_SEC_IEN);
+		if (rtc_user_isr[IDP_RTC_SEC_INT_INDEX] && (int_en & GPX_RTC_SEC_IEN)) {
+			(*rtc_user_isr[IDP_RTC_SEC_INT_INDEX])();
 		}
 	}
 
 	if (int_status & GPX_RTC_MIN_IEN) {
-		gpx_rtc_write(0x9,GPX_RTC_MIN_IEN);
-		if (rtc_user_isr[RTC_MIN_INT_INDEX]&& (int_en & GPX_RTC_MIN_IEN)) {
-			(*rtc_user_isr[RTC_MIN_INT_INDEX])();
+		gpx_rtc_write(0x9, GPX_RTC_MIN_IEN);
+		if (rtc_user_isr[IDP_RTC_MIN_INT_INDEX] && (int_en & GPX_RTC_MIN_IEN)) {
+			(*rtc_user_isr[IDP_RTC_MIN_INT_INDEX])();
 		}
 	}
 
 	if (int_status & GPX_RTC_HR_IEN) {
-		gpx_rtc_write(0x9,GPX_RTC_HR_IEN);
-		if (rtc_user_isr[RTC_HR_INT_INDEX]&& (int_en & GPX_RTC_HR_IEN)) {
-			(*rtc_user_isr[RTC_HR_INT_INDEX])();
+		gpx_rtc_write(0x9, GPX_RTC_HR_IEN);
+		if (rtc_user_isr[IDP_RTC_HR_INT_INDEX] && (int_en & GPX_RTC_HR_IEN)) {
+			(*rtc_user_isr[IDP_RTC_HR_INT_INDEX])();
 		}
 	}
 
 	if (int_status & GPX_RTC_DAY_IEN) {
-		gpx_rtc_write(0x9,GPX_RTC_DAY_IEN);
-		if (rtc_user_isr[RTC_DAY_INT_INDEX]&& (int_en & GPX_RTC_DAY_IEN)) {
-			(*rtc_user_isr[RTC_DAY_INT_INDEX])();
+		gpx_rtc_write(0x9, GPX_RTC_DAY_IEN);
+		if (rtc_user_isr[IDP_RTC_DAY_INT_INDEX] && (int_en & GPX_RTC_DAY_IEN)) {
+			(*rtc_user_isr[IDP_RTC_DAY_INT_INDEX])();
 		}
 	}
 
 	if (int_status & GPX_RTC_ALM_IEN) {
-		gpx_rtc_write(0x9,GPX_RTC_ALM_IEN);
-		if (rtc_user_isr[RTC_ALM_INT_INDEX]) {
-			(*rtc_user_isr[RTC_ALM_INT_INDEX])();
+		gpx_rtc_write(0x9, GPX_RTC_ALM_IEN);
+		if (rtc_user_isr[IDP_RTC_ALM_INT_INDEX] && (int_en & GPX_RTC_ALM_IEN)) {
+			(*rtc_user_isr[IDP_RTC_ALM_INT_INDEX])();
 		}
 	}
-
-	if (R_RTC_INT_STATUS & RTC_SCH_IEN) {
-		R_RTC_INT_STATUS = RTC_SCH_IEN;
-		if (rtc_user_isr[RTC_SCH_INT_INDEX]) {
-			(*rtc_user_isr[RTC_SCH_INT_INDEX])();
-		}
-	}
-#endif
 }
 
 void rtc_init(void)
@@ -331,23 +321,13 @@ void rtc_init(void)
 	INT8U data;
 
 	R_RTC_CTRL= 0; /* disable all RTC function */
-	R_RTC_CTRL |= RTC_RTCEN; /* enable RTC */
-	R_RTC_CTRL |= RTC_HMSEN;
-
-	//R_RTC_IDPWR_CTRL &= ~0xC;
-	//R_RTC_IDPWR_CTRL |= 0x4; /* RTC bridge clock = sys_clk/8 */
+	R_RTC_CTRL |= RTC_HMSEN | RTC_RTCEN; /* enable RTC */
 	
 	data = gpx_rtc_read(0x08);
-	
-	#if 0
-	data |= 0x8;
+	data |= 0x19;	/* enable external RTC */
 	gpx_rtc_write(0x08,data);
 
-	rtc_reset_trigger_level_set(0); /* reset level=1.6V */
-	#endif
-	
-	data = 0x19;
-	gpx_rtc_write(0x8,data);
+	rtc_reset_trigger_level_set(0); /* reset level=1.7V */
 	
 	vic_irq_register(VIC_ALM_SCH_HMS, rtc_isr);	/* register RTC isr */
 	vic_irq_enable(VIC_ALM_SCH_HMS);
@@ -355,17 +335,14 @@ void rtc_init(void)
 
 void rtc_time_set(t_rtc *rtc_time)
 {
-	//vic_irq_disable(VIC_ALM_SCH_HMS);
+	vic_irq_disable(VIC_ALM_SCH_HMS);
 #if _OPERATING_SYSTEM != _OS_NONE				// Soft Protect for critical section
 	OSSchedLock();
 #endif
+
 	gpx_rtc_write(0x0,rtc_time->rtc_sec); // sec
 	gpx_rtc_write(0x1,rtc_time->rtc_min); // min
 	gpx_rtc_write(0x2,rtc_time->rtc_hour); // hour
-#if _OPERATING_SYSTEM != _OS_NONE
-	OSSchedUnlock();
-#endif
-	//vic_irq_enable(VIC_ALM_SCH_HMS);
 
 	R_RTC_MIN = (INT32U)rtc_time->rtc_min;
 	while(R_RTC_BUSY & RTC_MIN_BUSY);
@@ -376,28 +353,20 @@ void rtc_time_set(t_rtc *rtc_time)
 	R_RTC_SEC = (INT32U)rtc_time->rtc_sec;
 	/* wait until not busy */
 	while(R_RTC_BUSY & RTC_SEC_BUSY);
-}
 
-void rtc_day_set(t_rtc *rtc_time)
-{
-	//vic_irq_disable(VIC_ALM_SCH_HMS);
-#if _OPERATING_SYSTEM != _OS_NONE				// Soft Protect for critical section
-	OSSchedLock();
-#endif
-	gpx_rtc_write(0x3,(INT8U)(rtc_time->rtc_day & 0xff));
-	gpx_rtc_write(0x4,(INT8U)((rtc_time->rtc_day >> 8) & 0xf));
 #if _OPERATING_SYSTEM != _OS_NONE
 	OSSchedUnlock();
 #endif
-	//vic_irq_enable(VIC_ALM_SCH_HMS);
+	vic_irq_enable(VIC_ALM_SCH_HMS);
 }
 
 void rtc_time_get(t_rtc *rtc_time)
 {
-	//vic_irq_disable(VIC_ALM_SCH_HMS);
+	vic_irq_disable(VIC_ALM_SCH_HMS);
 #if _OPERATING_SYSTEM != _OS_NONE				// Soft Protect for critical section
 	OSSchedLock();
 #endif
+
 #if 1
 	rtc_time->rtc_sec = gpx_rtc_read(0x0);
 	rtc_time->rtc_min = gpx_rtc_read(0x1);
@@ -407,64 +376,89 @@ void rtc_time_get(t_rtc *rtc_time)
 	rtc_time->rtc_min = R_RTC_MIN;
 	rtc_time->rtc_hour = R_RTC_HOUR;
 #endif
+
 #if _OPERATING_SYSTEM != _OS_NONE
 	OSSchedUnlock();
 #endif
-	//vic_irq_enable(VIC_ALM_SCH_HMS);
+	vic_irq_enable(VIC_ALM_SCH_HMS);
+}
+
+void rtc_day_set(t_rtc *rtc_time)
+{
+	vic_irq_disable(VIC_ALM_SCH_HMS);
+#if _OPERATING_SYSTEM != _OS_NONE				// Soft Protect for critical section
+	OSSchedLock();
+#endif
+
+	gpx_rtc_write(0x3,(INT8U)(rtc_time->rtc_day & 0xff));
+	gpx_rtc_write(0x4,(INT8U)((rtc_time->rtc_day >> 8) & 0xf));
+
+#if _OPERATING_SYSTEM != _OS_NONE
+	OSSchedUnlock();
+#endif
+	vic_irq_enable(VIC_ALM_SCH_HMS);
 }
 
 void rtc_day_get(t_rtc *rtc_time)
 {
-	//vic_irq_disable(VIC_ALM_SCH_HMS);
+	vic_irq_disable(VIC_ALM_SCH_HMS);
 #if _OPERATING_SYSTEM != _OS_NONE				// Soft Protect for critical section
 	OSSchedLock();
 #endif
+
 	rtc_time->rtc_day = gpx_rtc_read(0x3);
 	rtc_time->rtc_day |= (gpx_rtc_read(0x4) & 0xf) << 8;
+
 #if _OPERATING_SYSTEM != _OS_NONE
 	OSSchedUnlock();
 #endif
-	//vic_irq_enable(VIC_ALM_SCH_HMS);
+	vic_irq_enable(VIC_ALM_SCH_HMS);
 }
 
 void rtc_alarm_set(t_rtc *rtc_time)
 {
-	R_RTC_ALARM_SEC = (INT32U)rtc_time->rtc_sec;
-	R_RTC_ALARM_MIN = (INT32U)rtc_time->rtc_min;
-	R_RTC_ALARM_HOUR = (INT32U)rtc_time->rtc_hour;
-#if 0
 	vic_irq_disable(VIC_ALM_SCH_HMS);
 #if _OPERATING_SYSTEM != _OS_NONE				// Soft Protect for critical section
 	OSSchedLock();
 #endif
+
+#if 1
 	gpx_rtc_write(0x5,rtc_time->rtc_sec);
 	gpx_rtc_write(0x6,rtc_time->rtc_min);
 	gpx_rtc_write(0x7,rtc_time->rtc_hour);
+#else
+	R_RTC_ALARM_SEC = (INT32U)rtc_time->rtc_sec;
+	R_RTC_ALARM_MIN = (INT32U)rtc_time->rtc_min;
+	R_RTC_ALARM_HOUR = (INT32U)rtc_time->rtc_hour;
+#endif
+
 #if _OPERATING_SYSTEM != _OS_NONE
 	OSSchedUnlock();
 #endif
 	vic_irq_enable(VIC_ALM_SCH_HMS);
-#endif
 }
 
 void rtc_alarm_get(t_rtc *rtc_time)
 {
-    rtc_time->rtc_sec = R_RTC_ALARM_SEC;
-	rtc_time->rtc_min = R_RTC_ALARM_MIN;
-	rtc_time->rtc_hour = R_RTC_ALARM_HOUR;
-#if 0
 	vic_irq_disable(VIC_ALM_SCH_HMS);
 #if _OPERATING_SYSTEM != _OS_NONE				// Soft Protect for critical section
 	OSSchedLock();
 #endif
+
+#if 1
 	rtc_time->rtc_sec = gpx_rtc_read(0x5);
 	rtc_time->rtc_min = gpx_rtc_read(0x6);
 	rtc_time->rtc_hour = gpx_rtc_read(0x7);
+#else
+    rtc_time->rtc_sec = R_RTC_ALARM_SEC;
+	rtc_time->rtc_min = R_RTC_ALARM_MIN;
+	rtc_time->rtc_hour = R_RTC_ALARM_HOUR;
+#endif
+
 #if _OPERATING_SYSTEM != _OS_NONE
 	OSSchedUnlock();
 #endif
 	vic_irq_enable(VIC_ALM_SCH_HMS);
-#endif
 }
 
 void rtc_function_set(INT8U mask, INT8U value)
@@ -513,41 +507,45 @@ void rtc_int_set(INT8U mask, INT8U value)
     _mask = mask & 0xF;
     _value = value & 0xF;
 
-    if (mask & GPX_RTC_ALM_IEN) {
+    if (mask & RTC_ALM_IEN) {
         _mask |= RTC_ALM_IEN;
     }
 
-    if (mask & GPX_RTC_DAY_IEN) {
+    if (mask & RTC_DAY_IEN) {
         _mask |= RTC_DAY_IEN;
     }
 
-    if (value & GPX_RTC_ALM_IEN) {
+    if (value & RTC_ALM_IEN) {
         _value |= RTC_ALM_IEN;
         R_RTC_CTRL |= RTC_ALMEN;
     }
     
-    if (value & GPX_RTC_DAY_IEN) {
+    if (value & RTC_DAY_IEN) {
         _value |= RTC_DAY_IEN;
     }
 
     R_RTC_INT_CTRL &= ~_mask;
 	R_RTC_INT_CTRL |= (_mask & _value);
-#if 0
+}
+
+void idp_rtc_int_set(INT8U mask, INT8U value)
+{
 	INT8U data = 0;
 
 	vic_irq_disable(VIC_ALM_SCH_HMS);
 #if _OPERATING_SYSTEM != _OS_NONE				// Soft Protect for critical section
 	OSSchedLock();
 #endif
+
 	data = gpx_rtc_read(0x0A);
 	data &= ~mask;
 	data |= (mask & value);
 	gpx_rtc_write(0x0A,data);
+
 #if _OPERATING_SYSTEM != _OS_NONE
 	OSSchedUnlock();
 #endif
 	vic_irq_enable(VIC_ALM_SCH_HMS);
-#endif
 }
 
 INT8U gpx_rtc_read(INT8U addr)

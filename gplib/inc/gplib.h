@@ -4571,4 +4571,26 @@ void comair_cmd_generator(INT8U command);
 void comair_update_pwm_timer(void);
 
 #endif	/*__COMAIR_TEST_H__ */
+
+
+#define QR_OK					0
+#define QR_ERR_FINDERPATTERN	-1
+#define QR_ERR_ALIGNPATTERN		-2
+#define QR_ERR_IMAGE_SIZE       -3
+#define QR_ERR_IMAGE_BPP        -4
+#define QR_ERR_MEMORY           -5
+#define QR_ERR_VERSION          -6
+#define QR_ECC_FAILUR			-7
+#define QR_ERR_TOO_MUCH_LINE    -8
+
+
+extern long QR_GetErrorNum(unsigned char *qr_working_memory);
+extern long QR_GetVersion(unsigned char *qr_working_memory);	//Version of QRcode
+extern long QR_GetECCLevel(unsigned char *qr_working_memory);
+extern long QR_GetWorkingMemorySize(void);
+extern long QR_Init(unsigned char *qr_working_memory,long width, long height,unsigned char* image, unsigned char image_type, unsigned char* resultstream);
+extern unsigned char* QR_Decode(unsigned char *qr_working_memory);
+extern const char* QR_Version(void);							//version of Decoder 
+
+
 #endif 		// __GPLIB_H__

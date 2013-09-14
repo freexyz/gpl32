@@ -359,17 +359,19 @@ void usb_msdc_state_initial(void)
   SetLuntpye(0,LUNTYPE_MS);
   SetLuntpye(1,LUNTYPE_NF);
 #else  
-  Luns = 1;
-#if MCU_VERSION <= GPL326XX_C
+  Luns = 2;
+#if MCU_VERSION <= GP326XXXA
 #if (NAND_APP_EN == 1)
+  Luns = 1;
   SetLuntpye(0, LUNTYPE_NF_APP);
 #else
   SetLuntpye(0,LUNTYPE_NF);
+  SetLuntpye(1,LUNTYPE_SDCMMC);
 #endif
 #else
   Luns =1;       //Only SDCMMC 
-  //SetLuntpye(0,LUNTYPE_SDCMMC);
-  SetLuntpye(0,LUNTYPE_NF);
+  SetLuntpye(0,LUNTYPE_SDCMMC);
+  //SetLuntpye(0,LUNTYPE_NF);
 #endif
 
 
@@ -1067,6 +1069,7 @@ INT32S Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
     INT16U* USB_RW_Buffer_PTR_A;
     INT16U* USB_RW_Buffer_PTR_B;
     INT16U* USB_RW_Buffer_PTR_Temp;
+    INT32U LUN_DMA_SIZE = RWSECTOR_512B;
 
     if (!BUF) {
    			Sense_Code = 0x1B;
@@ -1083,11 +1086,17 @@ INT32S Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
       }
       usbd_current_lun = lUSB_LUN_Read->unLunNum;
     }
+    
+    if(lUSB_LUN_Read->unLunType == LUNTYPE_NF)
+    {
+    	LUN_DMA_SIZE = READWRITE_SECTOR;
+    }
+    
     stage =0;
 	SCSI_LBA=GetLBA();
 	SCSI_Transfer_Length=GetTransLeng();
 	USB_RW_Buffer_PTR_A=(INT16U*) BUF ;
-	USB_RW_Buffer_PTR_B=USB_RW_Buffer_PTR_A+ (256*READWRITE_SECTOR);
+	USB_RW_Buffer_PTR_B=USB_RW_Buffer_PTR_A+ (256*LUN_DMA_SIZE);
 	if(SCSI_LBA == 0x3ffd)
 	SCSI_LBA= 0x3ffd;
 
@@ -1117,16 +1126,16 @@ INT32S Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
 	//	memcpy(USB_RW_Buffer_PTR_A,(INT16U*)(CDROM_BUF+SCSI_LBA*512+i*512),512);
 	
 		ret = CDROM_ReadSector(SCSI_LBA+i,1,(INT32U)USB_RW_Buffer_PTR_A);
-		ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,READWRITE_SECTOR,0);
-		ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,READWRITE_SECTOR,1);
+		ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,LUN_DMA_SIZE,0);
+		ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,LUN_DMA_SIZE,1);
 	}
 	
 	}
 	else//LUNTYPE_CDROM cdrom
 #endif	
 	{
-	AB_Counts   = SCSI_Transfer_Length / READWRITE_SECTOR;
-	Ren_Sectors = SCSI_Transfer_Length % READWRITE_SECTOR;	
+	AB_Counts   = SCSI_Transfer_Length / LUN_DMA_SIZE;
+	Ren_Sectors = SCSI_Transfer_Length % LUN_DMA_SIZE;	
 			
     ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_cmd_phase(SCSI_LBA,SCSI_Transfer_Length);
 	if(ret != 0)
@@ -1140,17 +1149,17 @@ INT32S Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
 	for(i=0 ; i < AB_Counts ; i++)
 	{
             if (i == 0)
-              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase((INT32U*)USB_RW_Buffer_PTR_A,1,READWRITE_SECTOR);
+              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase((INT32U*)USB_RW_Buffer_PTR_A,1,LUN_DMA_SIZE);
             else
-              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase((INT32U*)USB_RW_Buffer_PTR_A,0,READWRITE_SECTOR);
+              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase((INT32U*)USB_RW_Buffer_PTR_A,0,LUN_DMA_SIZE);
             //if(ret != 0)  {	DBG_PRINT("e5 %x \r\n",i);break; }
 			if (ret != 0)	 break;
 
             if (i != 0)
-              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase(NULL,2,READWRITE_SECTOR); //wait and check storage DMA
+              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase(NULL,2,LUN_DMA_SIZE); //wait and check storage DMA
             if (stage)
 			{
-				ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,READWRITE_SECTOR,1);
+				ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,LUN_DMA_SIZE,1);
 				//DBG_PRINT("Read:0x%08x\r\n", *(INT32U*)USB_RW_Buffer_PTR_A);
 				//Check if timeout
 				//if(ret != 0)  {	DBG_PRINT("e1\r\n");break; }
@@ -1161,14 +1170,14 @@ INT32S Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
   			//if (i == AB_Counts-1)
             //   UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_cmdend_phase();//Storage end
 
-			ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,READWRITE_SECTOR,0);
+			ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,LUN_DMA_SIZE,0);
 		    //if(ret != 0)  {	DBG_PRINT("e3\r\n");break; }
 			if(ret != 0)  break;
 			stage=1;
 			//for last data
 			if (i == AB_Counts-1)
 			{
-				ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,READWRITE_SECTOR,1);
+				ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,LUN_DMA_SIZE,1);
 			    //if(ret != 0)  {	DBG_PRINT("e4\r\n");break; }
 				if(ret != 0)  break;
 			}
@@ -1221,7 +1230,7 @@ INT32S Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
 	if(ret != 0x00)
 	{
        	    //DBG_PRINT("READ10 %x %x Fail!\r\n",i,SCSI_Transfer_Length);
-			CSW_Residue=SCSI_Transfer_Length-(i*READWRITE_SECTOR)-j;
+			CSW_Residue=SCSI_Transfer_Length-(i*LUN_DMA_SIZE)-j;
 			CSW_Residue=CSW_Residue << 9;
 			Sense_Code = 0x12;
 #if (MCU_VERSION == GPL32_B)
@@ -1264,6 +1273,7 @@ INT32S Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
    INT16U* USB_RW_Buffer_PTR_A;
    INT16U* USB_RW_Buffer_PTR_B;
    INT16U* USB_RW_Buffer_PTR_Temp;
+   INT32U LUN_DMA_SIZE = RWSECTOR_512B;
 
    if (!BUF) {
    			Sense_Code = 0x1B;
@@ -1278,12 +1288,18 @@ INT32S Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
       }
       usbd_current_lun = lUSB_LUN_Write->unLunNum;
    }
+   
+    if(lUSB_LUN_Write->unLunNum == LUNTYPE_NF)
+    {
+    	LUN_DMA_SIZE = READWRITE_SECTOR;
+    }
+   
    //if (usbd_wpb_detection())   { }
    stage =0;
    SCSI_LBA=GetLBA();
    SCSI_Transfer_Length=GetTransLeng();
    USB_RW_Buffer_PTR_A=(INT16U*) BUF;
-   USB_RW_Buffer_PTR_B=USB_RW_Buffer_PTR_A+ (256*READWRITE_SECTOR);
+   USB_RW_Buffer_PTR_B=USB_RW_Buffer_PTR_A+ (256*LUN_DMA_SIZE);
    //DBG_PRINT("W10 %x %x\r\n",SCSI_LBA,SCSI_Transfer_Length);
    if ((SCSI_LBA + SCSI_Transfer_Length)>lUSB_LUN_Write->ulSecSize)
    {
@@ -1292,8 +1308,8 @@ INT32S Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
 			return 1;
    }
    
-   AB_Counts   = SCSI_Transfer_Length / READWRITE_SECTOR;
-   Ren_Sectors = SCSI_Transfer_Length % READWRITE_SECTOR;				   
+   AB_Counts   = SCSI_Transfer_Length / LUN_DMA_SIZE;
+   Ren_Sectors = SCSI_Transfer_Length % LUN_DMA_SIZE;				   
    ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_cmd_phase(SCSI_LBA,SCSI_Transfer_Length);
    if(ret != 0)
    {
@@ -1306,7 +1322,7 @@ INT32S Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
    }
    if(AB_Counts)
    {
-	   ret=Receive_From_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_B,READWRITE_SECTOR,0);
+	   ret=Receive_From_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_B,LUN_DMA_SIZE,0);
 	   if(ret != 0){/* 2011-2-17 USB Bug Fix:USB plug out cause data Fail*/
 	   		goto _USB_ERROR;
 	   }
@@ -1315,26 +1331,26 @@ INT32S Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
 	   {
 				//=================================================================================================
 			    if (i != 0)
-			       ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase(NULL,2,READWRITE_SECTOR);
+			       ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase(NULL,2,LUN_DMA_SIZE);
 	            //if(ret != 0)    DBG_PRINT("E3\r\n");
 	            if(ret != 0) break;
-			    ret=Receive_From_USB_DMA_USB(NULL,READWRITE_SECTOR,1);
+			    ret=Receive_From_USB_DMA_USB(NULL,LUN_DMA_SIZE,1);
 				if(ret != 0) break;
-	            ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase((INT32U*)USB_RW_Buffer_PTR_B,0,READWRITE_SECTOR);
+	            ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase((INT32U*)USB_RW_Buffer_PTR_B,0,LUN_DMA_SIZE);
 	            //if(ret != 0)    DBG_PRINT("E4\r\n");
 	            if(ret != 0) break;
 	
 				//for last data
 				if (i == AB_Counts-1)
 				{
-			       ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase(NULL,2,READWRITE_SECTOR);
+			       ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase(NULL,2,LUN_DMA_SIZE);
 	              //if(ret != 0)    DBG_PRINT("E5\r\n");
 			       break;
 				}
 				USB_RW_Buffer_PTR_Temp = USB_RW_Buffer_PTR_B;
 				USB_RW_Buffer_PTR_B = USB_RW_Buffer_PTR_A;
 				USB_RW_Buffer_PTR_A = USB_RW_Buffer_PTR_Temp;
-			    ret=Receive_From_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_B,READWRITE_SECTOR,0);
+			    ret=Receive_From_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_B,LUN_DMA_SIZE,0);
 			    if(ret != 0) break;/* 2011-2-17 USB Bug Fix:USB plug out cause data Fail*/
 			    
 			    //ret1 = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_cmdend_phase();
@@ -1381,7 +1397,7 @@ _USB_ERROR:
    //if(ret != 0)    DBG_PRINT("E6\r\n");
 	if( (ret != 0x00) || (ret1 != 0x00) )
 	{
-			CSW_Residue=SCSI_Transfer_Length-(i*READWRITE_SECTOR)-j-1;
+			CSW_Residue=SCSI_Transfer_Length-(i*LUN_DMA_SIZE)-j-1;
 			CSW_Residue=CSW_Residue << 9;
 		    Sense_Code=0x10;
             //DBG_PRINT("Write10 %x %x Fail!\r\n",j,SCSI_Transfer_Length);
@@ -1405,6 +1421,7 @@ INT32S Test_Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
     INT16U* USB_RW_Buffer_PTR_A;
     INT16U* USB_RW_Buffer_PTR_B;
     INT16U* USB_RW_Buffer_PTR_Temp;
+    INT32U LUN_DMA_SIZE = RWSECTOR_512B;
 
     if (!BUF) {
    			Sense_Code = 0x1B;
@@ -1421,11 +1438,17 @@ INT32S Test_Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
       }
       usbd_current_lun = lUSB_LUN_Read->unLunNum;
     }
+    
+    if(lUSB_LUN_Read->unLunType == LUNTYPE_NF)
+    {
+    	LUN_DMA_SIZE = READWRITE_SECTOR;
+    }
+    
     stage =0;
 	SCSI_LBA=0;
 	SCSI_Transfer_Length=8;
 	USB_RW_Buffer_PTR_A=(INT16U*) BUF ;
-	USB_RW_Buffer_PTR_B=USB_RW_Buffer_PTR_A+ (256*READWRITE_SECTOR);
+	USB_RW_Buffer_PTR_B=USB_RW_Buffer_PTR_A+ (256*LUN_DMA_SIZE);
 	if(SCSI_LBA == 0x3ffd)
 	SCSI_LBA= 0x3ffd;
 
@@ -1437,8 +1460,8 @@ INT32S Test_Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
 	}
 	
 	{
-	AB_Counts   = SCSI_Transfer_Length / READWRITE_SECTOR;
-	Ren_Sectors = SCSI_Transfer_Length % READWRITE_SECTOR;	
+	AB_Counts   = SCSI_Transfer_Length / LUN_DMA_SIZE;
+	Ren_Sectors = SCSI_Transfer_Length % LUN_DMA_SIZE;	
 			
     ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_cmd_phase(SCSI_LBA,SCSI_Transfer_Length);
 	if(ret != 0)
@@ -1452,17 +1475,17 @@ INT32S Test_Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
 	for(i=0 ; i < AB_Counts ; i++)
 	{
             if (i == 0)
-              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase((INT32U*)USB_RW_Buffer_PTR_A,1,READWRITE_SECTOR);
+              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase((INT32U*)USB_RW_Buffer_PTR_A,1,LUN_DMA_SIZE);
             else
-              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase((INT32U*)USB_RW_Buffer_PTR_A,0,READWRITE_SECTOR);
+              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase((INT32U*)USB_RW_Buffer_PTR_A,0,LUN_DMA_SIZE);
             //if(ret != 0)  {	DBG_PRINT("e5 %x \r\n",i);break; }
 			if (ret != 0)	 break;
 
             if (i != 0)
-              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase(NULL,2,READWRITE_SECTOR); //wait and check storage DMA
+              ret = UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_dma_phase(NULL,2,LUN_DMA_SIZE); //wait and check storage DMA
             if (stage)
 			{
-				ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,READWRITE_SECTOR,1);
+				ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,LUN_DMA_SIZE,1);
 				DBG_PRINT("Read:0x%08x\r\n", *(INT32U*)USB_RW_Buffer_PTR_A);
 				//Check if timeout
 				//if(ret != 0)  {	DBG_PRINT("e1\r\n");break; }
@@ -1473,14 +1496,14 @@ INT32S Test_Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
   			//if (i == AB_Counts-1)
             //   UsbReadWrite[lUSB_LUN_Read->unLunType]->usdc_read_cmdend_phase();//Storage end
 
-			ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,READWRITE_SECTOR,0);
+			ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,LUN_DMA_SIZE,0);
 		    //if(ret != 0)  {	DBG_PRINT("e3\r\n");break; }
 			if(ret != 0)  break;
 			stage=1;
 			//for last data
 			if (i == AB_Counts-1)
 			{
-				ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,READWRITE_SECTOR,1);
+				ret = Send_To_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_A,LUN_DMA_SIZE,1);
 			    //if(ret != 0)  {	DBG_PRINT("e4\r\n");break; }
 				if(ret != 0)  break;
 			}
@@ -1533,7 +1556,7 @@ INT32S Test_Read_10(str_USB_Lun_Info* lUSB_LUN_Read)
 	if(ret != 0x00)
 	{
        	    //DBG_PRINT("READ10 %x %x Fail!\r\n",i,SCSI_Transfer_Length);
-			CSW_Residue=SCSI_Transfer_Length-(i*READWRITE_SECTOR)-j;
+			CSW_Residue=SCSI_Transfer_Length-(i*LUN_DMA_SIZE)-j;
 			CSW_Residue=CSW_Residue << 9;
 			Sense_Code = 0x12;
 #if (MCU_VERSION == GPL32_B)
@@ -1559,6 +1582,7 @@ INT32S Test_Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
    INT16U* USB_RW_Buffer_PTR_A;
    INT16U* USB_RW_Buffer_PTR_B;
    INT16U* USB_RW_Buffer_PTR_Temp;
+   INT32U  LUN_DMA_SIZE = RWSECTOR_512B;
 
    if (!BUF) {
    			Sense_Code = 0x1B;
@@ -1573,12 +1597,18 @@ INT32S Test_Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
       }
       usbd_current_lun = lUSB_LUN_Write->unLunNum;
    }
+   
+    if(lUSB_LUN_Write->unLunNum == LUNTYPE_NF)
+    {
+    	LUN_DMA_SIZE = READWRITE_SECTOR;
+    }
+   
    //if (usbd_wpb_detection())   { }
    stage =0;
    SCSI_LBA=0;
    SCSI_Transfer_Length=16;
    USB_RW_Buffer_PTR_A=(INT16U*) BUF;
-   USB_RW_Buffer_PTR_B=USB_RW_Buffer_PTR_A+ (256*READWRITE_SECTOR);
+   USB_RW_Buffer_PTR_B=USB_RW_Buffer_PTR_A+ (256*LUN_DMA_SIZE);
    //DBG_PRINT("W10 %x %x\r\n",SCSI_LBA,SCSI_Transfer_Length);
    if ((SCSI_LBA + SCSI_Transfer_Length)>lUSB_LUN_Write->ulSecSize)
    {
@@ -1587,8 +1617,8 @@ INT32S Test_Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
 			return 1;
    }
    
-   AB_Counts   = SCSI_Transfer_Length / READWRITE_SECTOR;
-   Ren_Sectors = SCSI_Transfer_Length % READWRITE_SECTOR;				   
+   AB_Counts   = SCSI_Transfer_Length / LUN_DMA_SIZE;
+   Ren_Sectors = SCSI_Transfer_Length % LUN_DMA_SIZE;				   
    ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_cmd_phase(SCSI_LBA,SCSI_Transfer_Length);
    if(ret != 0)
    {
@@ -1601,7 +1631,7 @@ INT32S Test_Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
    }
    if(AB_Counts)
    {
-	   //ret=Receive_From_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_B,READWRITE_SECTOR,0);
+	   //ret=Receive_From_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_B,LUN_DMA_SIZE,0);
 	   
 	 
 	   		
@@ -1613,30 +1643,30 @@ INT32S Test_Write_10(str_USB_Lun_Info* lUSB_LUN_Write)
 	   {
 				//=================================================================================================
 			    if (i != 0)
-			       ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase(NULL,2,READWRITE_SECTOR);
+			       ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase(NULL,2,LUN_DMA_SIZE);
 	            //if(ret != 0)    DBG_PRINT("E3\r\n");
 	            if(ret != 0) break;
-			    //ret=Receive_From_USB_DMA_USB(NULL,READWRITE_SECTOR,1);
+			    //ret=Receive_From_USB_DMA_USB(NULL,LUN_DMA_SIZE,1);
 				//if(ret != 0) break;
 				 for(j = 0; j < 256; j++)
 	   				USB_RW_Buffer_PTR_B[j] = j;
 	   				
 				DBG_PRINT("Write:0x%08x\r\n", *(INT32U*)USB_RW_Buffer_PTR_B);
-	            ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase((INT32U*)USB_RW_Buffer_PTR_B,0,READWRITE_SECTOR);
+	            ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase((INT32U*)USB_RW_Buffer_PTR_B,0,LUN_DMA_SIZE);
 	            //if(ret != 0)    DBG_PRINT("E4\r\n");
 	            if(ret != 0) break;
 	
 				//for last data
 				if (i == AB_Counts-1)
 				{
-			       ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase(NULL,2,READWRITE_SECTOR);
+			       ret = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_dma_phase(NULL,2,LUN_DMA_SIZE);
 	              //if(ret != 0)    DBG_PRINT("E5\r\n");
 			       break;
 				}
 				USB_RW_Buffer_PTR_Temp = USB_RW_Buffer_PTR_B;
 				USB_RW_Buffer_PTR_B = USB_RW_Buffer_PTR_A;
 				USB_RW_Buffer_PTR_A = USB_RW_Buffer_PTR_Temp;
-			    //ret=Receive_From_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_B,READWRITE_SECTOR,0);
+			    //ret=Receive_From_USB_DMA_USB((INT32U*)USB_RW_Buffer_PTR_B,LUN_DMA_SIZE,0);
 			    //if(ret != 0) break;/* 2011-2-17 USB Bug Fix:USB plug out cause data Fail*/
 			    
 			    //ret1 = UsbReadWrite[lUSB_LUN_Write->unLunType]->usdc_write_cmdend_phase();
@@ -1683,7 +1713,7 @@ _USB_ERROR:
    //if(ret != 0)    DBG_PRINT("E6\r\n");
 	if( (ret != 0x00) || (ret1 != 0x00) )
 	{
-			CSW_Residue=SCSI_Transfer_Length-(i*READWRITE_SECTOR)-j-1;
+			CSW_Residue=SCSI_Transfer_Length-(i*LUN_DMA_SIZE)-j-1;
 			CSW_Residue=CSW_Residue << 9;
 		    Sense_Code=0x10;
             //DBG_PRINT("Write10 %x %x Fail!\r\n",j,SCSI_Transfer_Length);

@@ -488,5 +488,5 @@ VIDEO_CODEC_STATUS video_decode_get_nth_video_frame(VIDEO_INFO *video_info, VIDE
 void video_decode_get_display_size(INT16U *pwidth, INT16U *pheight)
 {
 	*pwidth = p_vid_dec_para->buffer_output_width;
-	*pheight = p_vid_dec_para->buffer_output_width;
+	*pheight = p_vid_dec_para->buffer_output_height;
 }

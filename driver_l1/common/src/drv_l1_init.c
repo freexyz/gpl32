@@ -166,7 +166,7 @@ void drv_l1_init(void)
 
 
  #if _DRV_L1_RTC==1
-//	rtc_init();							// Initiate Real Time Clock
+	rtc_init();							// Initiate Real Time Clock
   #endif
 
   #if _DRV_L1_SW_TIMER== 1
@@ -180,7 +180,7 @@ void drv_l1_init(void)
   
   #if _DRV_L1_NAND==1
   	#ifdef GPL326XXB_BCH60
-  		nand_iopad_sel(NAND_IO_AUTO_SCAN);
+  		nand_iopad_sel(NAND_DATA_CTRL_POS);
   	#endif
   	
     DrvL1_Nand_Init();				// Initiate NAND

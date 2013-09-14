@@ -236,7 +236,7 @@ struct Drv_FileSystem FS_SD1_driver = {
 #endif
 
 //=== SD 2 setting ===//
-#if((SD_DUAL_SUPPORT==1)&&(MCU_VERSION>=GPL326XXB))
+#if((SD_DUAL_SUPPORT==1)&&((MCU_VERSION==GPL326XXB)||(MCU_VERSION==GP326XXXA)))
 
 INT32S SD2_Initial(void)
 {

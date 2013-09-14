@@ -39,7 +39,7 @@ void mic_init(void)
 #if (defined MCU_VERSION) && (MCU_VERSION >= GPL327XX)	
 	R_MIC_SETUP	|= MIC_AUTO_ASIEN;	/* to enable MIC/ADC bias in GPL327XX series */
 	R_MIC_PGA_GAIN |= 0x300;
-#elif (defined MCU_VERSION) && (MCU_VERSION == GPL326XXB)	
+#elif (defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
 	
 	R_SYSTEM_CTRL_NEW |= 0x400;	/* to enable MIC/ADC bias in GPL326xxB series */
 	R_MIC_PGA_GAIN &= ~ 0x300;
@@ -81,7 +81,7 @@ INT32S mic_auto_sample_start(void)
 	R_MIC_ASADC_CTRL |= MIC_ASADC_DMA; /* DMA mode enable */
 	R_MIC_SETUP |= MIC_ASEN;
 	R_MIC_SETUP |= MIC_ASMEN; /* start auto sample */
-#if (defined MCU_VERSION) && (MCU_VERSION == GPL326XXB)
+#if (defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
 	R_MIC_SETUP |= 0x0800;	//select MICP as input channel for MIC which is thru PGA module
 #endif 
 
@@ -215,7 +215,7 @@ INT32S mic_auto_data_get(INT16U *data, INT32U len, INT8S *notify)
 }
 
 
-#if (defined MCU_VERSION) && (MCU_VERSION == GPL326XXB)
+#if (defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
 void mic_set_pga_gain(INT16U booster_gain, INT16U pga_gain)
 {
 	//booster gain: 00: 0dB; 01: 6dB; 10: 12dB; 11: 18dB

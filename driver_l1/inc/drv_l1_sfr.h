@@ -64,7 +64,7 @@
 #define R_FUNPOS2					(*((volatile INT32U *) 0xC0000174))
 #endif
 
-#if MCU_VERSION >= GPL326XXB
+#if (MCU_VERSION >= GPL326XXB) || (MCU_VERSION < GPL327XX)
 #define R_IOI_I_DATA	            (*((volatile INT32U *) 0xC0000180))
 #define R_IOI_O_DATA	            (*((volatile INT32U *) 0xC0000184))
 #define R_IOI_DIR	                (*((volatile INT32U *) 0xC0000188))
@@ -462,7 +462,7 @@
  ******************************************************************************/
 #define SPI0_BASE	0xC0080000
 
-#if MCU_VERSION == GPL326XXB
+#if MCU_VERSION == GPL326XXB || MCU_VERSION == GP326XXXA
 #define SPI1_BASE	0xC0150000
 #else
 #define SPI1_BASE	0xC0090000

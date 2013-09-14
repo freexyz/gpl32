@@ -8,7 +8,7 @@
 //jpeg encode fifo mode only support by GPL32600, when use fifo mode sensor must set fifo mode at same time
 #define C_VIDEO_ENCODE_FRAME_MODE		0
 #define C_VIDEO_ENCODE_FIFO_MODE		1
-#if (defined MCU_VERSION) && (MCU_VERSION == GPL326XXB)
+#if (defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
 #define FACE_DETECTION_MODE                  1   //0; disable, 1;enable
 #else
 #define FACE_DETECTION_MODE                  0   //0; disable, 1;enable

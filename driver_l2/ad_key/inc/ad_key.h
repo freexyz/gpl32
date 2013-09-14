@@ -3,9 +3,9 @@
 
 #include "driver_l2.h"
 
-#if (MCU_VERSION >= GPL327XX) && (BOARD_TYPE == BOARD_DEMO_GPL327XX)
+#if (MCU_VERSION >= GPL327XX) && ((BOARD_TYPE == BOARD_DEMO_GPL327XX) || (BOARD_TYPE == BOARD_DEMO_GP327XXXA))
 	#define C_AD_KEY_CH				1
-#elif (BOARD_TYPE == BOARD_DEMO_GPL326XXB)
+#elif (BOARD_TYPE == BOARD_DEMO_GPL326XXB) || (BOARD_TYPE == BOARD_DEMO_GP326XXXA)
 	#define C_AD_KEY_CH				3
 #else
 	#define C_AD_KEY_CH				0	
@@ -35,7 +35,7 @@
 	#define C_AD_VALUE_5			852 - 85
 	#define C_AD_VALUE_6			1023 - 85
 #elif (SUPPORT_AD_KEY == KEY_AD_8_MODE)
-#if (MCU_VERSION >= GPL327XX) && (BOARD_TYPE == BOARD_DEMO_GPL327XX)
+#if (MCU_VERSION >= GPL327XX) && ((BOARD_TYPE == BOARD_DEMO_GPL327XX) || (BOARD_TYPE == BOARD_DEMO_GP327XXXA))
 	#define C_AD_VALUE_0			10
 	#define C_AD_VALUE_1			130+40
 	#define C_AD_VALUE_2			190+40 
@@ -45,13 +45,12 @@
 	#define C_AD_VALUE_6			700+40
 	#define C_AD_VALUE_7			850+40
 	#define C_AD_VALUE_8			1024
-#elif (MCU_VERSION >= GPL326XXB) && (BOARD_TYPE == BOARD_DEMO_GPL326XXB)
+#elif (MCU_VERSION >= GPL326XXB) && ((BOARD_TYPE == BOARD_DEMO_GPL326XXB) || (BOARD_TYPE == BOARD_DEMO_GP326XXXA))
 
 	#define C_AD_VALUE_0			0
 	#define C_AD_VALUE_1			70
 	#define C_AD_VALUE_2			250+40
-	//#define C_AD_VALUE_3			480+40
-	#define C_AD_VALUE_3			380+40 
+	#define C_AD_VALUE_3			480+40 
 	#define C_AD_VALUE_4			610+40
 	#define C_AD_VALUE_5			720+40 
 	#define C_AD_VALUE_6			810+40
@@ -65,7 +64,7 @@
 	#define C_AD_VALUE_1			70
 	#define C_AD_VALUE_2			127+40
 	#define C_AD_VALUE_3			255+40
-	#define C_AD_VALUE_4			380+30
+	#define C_AD_VALUE_4			380+40
 	#define C_AD_VALUE_5			511+40
 	#define C_AD_VALUE_6			638+40
 	#define C_AD_VALUE_7			766+40

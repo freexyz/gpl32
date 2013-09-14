@@ -97,7 +97,7 @@ void gpio_basic_init(void)
     };
 
 	
-#if MCU_VERSION >= GPL326XXB
+#if (MCU_VERSION >= GPL326XXB) && (MCU_VERSION < GPL327XX)
 	gpio_data_out_addr[8] = (0xC0000184);
 	gpio_data_in_addr[8] = (0xC0000180);
 		
@@ -755,6 +755,7 @@ void gpio_drving_init(void)
 	        gpio_write_io(i, 1);
 	    }
 	#endif
+	#if(MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA)
 	#if((SD_POS == SDC1_IOI4_IOI5_IOI6_IOI7_IOI8_IOI9)||(SD_DUAL_SUPPORT==1))
 		for (i=IO_I4 ; i<=IO_I9; i++)
 	    {
@@ -763,7 +764,7 @@ void gpio_drving_init(void)
 	        gpio_write_io(i, 1);
 	    }
 	#endif
-	
+	#endif
 	
 	
 	#else
@@ -1139,7 +1140,7 @@ void gpio_drving_uninit(void)
     R_IOF_DRV = 0;
     R_IOG_DRV = 0;
     R_IOH_DRV = 0;
-#if MCU_VERSION >= GPL326XXB
+#if (MCU_VERSION >= GPL326XXB) && (MCU_VERSION < GPL327XX)
     R_IOI_DRV = 0;
 #endif    
 }

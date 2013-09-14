@@ -123,9 +123,9 @@
     #define C_TV_VGA                    0xE251	// 640x480
     #define C_TV_D1                     0xE252  // 720x480
 
-    #define C_DISPLAY_DEVICE            TPO_TD025THD1//C_TV_VGA          		// Select one of the display device from above list
-    #define C_DISPLAY_DEV_HPIXEL        320//640                     // Set display device horizontal pixel number
-    #define C_DISPLAY_DEV_VPIXEL        240//480                     // Set display device vertical pixel number
+    #define C_DISPLAY_DEVICE            C_TV_VGA          		// Select one of the display device from above list
+    #define C_DISPLAY_DEV_HPIXEL        640                     // Set display device horizontal pixel number
+    #define C_DISPLAY_DEV_VPIXEL        480                     // Set display device vertical pixel number
 
     // TFT Back Light Configuration
     #define LCD_BACKLIGHT_LED           0
@@ -297,6 +297,23 @@
     #define NF_SHARE_MODE  0
     #define NF_NON_SHARE   1
     #define NAND_POS_SET_VALUE  ((NAND_CS_POS|NAND_CTRL_POS|NAND_DATA5_0_POS|NAND_DATA7_6_POS)&NAND_POSFUN_MASK)
+
+    // For GPL326XXB use only. To assign NAND DATA/CTRL IO pins
+    // (0) NAND_DATA_IOI_CTRL_IOF: DATA[7:0]=>IOI[7:0] , ALE/CLE/WEB/REB=>IOF[7:6], IOI[9:8]
+    // (1) NAND_DATA_IOB_CTRL_IOC: DATA[7:0]=>IOB[15:8], ALE/CLE/WEB/REB=>IOC[9:6]
+    // (2) NAND_DATA_IOA_CTRL_IOC: DATA[7:0]=>IOA[15:8], ALE/CLE/WEB/REB=>IOC[9:6]
+    // (3) NAND_DATA_IOB_CTRL_IOG: DATA[7:0]=>IOB[15:8], ALE/CLE/WEB/REB=>IOG[11:10], IOG[5:6]    
+    // (4) NAND_DATA_IOA_CTRL_IOG: DATA[7:0]=>IOA[15:8], ALE/CLE/WEB/REB=>IOG[11:10], IOG[5:6]
+    // (5) NAND_DATA_IOI_CTRL_IOG: DATA[7:0]=>IOI[7:0] , ALE/CLE/WEB/REB=>IOG[11:10], IOG[5:6] 
+    // (6) NAND_DATA_AUTO_CTRL_AUTO : Auto pad scan option 
+    #define NAND_DATA_IOI_CTRL_IOF           0
+    #define NAND_DATA_IOB_CTRL_IOC           1
+    #define NAND_DATA_IOA_CTRL_IOC           2
+    #define NAND_DATA_IOB_CTRL_IOG           3
+    #define NAND_DATA_IOA_CTRL_IOG           4
+    #define NAND_DATA_IOI_CTRL_IOG           5
+    #define NAND_DATA_AUTO_CTRL_AUTO         0xff
+    #define NAND_DATA_CTRL_POS               NAND_DATA_IOI_CTRL_IOG 
 
     // XD
     #define XD_ALE_IOC12__CLE_IOC13__REB_IOC14__WEB_IOC15    0x00000000

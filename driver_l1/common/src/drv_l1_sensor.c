@@ -145,7 +145,7 @@ void sccb_stop (void)
 //===================================================================
 INT32S sccb_w_phase (INT16U value, INT8U ack)
 {
-	INT16U i;
+	INT32U i;
 	INT32S ret = 0;
 
 	for(i=0;i<8;i++){
@@ -170,14 +170,14 @@ INT32S sccb_w_phase (INT16U value, INT8U ack)
 	
 	// ckeck ack = low
 	if(ack) {
-		for(i=0; i<0x8000; i++) {
+		for(i=0; i<0x20000; i++) {
 			if(gpio_read_io(SCCB_SDA) == 0) {
 				break;
 			}
 		}		
 	}
 
-	if(i == 0x8000) {
+	if(i == 0x20000) {
 		ret = -1;
 	}
 	
@@ -2164,7 +2164,6 @@ void OV7670_Init (
 		sccb_write_Reg8Data8(OV7670_ID, 0x0f, 0x4b);
 		sccb_write_Reg8Data8(OV7670_ID, 0x16, 0x02);
 		sccb_write_Reg8Data8(OV7670_ID, 0x1e, 0x3f); 	// Flip & Mirror
-		//sccb_write_Reg8Data8(OV7670_ID, 0x1e, 0x0f); 	// Flip & Mirror
 		sccb_write_Reg8Data8(OV7670_ID, 0x21, 0x02);
 		sccb_write_Reg8Data8(OV7670_ID, 0x22, 0x91);
 		sccb_write_Reg8Data8(OV7670_ID, 0x29, 0x07);
@@ -3244,18 +3243,27 @@ void OV3640_Init (
 	INT16S nWidthH,			// Active H Width
 	INT16S nWidthV,			// Active V Width
 	INT16U uFlag				// Flag Type
-) {
+) 
+{
 	INT16U uCtrlReg1, uCtrlReg2;
 	
 	// Enable CSI clock to let sensor initialize at first
-//#if CSI_CLOCK == CSI_CLOCK_27MHZ
-//	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
-//#else
+#if CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV2
 	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL48M | CSI_HIGHPRI | CSI_NOSTOP;
-//#endif		
+	R_SYSTEM_CTRL &= ~0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_27MHZ
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL &= ~0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV4
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL48M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL |= 0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_13_5MHZ
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL |= 0x4000; 
+#endif	
 	
-	uCtrlReg1 = CSIEN | YUV_YUYV | CAP;									// Default CSI Control Register 1
-	if (uFlag & FT_CSI_RGB1555)											// RGB1555
+	uCtrlReg1 = CSIEN | YUV_YUYV | CAP;								// Default CSI Control Register 1
+	if (uFlag & FT_CSI_RGB1555)										// RGB1555
 	{
 		uCtrlReg2 |= CSI_RGB1555;
 	}
@@ -3279,475 +3287,408 @@ void OV3640_Init (
 	}
 
 	R_CSI_TG_HRATIO = 0;							//no scaler
-	R_CSI_TG_VRATIO = 0;							
+	R_CSI_TG_VRATIO = 0;
 
 	R_CSI_TG_VL0START = 0x0000;						// Sensor field 0 vertical latch start register.
-	R_CSI_TG_VL1START = 0x0000;						//*P_Sensor_TG_V_L1Start = 0x0000;				
+	R_CSI_TG_VL1START = 0x0000;						//*P_Sensor_TG_V_L1Start = 0x0000;
 	R_CSI_TG_HSTART = 0x0000;						// Sensor horizontal start register.
 
 	R_CSI_TG_CTRL0 = 0;								//reset control0
 	R_CSI_TG_CTRL1 = CSI_NOSTOP|CLKOEN;				//enable CSI CLKO
 	drv_msec_wait(100); 							//wait 100ms for CLKO stable
 
+#if 0	
+	if((nWidthH == 2048) &&(nWidthV == 1536)) {
+		R_CSI_TG_HRATIO = 0;		
+		R_CSI_TG_VRATIO = 0;		
+		R_CSI_TG_HWIDTH	= 2048;
+		R_CSI_TG_VHEIGHT = 1536;
+	} else if((nWidthH == 1024) &&(nWidthV == 768)) {
+		R_CSI_TG_HRATIO = 0x0102;		//from 2048 to 1024
+		R_CSI_TG_VRATIO = 0x0102;		//from 1536 to 768
+		R_CSI_TG_HWIDTH	= 2048;
+		R_CSI_TG_VHEIGHT = 1536;
+	} else if((nWidthH == 640) &&(nWidthV == 480)) {
+		R_CSI_TG_HRATIO = 0x0510;		//from 2048 to 640
+		R_CSI_TG_VRATIO = 0x0510;		//from 1536 to 480
+		R_CSI_TG_HWIDTH	= 2048;
+		R_CSI_TG_VHEIGHT = 1536;
+	}
+#endif
+
 	// CMOS Sensor Initialization Start...
 	sccb_init();
 	sccb_delay(200);
-	sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x80);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x80);		//reset
 	sccb_delay(200);
 
-	// 3640 QVGA YUV
-	if((nWidthH == 320) &&(nWidthV == 240))
-	{	//QVGA
-		sccb_write_Reg16Data8(OV3640_ID,0x3012,0x80);
-		sccb_write_Reg16Data8(OV3640_ID,0x304d,0x45);
-		sccb_write_Reg16Data8(OV3640_ID,0x30a7,0x5e);
-		sccb_write_Reg16Data8(OV3640_ID,0x3087,0x16);
-		sccb_write_Reg16Data8(OV3640_ID,0x309C,0x1a);
-		sccb_write_Reg16Data8(OV3640_ID,0x30a2,0xe4);
-		sccb_write_Reg16Data8(OV3640_ID,0x30aa,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b0,0xff);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b1,0xff);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b2,0x10);
-		//24Mhz
-		sccb_write_Reg16Data8(OV3640_ID,0x300e,0x32);
-		sccb_write_Reg16Data8(OV3640_ID,0x300f,0x21);
-		sccb_write_Reg16Data8(OV3640_ID,0x3010,0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x3011,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x304c,0x84);
-		sccb_write_Reg16Data8(OV3640_ID,0x30d7,0x10);
-		//
-		sccb_write_Reg16Data8(OV3640_ID,0x30d9,0x0d);
-		sccb_write_Reg16Data8(OV3640_ID,0x30db,0x08);
-		sccb_write_Reg16Data8(OV3640_ID,0x3016,0x82);
-              
-		//aec/agc,0xauto,0xsetting
-		sccb_write_Reg16Data8(OV3640_ID,0x3018,0x38);
-		sccb_write_Reg16Data8(OV3640_ID,0x3019,0x30);
-		sccb_write_Reg16Data8(OV3640_ID,0x301a,0x61);
-		sccb_write_Reg16Data8(OV3640_ID,0x307d,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3087,0x02);
-		sccb_write_Reg16Data8(OV3640_ID,0x3082,0x20);
-              
-		sccb_write_Reg16Data8(OV3640_ID,0x3015,0x12);
-		sccb_write_Reg16Data8(OV3640_ID,0x3014,0x04);
-		sccb_write_Reg16Data8(OV3640_ID,0x3013,0xf7);
-              
-		//aecweight;06142007
-		sccb_write_Reg16Data8(OV3640_ID,0x303c,0x08);
-		sccb_write_Reg16Data8(OV3640_ID,0x303d,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x303e,0x06);
-		sccb_write_Reg16Data8(OV3640_ID,0x303F,0x0c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3030,0x62);
-		sccb_write_Reg16Data8(OV3640_ID,0x3031,0x26);
-		sccb_write_Reg16Data8(OV3640_ID,0x3032,0xe6);
-		sccb_write_Reg16Data8(OV3640_ID,0x3033,0x6e);
-		sccb_write_Reg16Data8(OV3640_ID,0x3034,0xea);
-		sccb_write_Reg16Data8(OV3640_ID,0x3035,0xae);
-		sccb_write_Reg16Data8(OV3640_ID,0x3036,0xa6);
-		sccb_write_Reg16Data8(OV3640_ID,0x3037,0x6a);
-              
-		//ISP,0xCommon,0x
-		sccb_write_Reg16Data8(OV3640_ID,0x3104,0x02);
-		sccb_write_Reg16Data8(OV3640_ID,0x3105,0xfd);
-		sccb_write_Reg16Data8(OV3640_ID,0x3106,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3107,0xff);
-              
-		sccb_write_Reg16Data8(OV3640_ID,0x3300,0x12);
-		sccb_write_Reg16Data8(OV3640_ID,0x3301,0xde);
-
-		//ISP,0xsetting
-		sccb_write_Reg16Data8(OV3640_ID,0x3302,0xcf);
-
-		//AWB
-		sccb_write_Reg16Data8(OV3640_ID,0x3312,0x26);
-		sccb_write_Reg16Data8(OV3640_ID,0x3314,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3313,0x2b);
-		sccb_write_Reg16Data8(OV3640_ID,0x3315,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3310,0xd0);
-		sccb_write_Reg16Data8(OV3640_ID,0x3311,0xbd);
-		sccb_write_Reg16Data8(OV3640_ID,0x330c,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x330d,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x330e,0x56);
-		sccb_write_Reg16Data8(OV3640_ID,0x330f,0x5c);
-		sccb_write_Reg16Data8(OV3640_ID,0x330b,0x1c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3306,0x5c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3307,0x11);
-
-		//Lens,0xcorrection
-		sccb_write_Reg16Data8(OV3640_ID,0x336a,0x52);
-		sccb_write_Reg16Data8(OV3640_ID,0x3370,0x46);
-		sccb_write_Reg16Data8(OV3640_ID,0x3376,0x38);
-		sccb_write_Reg16Data8(OV3640_ID,0x3300,0x13);
-
-		//UV,0xadjust,0x
-		sccb_write_Reg16Data8(OV3640_ID,0x30b8,0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b9,0x17);
-		sccb_write_Reg16Data8(OV3640_ID,0x30ba,0x04);
-		sccb_write_Reg16Data8(OV3640_ID,0x30bb,0x08);
-
-		//Compression
-		sccb_write_Reg16Data8(OV3640_ID,0x3507,0x06);
-		sccb_write_Reg16Data8(OV3640_ID,0x350a,0x4f);
-
-		//Output,0xformat
-		sccb_write_Reg16Data8(OV3640_ID,0x3100,0x32);
-		sccb_write_Reg16Data8(OV3640_ID,0x3304,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3400,0x02);
-		sccb_write_Reg16Data8(OV3640_ID,0x3404,0x22);
-		sccb_write_Reg16Data8(OV3640_ID,0x3500,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3600,0xc0);
-		sccb_write_Reg16Data8(OV3640_ID,0x3610,0x60);
-		sccb_write_Reg16Data8(OV3640_ID,0x350a,0x4f);
-
-		//DVP,0xQXGA
-		sccb_write_Reg16Data8(OV3640_ID,0x3088,0x08);
-		sccb_write_Reg16Data8(OV3640_ID,0x3089,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x308a,0x06);
-		sccb_write_Reg16Data8(OV3640_ID,0x308b,0x00);
-
-		sccb_write_Reg16Data8(OV3640_ID,0x3302,0xef);
-		sccb_write_Reg16Data8(OV3640_ID,0x335f,0x68);
-		sccb_write_Reg16Data8(OV3640_ID,0x3360,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x3361,0x0c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3362,0x01);
-		sccb_write_Reg16Data8(OV3640_ID,0x3363,0x48);
-		sccb_write_Reg16Data8(OV3640_ID,0x3364,0xf4);
-		sccb_write_Reg16Data8(OV3640_ID,0x3403,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3088,0x01);
-		sccb_write_Reg16Data8(OV3640_ID,0x3089,0x40);
-		sccb_write_Reg16Data8(OV3640_ID,0x308a,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x308b,0xf0);
-
-		sccb_write_Reg16Data8(OV3640_ID,0x3100,0x02);
-		sccb_write_Reg16Data8(OV3640_ID,0x3304,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3400,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3404,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3600,0xc0);
-
-		sccb_write_Reg16Data8(OV3640_ID,0x308d,0x04);
-		sccb_write_Reg16Data8(OV3640_ID,0x3086,0x03);
-		sccb_write_Reg16Data8(OV3640_ID,0x3086,0x00);
-	}
-	
-	if((nWidthH == 640) &&(nWidthV == 480))
+#if 0	
+	//init QXGA 2048X1536
 	{
-		//VGA
-		sccb_write_Reg16Data8(OV3640_ID,0x3012, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x304d, 0x45);
-		sccb_write_Reg16Data8(OV3640_ID,0x30a7, 0x5e);
-		sccb_write_Reg16Data8(OV3640_ID,0x3087, 0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x309c, 0x1a);
-		sccb_write_Reg16Data8(OV3640_ID,0x30a2, 0xe4);
-		sccb_write_Reg16Data8(OV3640_ID,0x30aa, 0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b0, 0xff);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b1, 0xff);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b2, 0x10);
-		sccb_write_Reg16Data8(OV3640_ID,0x300e, 0x32);
-		sccb_write_Reg16Data8(OV3640_ID,0x300f, 0x21);
-		sccb_write_Reg16Data8(OV3640_ID,0x3010, 0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x3011, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x304c, 0x84);
-		sccb_write_Reg16Data8(OV3640_ID,0x30d7, 0x10);
-		sccb_write_Reg16Data8(OV3640_ID,0x30d9, 0xd); 
-		sccb_write_Reg16Data8(OV3640_ID,0x30db, 0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3016, 0x82);
-		sccb_write_Reg16Data8(OV3640_ID,0x3018, 0x38);
-		sccb_write_Reg16Data8(OV3640_ID,0x3019, 0x30);
-		sccb_write_Reg16Data8(OV3640_ID,0x301a, 0x61);
-		sccb_write_Reg16Data8(OV3640_ID,0x307d, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3087, 0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3082, 0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x3015, 0x12);
-		sccb_write_Reg16Data8(OV3640_ID,0x3014, 0xc); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3013, 0xf7);
-		sccb_write_Reg16Data8(OV3640_ID,0x303c, 0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x303d, 0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x303e, 0x6); 
-		sccb_write_Reg16Data8(OV3640_ID,0x303f, 0xc); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3030, 0x62);
-		sccb_write_Reg16Data8(OV3640_ID,0x3031, 0x26);
-		sccb_write_Reg16Data8(OV3640_ID,0x3032, 0xe6);
-		sccb_write_Reg16Data8(OV3640_ID,0x3033, 0x6e);
-		sccb_write_Reg16Data8(OV3640_ID,0x3034, 0xea);
-		sccb_write_Reg16Data8(OV3640_ID,0x3035, 0xae);
-		sccb_write_Reg16Data8(OV3640_ID,0x3036, 0xa6);
-		sccb_write_Reg16Data8(OV3640_ID,0x3037, 0x6a);
-		sccb_write_Reg16Data8(OV3640_ID,0x3104, 0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3105, 0xfd);
-		sccb_write_Reg16Data8(OV3640_ID,0x3106, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3107, 0xff);
-		sccb_write_Reg16Data8(OV3640_ID,0x3300, 0x13);
-		sccb_write_Reg16Data8(OV3640_ID,0x3301, 0xde);
-		sccb_write_Reg16Data8(OV3640_ID,0x3302, 0xef);
-		sccb_write_Reg16Data8(OV3640_ID,0x3312, 0x26);
-		sccb_write_Reg16Data8(OV3640_ID,0x3314, 0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3313, 0x2b);
-		sccb_write_Reg16Data8(OV3640_ID,0x3315, 0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3310, 0xd0);
-		sccb_write_Reg16Data8(OV3640_ID,0x3311, 0xbd);
-		sccb_write_Reg16Data8(OV3640_ID,0x330c, 0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x330d, 0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x330e, 0x56);
-		sccb_write_Reg16Data8(OV3640_ID,0x330f, 0x5c);
-		sccb_write_Reg16Data8(OV3640_ID,0x330b, 0x1c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3306, 0x5c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3307, 0x11);
-		sccb_write_Reg16Data8(OV3640_ID,0x336a, 0x52);
-		sccb_write_Reg16Data8(OV3640_ID,0x3370, 0x46);
-		sccb_write_Reg16Data8(OV3640_ID,0x3376, 0x38);
-		sccb_write_Reg16Data8(OV3640_ID,0x3300, 0x13);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b8, 0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b9, 0x17);
-		sccb_write_Reg16Data8(OV3640_ID,0x30ba, 0x4); 
-		sccb_write_Reg16Data8(OV3640_ID,0x30bb, 0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3507, 0x6); 
-		sccb_write_Reg16Data8(OV3640_ID,0x350a, 0x4f);
-		sccb_write_Reg16Data8(OV3640_ID,0x3100, 0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3304, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3400, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3404, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3500, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3600, 0xc0);
-		sccb_write_Reg16Data8(OV3640_ID,0x3610, 0x60);
-		sccb_write_Reg16Data8(OV3640_ID,0x350a, 0x4f);
-		sccb_write_Reg16Data8(OV3640_ID,0x3088, 0x1); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3089, 0x40);
-		sccb_write_Reg16Data8(OV3640_ID,0x308a, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x308b, 0xf0);
-		sccb_write_Reg16Data8(OV3640_ID,0x3302, 0xef);
-		sccb_write_Reg16Data8(OV3640_ID,0x335f, 0x68);
-		sccb_write_Reg16Data8(OV3640_ID,0x3360, 0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x3361, 0xc); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3362, 0x1); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3363, 0x48);
-		sccb_write_Reg16Data8(OV3640_ID,0x3364, 0xf4);
-		sccb_write_Reg16Data8(OV3640_ID,0x3403, 0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3088, 0x1); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3089, 0x40);
-		sccb_write_Reg16Data8(OV3640_ID,0x308a, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x308b, 0xf0);
-		sccb_write_Reg16Data8(OV3640_ID,0x3100, 0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3304, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3400, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3404, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3600, 0xc0);
-		sccb_write_Reg16Data8(OV3640_ID,0x308d, 0x4); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3086, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3086, 0x0); 
-              
-		//15FPS			
-		sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x32);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID, 0x3010, 0x81);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3014, 0x4);
-		sccb_write_Reg16Data8(OV3640_ID, 0x302e, 0x0); 
-		sccb_write_Reg16Data8(OV3640_ID, 0x302d, 0x0); 
-              
-		//VGA     
-		sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x10);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x6);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3026, 0x3);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3027, 0x4);
-		sccb_write_Reg16Data8(OV3640_ID, 0x302a, 0x3);
-		sccb_write_Reg16Data8(OV3640_ID, 0x302b, 0x10);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3075, 0x24);
-		sccb_write_Reg16Data8(OV3640_ID, 0x300d, 0x1);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x90);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3069, 0x4);
-		sccb_write_Reg16Data8(OV3640_ID, 0x303e, 0x0);
-		sccb_write_Reg16Data8(OV3640_ID, 0x303f, 0xc0);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xef);
-		sccb_write_Reg16Data8(OV3640_ID, 0x335f, 0x34);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3360, 0xc);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3361, 0x4);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3362, 0x12);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3363, 0x88);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3364, 0xe4);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3403, 0x42);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3088, 0x12);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3089, 0x80);
-		sccb_write_Reg16Data8(OV3640_ID, 0x308a, 0x1);
-		sccb_write_Reg16Data8(OV3640_ID, 0x308b, 0xe0);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3100, 0x2);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3301, 0xde);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3304, 0x0);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3400, 0x0);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3404, 0x0);
-		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x3);// set CLKO=SYS/2 to get 15FPS 
-	}	
-	
-	if((nWidthH == 2048) &&(nWidthV == 1536))
-	{	//Capture Test
-		//QXGA 2048X1536
-		sccb_write_Reg16Data8(OV3640_ID,0x3012,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x304d,0x45);
-		sccb_write_Reg16Data8(OV3640_ID,0x30a7,0x5e);
-		sccb_write_Reg16Data8(OV3640_ID,0x3087,0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x309c,0x1a);
-		sccb_write_Reg16Data8(OV3640_ID,0x30a2,0xe4);
-		sccb_write_Reg16Data8(OV3640_ID,0x30aa,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b0,0xff);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b1,0xff);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b2,0x10);
-		sccb_write_Reg16Data8(OV3640_ID,0x300e,0x32);
-		sccb_write_Reg16Data8(OV3640_ID,0x300f,0x21);
-		sccb_write_Reg16Data8(OV3640_ID,0x3010,0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x3011,0x1); 
-		sccb_write_Reg16Data8(OV3640_ID,0x304c,0x82);
-		sccb_write_Reg16Data8(OV3640_ID,0x30d7,0x10);
-		sccb_write_Reg16Data8(OV3640_ID,0x30d9,0xd); 
-		sccb_write_Reg16Data8(OV3640_ID,0x30db,0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3016,0x82);
-		sccb_write_Reg16Data8(OV3640_ID,0x3018,0x38);
-		sccb_write_Reg16Data8(OV3640_ID,0x3019,0x30);
-		sccb_write_Reg16Data8(OV3640_ID,0x301a,0x61);
-		sccb_write_Reg16Data8(OV3640_ID,0x307d,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3087,0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3082,0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x3015,0x12);
-		sccb_write_Reg16Data8(OV3640_ID,0x3014,0xc); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3013,0xf7);
-		sccb_write_Reg16Data8(OV3640_ID,0x303c,0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x303d,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x303e,0x6); 
-		sccb_write_Reg16Data8(OV3640_ID,0x303f,0xc); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3030,0x62);
-		sccb_write_Reg16Data8(OV3640_ID,0x3031,0x26);
-		sccb_write_Reg16Data8(OV3640_ID,0x3032,0xe6);
-		sccb_write_Reg16Data8(OV3640_ID,0x3033,0x6e);
-		sccb_write_Reg16Data8(OV3640_ID,0x3034,0xea);
-		sccb_write_Reg16Data8(OV3640_ID,0x3035,0xae);
-		sccb_write_Reg16Data8(OV3640_ID,0x3036,0xa6);
-		sccb_write_Reg16Data8(OV3640_ID,0x3037,0x6a);
-		sccb_write_Reg16Data8(OV3640_ID,0x3104,0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3105,0xfd);
-		sccb_write_Reg16Data8(OV3640_ID,0x3106,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3107,0xff);
-		sccb_write_Reg16Data8(OV3640_ID,0x3300,0x13);
-		sccb_write_Reg16Data8(OV3640_ID,0x3301,0xde);
-		sccb_write_Reg16Data8(OV3640_ID,0x3302,0xcf);
-		sccb_write_Reg16Data8(OV3640_ID,0x3312,0x26);
-		sccb_write_Reg16Data8(OV3640_ID,0x3314,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3313,0x2b);
-		sccb_write_Reg16Data8(OV3640_ID,0x3315,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3310,0xd0);
-		sccb_write_Reg16Data8(OV3640_ID,0x3311,0xbd);
-		sccb_write_Reg16Data8(OV3640_ID,0x330c,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x330d,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x330e,0x56);
-		sccb_write_Reg16Data8(OV3640_ID,0x330f,0x5c);
-		sccb_write_Reg16Data8(OV3640_ID,0x330b,0x1c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3306,0x5c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3307,0x11);
-		sccb_write_Reg16Data8(OV3640_ID,0x336a,0x52);
-		sccb_write_Reg16Data8(OV3640_ID,0x3370,0x46);
-		sccb_write_Reg16Data8(OV3640_ID,0x3376,0x38);
-		sccb_write_Reg16Data8(OV3640_ID,0x3300,0x13);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b8,0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x30b9,0x17);
-		sccb_write_Reg16Data8(OV3640_ID,0x30ba,0x4); 
-		sccb_write_Reg16Data8(OV3640_ID,0x30bb,0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3507,0x6); 
-		sccb_write_Reg16Data8(OV3640_ID,0x350a,0x4f);
-		sccb_write_Reg16Data8(OV3640_ID,0x3100,0x32);
-		sccb_write_Reg16Data8(OV3640_ID,0x3304,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3400,0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3404,0x22);
-		sccb_write_Reg16Data8(OV3640_ID,0x3500,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3600,0xc0);
-		sccb_write_Reg16Data8(OV3640_ID,0x3610,0x60);
-		sccb_write_Reg16Data8(OV3640_ID,0x350a,0x4f);
-		sccb_write_Reg16Data8(OV3640_ID,0x3088,0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3089,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x308a,0x6); 
-		sccb_write_Reg16Data8(OV3640_ID,0x308b,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x308d,0x4); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3086,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3086,0x0); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3012,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x304d,0x45);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30a7,0x5e);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3087,0x02); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x309c,0x1a);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30a2,0xe4);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30aa,0x42);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b0,0xff);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b1,0xff);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b2,0x10);
+		sccb_write_Reg16Data8(OV3640_ID, 0x300e,0x32);
+		sccb_write_Reg16Data8(OV3640_ID, 0x300f,0x21);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3010,0x20);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3011,0x01); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x304c,0x82);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d7,0x10);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d9,0x0d); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x30db,0x08); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3016,0x82);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3018,0x38);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3019,0x30);
+		sccb_write_Reg16Data8(OV3640_ID, 0x301a,0x61);
+		sccb_write_Reg16Data8(OV3640_ID, 0x307d,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3087,0x02); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3082,0x20);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3015,0x12);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3014,0x0c); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3013,0xf7); //AE enable
+		sccb_write_Reg16Data8(OV3640_ID, 0x303c,0x08); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x303d,0x18);
+		sccb_write_Reg16Data8(OV3640_ID, 0x303e,0x06); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x303f,0x0c); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3030,0x62);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3031,0x26);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3032,0xe6);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3033,0x6e);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3034,0xea);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3035,0xae);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3036,0xa6);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3037,0x6a);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3104,0x02); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3105,0xfd);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3106,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3107,0xff);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3300,0x13);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3301,0xde);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302,0xcf);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3312,0x26);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3314,0x42);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3313,0x2b);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3315,0x42);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3310,0xd0);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3311,0xbd);
+		sccb_write_Reg16Data8(OV3640_ID, 0x330c,0x18);
+		sccb_write_Reg16Data8(OV3640_ID, 0x330d,0x18);
+		sccb_write_Reg16Data8(OV3640_ID, 0x330e,0x56);
+		sccb_write_Reg16Data8(OV3640_ID, 0x330f,0x5c);
+		sccb_write_Reg16Data8(OV3640_ID, 0x330b,0x1c);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3306,0x5c);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3307,0x11);
+		sccb_write_Reg16Data8(OV3640_ID, 0x336a,0x52);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3370,0x46);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3376,0x38);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3300,0x13);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b8,0x20);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b9,0x17);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30ba,0x04); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x30bb,0x08); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3507,0x06); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x350a,0x4f);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3100,0x32);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3304,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3400,0x02); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3404,0x22);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3500,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3600,0xc0);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3610,0x60);
+		sccb_write_Reg16Data8(OV3640_ID, 0x350a,0x4f);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3088,0x08); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3089,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x308a,0x06); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x308b,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x308d,0x04); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3086,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3086,0x00); 
                           
 		//QXGA YUV            
-		sccb_write_Reg16Data8(OV3640_ID,0x3012,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3020,0x1); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3021,0x1d);
-		sccb_write_Reg16Data8(OV3640_ID,0x3022,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3023,0xa); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3024,0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3025,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x3026,0x6); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3027,0xc); 
-		sccb_write_Reg16Data8(OV3640_ID,0x302a,0x6); 
-		sccb_write_Reg16Data8(OV3640_ID,0x302b,0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x3075,0x44);
-		sccb_write_Reg16Data8(OV3640_ID,0x300d,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x30d7,0x10);
-		sccb_write_Reg16Data8(OV3640_ID,0x3069,0x44);
-		sccb_write_Reg16Data8(OV3640_ID,0x303e,0x1); 
-		sccb_write_Reg16Data8(OV3640_ID,0x303f,0x80);
-		sccb_write_Reg16Data8(OV3640_ID,0x3302,0xef);
-		sccb_write_Reg16Data8(OV3640_ID,0x335f,0x68);
-		sccb_write_Reg16Data8(OV3640_ID,0x3360,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x3361,0xc); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3362,0x68);
-		sccb_write_Reg16Data8(OV3640_ID,0x3363,0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3364,0x4); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3403,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3088,0x8); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3089,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x308a,0x6); 
-		sccb_write_Reg16Data8(OV3640_ID,0x308b,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3100,0x2); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3301,0xde);
-		sccb_write_Reg16Data8(OV3640_ID,0x3304,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3400,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x3404,0x0); 
-		sccb_write_Reg16Data8(OV3640_ID,0x304c,0x81);
-		sccb_write_Reg16Data8(OV3640_ID,0x3011,0x5); 
-                         
-#if 0         
-		//correct yellowish efQXGA
-		sccb_write_Reg16Data8(OV3640_ID,0x3012,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3020,0x01);
-		sccb_write_Reg16Data8(OV3640_ID,0x3021,0x1d);
-		sccb_write_Reg16Data8(OV3640_ID,0x3022,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3023,0x0a);
-		sccb_write_Reg16Data8(OV3640_ID,0x3024,0x08);
-		sccb_write_Reg16Data8(OV3640_ID,0x3025,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x3026,0x06);
-		sccb_write_Reg16Data8(OV3640_ID,0x3027,0x0c);
-		sccb_write_Reg16Data8(OV3640_ID,0x302a,0x06);
-		sccb_write_Reg16Data8(OV3640_ID,0x302b,0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x3075,0x44);
-		sccb_write_Reg16Data8(OV3640_ID,0x300d,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x30d7,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x3069,0x40);
-		sccb_write_Reg16Data8(OV3640_ID,0x303e,0x01);
-		sccb_write_Reg16Data8(OV3640_ID,0x303f,0x80);
-		                        
-		sccb_write_Reg16Data8(OV3640_ID,0x3302,0x20);
-		sccb_write_Reg16Data8(OV3640_ID,0x335f,0x68);
-		sccb_write_Reg16Data8(OV3640_ID,0x3360,0x18);
-		sccb_write_Reg16Data8(OV3640_ID,0x3361,0x0c);
-		sccb_write_Reg16Data8(OV3640_ID,0x3362,0x68);
-		sccb_write_Reg16Data8(OV3640_ID,0x3363,0x08);
-		sccb_write_Reg16Data8(OV3640_ID,0x3364,0x04);
-		sccb_write_Reg16Data8(OV3640_ID,0x3403,0x42);
-		sccb_write_Reg16Data8(OV3640_ID,0x3088,0x08);
-		sccb_write_Reg16Data8(OV3640_ID,0x3089,0x00);
-		sccb_write_Reg16Data8(OV3640_ID,0x308a,0x06);
-		sccb_write_Reg16Data8(OV3640_ID,0x308b,0x00);
-#endif                    
-
-//Color Saturation
-//		sccb_write_Reg16Data8(OV3640_ID,0x3302,0xef); 
-//		sccb_write_Reg16Data8(OV3640_ID,0x3358,0x40);
-//		sccb_write_Reg16Data8(OV3640_ID,0x3359,0x40); 
-//		sccb_write_Reg16Data8(OV3640_ID,0x3355,0x0); 	
+		sccb_write_Reg16Data8(OV3640_ID, 0x3012,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3020,0x01); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3021,0x1d);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3022,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3023,0x0a); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3024,0x08); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3025,0x18);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3026,0x06); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3027,0x0c); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x302a,0x06); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x302b,0x20);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3075,0x44);
+		sccb_write_Reg16Data8(OV3640_ID, 0x300d,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d7,0x10);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3069,0x44);
+		sccb_write_Reg16Data8(OV3640_ID, 0x303e,0x01); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x303f,0x80);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302,0xef);
+		sccb_write_Reg16Data8(OV3640_ID, 0x335f,0x68);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3360,0x18);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3361,0x0c); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3362,0x68);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3363,0x08); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3364,0x04); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3403,0x42);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3088,0x08); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3089,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x308a,0x06); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x308b,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3100,0x02); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3301,0xde);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3304,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3400,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x3404,0x00); 
+		sccb_write_Reg16Data8(OV3640_ID, 0x304c,0x81);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3011,0x5);                                          
 	}
 	//V Flip & Mirror
-	sccb_write_Reg16Data8(OV3640_ID,0x307c, 0x13); 
-	sccb_write_Reg16Data8(OV3640_ID,0x3023, 0x09); 
-	sccb_write_Reg16Data8(OV3640_ID,0x3090, 0xc9); 	
+	sccb_write_Reg16Data8(OV3640_ID, 0x307c, 0x13); 
+	sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x09); 
+	sccb_write_Reg16Data8(OV3640_ID, 0x3090, 0xc9); 
+		
+#else
+	//Init ov3640
+	{
+		sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x90);	// [7]:Reset; [6:4]=001->XGA mode
+		sccb_write_Reg16Data8(OV3640_ID, 0x30a9, 0xdb);	// for 1.5V
+		sccb_write_Reg16Data8(OV3640_ID, 0x304d, 0x45);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3087, 0x16);
+		sccb_write_Reg16Data8(OV3640_ID, 0x309c, 0x1a);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30a2, 0xe4);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30aa, 0x42);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b0, 0xff);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b1, 0xff);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b2, 0x10);
+		sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x32);
+		sccb_write_Reg16Data8(OV3640_ID, 0x300f, 0x21);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3010, 0x20);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x01);
+		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x10);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d9, 0x0d);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30db, 0x08);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3016, 0x82);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3018, 0x48);	// Luminance High Range=72 after Gamma=0x86=134; 0x40->134
+		sccb_write_Reg16Data8(OV3640_ID, 0x3019, 0x40);	// Luminance Low Range=64 after Gamma=0x8f=143; 0x38->125
+		sccb_write_Reg16Data8(OV3640_ID, 0x301a, 0x82);
+		sccb_write_Reg16Data8(OV3640_ID, 0x307d, 0x00);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3087, 0x02);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3082, 0x20);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3070, 0x00);	// 50Hz Banding MSB
+		sccb_write_Reg16Data8(OV3640_ID, 0x3071, 0xbb);	// 50Hz Banding LSB
+		sccb_write_Reg16Data8(OV3640_ID, 0x3072, 0x00);	// 60Hz Banding MSB
+		sccb_write_Reg16Data8(OV3640_ID, 0x3073, 0xa6);	// 60Hz Banding LSB
+		sccb_write_Reg16Data8(OV3640_ID, 0x301c, 0x07);	// max_band_step_50hz
+		sccb_write_Reg16Data8(OV3640_ID, 0x301d, 0x08);	// max_band_step_60hz
+		sccb_write_Reg16Data8(OV3640_ID, 0x3015, 0x12);	// [6:4]:1 dummy frame; [2:0]:AGC gain 8x
+		sccb_write_Reg16Data8(OV3640_ID, 0x3014, 0x84);	// [7]:50hz; [6]:auto banding detection disable; [3]:night modedisable
+		sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf7);	// AE_en
+		sccb_write_Reg16Data8(OV3640_ID, 0x3030, 0x11);	// Avg_win_Weight0
+		sccb_write_Reg16Data8(OV3640_ID, 0x3031, 0x11);	// Avg_win_Weight1
+		sccb_write_Reg16Data8(OV3640_ID, 0x3032, 0x11);	// Avg_win_Weight2
+		sccb_write_Reg16Data8(OV3640_ID, 0x3033, 0x11);	// Avg_win_Weight3
+		sccb_write_Reg16Data8(OV3640_ID, 0x3034, 0x11);	// Avg_win_Weight4
+		sccb_write_Reg16Data8(OV3640_ID, 0x3035, 0x11);	// Avg_win_Weight5
+		sccb_write_Reg16Data8(OV3640_ID, 0x3036, 0x11);	// Avg_win_Weight6
+		sccb_write_Reg16Data8(OV3640_ID, 0x3037, 0x11);	// Avg_win_Weight7
+		sccb_write_Reg16Data8(OV3640_ID, 0x3038, 0x01);	// Avg_Win_Hstart=285
+		sccb_write_Reg16Data8(OV3640_ID, 0x3039, 0x1d);	// Avg_Win_Hstart=285
+		sccb_write_Reg16Data8(OV3640_ID, 0x303a, 0x00);	// Avg_Win_Vstart=10
+		sccb_write_Reg16Data8(OV3640_ID, 0x303b, 0x0a);	// Avg_Win_Vstart=10
+		sccb_write_Reg16Data8(OV3640_ID, 0x303c, 0x02);	// Avg_Win_Width=512x4=2048
+		sccb_write_Reg16Data8(OV3640_ID, 0x303d, 0x00);	// Avg_Win_Width=512x4=2048
+		sccb_write_Reg16Data8(OV3640_ID, 0x303e, 0x01);	// Avg_Win_Height=384x4=1536
+		sccb_write_Reg16Data8(OV3640_ID, 0x303f, 0x80);	// Avg_Win_Height=384x4=1536
+		sccb_write_Reg16Data8(OV3640_ID, 0x3047, 0x00);	// [7]:avg_based AE
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b8, 0x20);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30b9, 0x17);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30ba, 0x04);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30bb, 0x08);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30a9, 0xdb);	// for 1.5V
+
+		sccb_write_Reg16Data8(OV3640_ID, 0x3104, 0x02);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3105, 0xfd);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3106, 0x00);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3107, 0xff);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3100, 0x02);
+
+		sccb_write_Reg16Data8(OV3640_ID, 0x3300, 0x13);	// [0]: LENC disable; [1]: AF enable
+		sccb_write_Reg16Data8(OV3640_ID, 0x3301, 0xde);	// [1]: BC_en; [2]: WC_en; [4]: CMX_en
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf);	// [0]: AWB_en; [1]: AWB_gain_en; [2]: Gamma_en; [7]: Special_Effect_en
+		sccb_write_Reg16Data8(OV3640_ID, 0x3304, 0xfc);	// [4]: Add bias to gamma result; [5]: Enable Gamma bias function
+		sccb_write_Reg16Data8(OV3640_ID, 0x3306, 0x5c);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3307, 0x11);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3308, 0x00);	// [7]: AWB_mode=advanced
+		sccb_write_Reg16Data8(OV3640_ID, 0x330b, 0x1c);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x330c, 0x18);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x330d, 0x18);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x330e, 0x56);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x330f, 0x5c);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3310, 0xd0);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3311, 0xbd);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3312, 0x26);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3313, 0x2b);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3314, 0x42);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3315, 0x42);	// Reserved ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x331b, 0x09);	// Gamma YST1
+		sccb_write_Reg16Data8(OV3640_ID, 0x331c, 0x18);	// Gamma YST2
+		sccb_write_Reg16Data8(OV3640_ID, 0x331d, 0x30);	// Gamma YST3
+		sccb_write_Reg16Data8(OV3640_ID, 0x331e, 0x58);	// Gamma YST4
+		sccb_write_Reg16Data8(OV3640_ID, 0x331f, 0x66);	// Gamma YST5
+		sccb_write_Reg16Data8(OV3640_ID, 0x3320, 0x72);	// Gamma YST6
+		sccb_write_Reg16Data8(OV3640_ID, 0x3321, 0x7d);	// Gamma YST7
+		sccb_write_Reg16Data8(OV3640_ID, 0x3322, 0x86);	// Gamma YST8
+		sccb_write_Reg16Data8(OV3640_ID, 0x3323, 0x8f);	// Gamma YST9
+		sccb_write_Reg16Data8(OV3640_ID, 0x3324, 0x97);	// Gamma YST10
+		sccb_write_Reg16Data8(OV3640_ID, 0x3325, 0xa5);	// Gamma YST11
+		sccb_write_Reg16Data8(OV3640_ID, 0x3326, 0xb2);	// Gamma YST12
+		sccb_write_Reg16Data8(OV3640_ID, 0x3327, 0xc7);	// Gamma YST13
+		sccb_write_Reg16Data8(OV3640_ID, 0x3328, 0xd8);	// Gamma YST14
+		sccb_write_Reg16Data8(OV3640_ID, 0x3329, 0xe8);	// Gamma YST15
+		sccb_write_Reg16Data8(OV3640_ID, 0x332a, 0x20);	// Gamma YSLP15
+		sccb_write_Reg16Data8(OV3640_ID, 0x332b, 0x00);	// [3]: WB_mode=auto
+		sccb_write_Reg16Data8(OV3640_ID, 0x332d, 0x64);	// [6]:de-noise auto mode; [5]:edge auto mode; [4:0]:edge threshold
+		sccb_write_Reg16Data8(OV3640_ID, 0x3355, 0x06);	// Special_Effect_CTRL: [1]:Sat_en; [2]: Cont_Y_en
+		sccb_write_Reg16Data8(OV3640_ID, 0x3358, 0x40);	// Special_Effect_Sat_U
+		sccb_write_Reg16Data8(OV3640_ID, 0x3359, 0x40);	// Special_Effect_Sat_V
+		sccb_write_Reg16Data8(OV3640_ID, 0x336a, 0x52);	// LENC R_A1
+		sccb_write_Reg16Data8(OV3640_ID, 0x3370, 0x46);	// LENC G_A1
+		sccb_write_Reg16Data8(OV3640_ID, 0x3376, 0x38);	// LENC B_A1
+
+		sccb_write_Reg16Data8(OV3640_ID, 0x3400, 0x00);	// [2:0];Format input source=DSP TUV444
+		sccb_write_Reg16Data8(OV3640_ID, 0x3403, 0x42);	// DVP Win Addr
+		sccb_write_Reg16Data8(OV3640_ID, 0x3404, 0x00);	// [5:0]: yuyv
+
+		sccb_write_Reg16Data8(OV3640_ID, 0x3507, 0x06);	// ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x350a, 0x4f);	// ???
+
+		sccb_write_Reg16Data8(OV3640_ID, 0x3600, 0xc0);	// VSYNC_CTRL
+
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf);	// [0]: AWB_enable
+		sccb_write_Reg16Data8(OV3640_ID, 0x300d, 0x01);	// PCLK/2
+		sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x10);	// [6:4]=001->XGA mode
+		sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf7);	// AE_enable
+		sccb_write_Reg16Data8(OV3640_ID, 0x3020, 0x01);	// HS=285
+		sccb_write_Reg16Data8(OV3640_ID, 0x3021, 0x1d);	// HS=285
+		sccb_write_Reg16Data8(OV3640_ID, 0x3022, 0x00);	// VS = 6
+		sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x06);	// VS = 6
+		sccb_write_Reg16Data8(OV3640_ID, 0x3024, 0x08);	// HW=2072
+		sccb_write_Reg16Data8(OV3640_ID, 0x3025, 0x18);	// HW=2072
+		sccb_write_Reg16Data8(OV3640_ID, 0x3026, 0x03);	// VW=772
+		sccb_write_Reg16Data8(OV3640_ID, 0x3027, 0x04);	// VW=772
+		sccb_write_Reg16Data8(OV3640_ID, 0x3028, 0x09);	// HTotalSize=2375
+		sccb_write_Reg16Data8(OV3640_ID, 0x3029, 0x47);	// HTotalSize=2375
+		sccb_write_Reg16Data8(OV3640_ID, 0x302a, 0x03);	// VTotalSize=784
+		sccb_write_Reg16Data8(OV3640_ID, 0x302b, 0x10);	// VTotalSize=784
+		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3075, 0x24);	// VSYNCOPT
+		sccb_write_Reg16Data8(OV3640_ID, 0x3086, 0x00);	// Sleep/Wakeup
+		sccb_write_Reg16Data8(OV3640_ID, 0x3088, 0x04);	// x_output_size=1024
+		sccb_write_Reg16Data8(OV3640_ID, 0x3089, 0x00);	// x_output_size=1024
+		sccb_write_Reg16Data8(OV3640_ID, 0x308a, 0x03);	// y_output_size=768
+		sccb_write_Reg16Data8(OV3640_ID, 0x308b, 0x00);	// y_output_size=768
+		sccb_write_Reg16Data8(OV3640_ID, 0x308d, 0x04);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x90);	// ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xef);	// [5]: Scale_en, [0]: AWB_enable
+		sccb_write_Reg16Data8(OV3640_ID, 0x335f, 0x34);	// Scale_VH_in
+		sccb_write_Reg16Data8(OV3640_ID, 0x3360, 0x0c);	// Scale_H_in = 0x40c = 1036
+		sccb_write_Reg16Data8(OV3640_ID, 0x3361, 0x04);	// Scale_V_in = 0x304 = 772
+		sccb_write_Reg16Data8(OV3640_ID, 0x3362, 0x34);	// Scale_VH_out
+		sccb_write_Reg16Data8(OV3640_ID, 0x3363, 0x08);	// Scale_H_out = 0x408 = 1032
+		sccb_write_Reg16Data8(OV3640_ID, 0x3364, 0x04);	// Scale_V_out = 0x304 = 772
+		sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x32);
+		sccb_write_Reg16Data8(OV3640_ID, 0x300f, 0x21);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x00);	// for 30 FPS
+		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
+	}
+	
+	if(nWidthH == 1024 && nWidthV == 768) {	
+		//set output size to 1024x768
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf);	// [0]: AWB_enable
+		sccb_write_Reg16Data8(OV3640_ID, 0x300d, 0x01);	// PCLK/2
+		sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x10);	// [6:4]=001->XGA mode
+		sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf7);	// AE_enable
+		sccb_write_Reg16Data8(OV3640_ID, 0x3020, 0x01);	// HS=285
+		sccb_write_Reg16Data8(OV3640_ID, 0x3021, 0x1d);	// HS=285
+		sccb_write_Reg16Data8(OV3640_ID, 0x3022, 0x00);	// VS = 6
+		sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x06);	// VS = 6
+		sccb_write_Reg16Data8(OV3640_ID, 0x3024, 0x08);	// HW=2072
+		sccb_write_Reg16Data8(OV3640_ID, 0x3025, 0x18);	// HW=2072
+		sccb_write_Reg16Data8(OV3640_ID, 0x3026, 0x03);	// VW=772
+		sccb_write_Reg16Data8(OV3640_ID, 0x3027, 0x04);	// VW=772
+		sccb_write_Reg16Data8(OV3640_ID, 0x3028, 0x09);	// HTotalSize=2375
+		sccb_write_Reg16Data8(OV3640_ID, 0x3029, 0x47);	// HTotalSize=2375
+		sccb_write_Reg16Data8(OV3640_ID, 0x302a, 0x03);	// VTotalSize=784
+		sccb_write_Reg16Data8(OV3640_ID, 0x302b, 0x10);	// VTotalSize=784
+		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3075, 0x24);	// VSYNCOPT
+		sccb_write_Reg16Data8(OV3640_ID, 0x3086, 0x00);	// Sleep/Wakeup
+		sccb_write_Reg16Data8(OV3640_ID, 0x3088, 0x04);	// x_output_size=1024
+		sccb_write_Reg16Data8(OV3640_ID, 0x3089, 0x00);	// x_output_size=1024
+		sccb_write_Reg16Data8(OV3640_ID, 0x308a, 0x03);	// y_output_size=768
+		sccb_write_Reg16Data8(OV3640_ID, 0x308b, 0x00);	// y_output_size=768
+		sccb_write_Reg16Data8(OV3640_ID, 0x308d, 0x04);
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x90);	// ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xef);	// [5]: Scale_en, [0]: AWB_enable
+		sccb_write_Reg16Data8(OV3640_ID, 0x335f, 0x34);	// Scale_VH_in
+		sccb_write_Reg16Data8(OV3640_ID, 0x3360, 0x0c);	// Scale_H_in = 0x40c = 1036
+		sccb_write_Reg16Data8(OV3640_ID, 0x3361, 0x04);	// Scale_V_in = 0x304 = 772
+		sccb_write_Reg16Data8(OV3640_ID, 0x3362, 0x34);	// Scale_VH_out
+		sccb_write_Reg16Data8(OV3640_ID, 0x3363, 0x08);	// Scale_H_out = 0x408 = 1032
+		sccb_write_Reg16Data8(OV3640_ID, 0x3364, 0x04);	// Scale_V_out = 0x304 = 772
+		sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x32);
+		sccb_write_Reg16Data8(OV3640_ID, 0x300f, 0x21);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x00);	// for 30 FPS
+		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
+	} else { 
+		//set output size to 2048*1536
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xce);	//[0]: AWB_disable
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf); //[0]: AWB_enable 0401add
+		sccb_write_Reg16Data8(OV3640_ID, 0x300d, 0x00);	// PCLK/1
+		sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x39);
+		sccb_write_Reg16Data8(OV3640_ID, 0x300f, 0x21);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3010, 0x20);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x00);
+		sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x00);	// [6:4]=000->QXGA mode
+		sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf2);	// AE_disable
+		sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf7);	// AE_enable 0401add
+		sccb_write_Reg16Data8(OV3640_ID, 0x3020, 0x01);	// HS=285
+		sccb_write_Reg16Data8(OV3640_ID, 0x3021, 0x1d);	// HS=285
+		sccb_write_Reg16Data8(OV3640_ID, 0x3022, 0x00);	// VS = 10
+		sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x0a);	// VS = 10
+		sccb_write_Reg16Data8(OV3640_ID, 0x3024, 0x08);	// HW=2072
+		sccb_write_Reg16Data8(OV3640_ID, 0x3025, 0x18);	// HW=2072
+		sccb_write_Reg16Data8(OV3640_ID, 0x3026, 0x06);	// VW=1548
+		sccb_write_Reg16Data8(OV3640_ID, 0x3027, 0x0c);	// VW=1548
+		sccb_write_Reg16Data8(OV3640_ID, 0x3028, 0x09);	// HTotalSize=2375
+		sccb_write_Reg16Data8(OV3640_ID, 0x3029, 0x47);	// HTotalSize=2375
+		sccb_write_Reg16Data8(OV3640_ID, 0x302a, 0x06);	// VTotalSize=1568
+		sccb_write_Reg16Data8(OV3640_ID, 0x302b, 0x20);	// VTotalSize=1568
+		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x81);	// ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3075, 0x44);	// VSYNCOPT
+		sccb_write_Reg16Data8(OV3640_ID, 0x3088, 0x08);	// x_output_size=2048
+		sccb_write_Reg16Data8(OV3640_ID, 0x3089, 0x00);	// x_output_size=2048
+		sccb_write_Reg16Data8(OV3640_ID, 0x308a, 0x06);	// y_output_size=1536
+		sccb_write_Reg16Data8(OV3640_ID, 0x308b, 0x00);	// y_output_size=1536
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x10);	// ???
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xee);	// [5]: Scale_en, [0]: AWB_disable
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xef);	// [5]: Scale_en, [0]: AWB_enable 0401add
+		sccb_write_Reg16Data8(OV3640_ID, 0x335f, 0x68);	// Scale_VH_in
+		sccb_write_Reg16Data8(OV3640_ID, 0x3360, 0x18);	// Scale_H_in = 0x818 = 2072
+		sccb_write_Reg16Data8(OV3640_ID, 0x3361, 0x0c);	// Scale_V_in = 0x60c = 1548
+		sccb_write_Reg16Data8(OV3640_ID, 0x3362, 0x68);	// Scale_VH_out
+		sccb_write_Reg16Data8(OV3640_ID, 0x3363, 0x08);	// Scale_H_out = 0x808 = 2056
+		sccb_write_Reg16Data8(OV3640_ID, 0x3364, 0x04);	// Scale_V_out = 0x604 = 1540
+	}
+#endif
 
 	R_CSI_TG_CTRL1 = uCtrlReg2;					//*P_Sensor_TG_Ctrl2 = uCtrlReg2;
 #if CSI_IRQ_MODE == CSI_IRQ_PPU_IRQ	
@@ -3760,7 +3701,7 @@ void OV3640_Init (
 	R_CSI_TG_CTRL0 = uCtrlReg1 | (2 << 20) | (1 << 16);
 #elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO32_IRQ
 	R_CSI_TG_CTRL0 = uCtrlReg1 | (3 << 20) | (1 << 16);
-#endif	
+#endif
 }
 #endif
 #ifdef	__OV5642_DRV_C__

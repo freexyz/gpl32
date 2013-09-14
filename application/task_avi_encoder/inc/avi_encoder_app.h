@@ -280,6 +280,7 @@ extern void avi_encode_set_sensor_format(INT32U format);
 extern void avi_encode_set_display_format(INT32U format);
 //other
 extern void avi_encode_set_display_scaler(void);
+extern INT32S jpeg_header_generate(INT8U q, INT16U w, INT16U h);
 extern INT32S avi_encode_set_jpeg_quality(INT8U quality_value);
 extern INT32S avi_encode_set_mp4_resolution(INT16U encode_width, INT16U encode_height);
 extern BOOLEAN avi_encode_is_pause(void);

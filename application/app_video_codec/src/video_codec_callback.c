@@ -10,12 +10,9 @@ PPU_REGISTER_SETS *video_ppu_register_set;
 
 #if FACE_DETECTION == 1
 extern void face_frame_set(INT32U frame);
-extern INT32U face_train_set(INT32U frame);
 extern void pic_face(INT32U frame_buffer);
 extern INT32U face_detect_return(void);
-extern INT32U Face_Detect_Demo_En;
-extern drawFace_flag;
-extern train_counter;
+extern INT32U Face_Detect_Demo_En,drawFace_flag;
 INT32U face_buffer_ck=0,old_frame,buffer_set=0;
 INT32U sensor_buffer_post,sensor_buffer_post_flag;
 #endif
@@ -147,38 +144,27 @@ INT32S video_encode_display_frame_ready(INT32U frame_buffer)
     if(Face_Detect_Demo_En)
     {
 	    sensor_buffer_post_flag=0;
-	    if(train_counter)
+	    if(face_buffer_ck)
 	    {
-			if(face_train_set(frame_buffer) >= 20)
+			old_frame=face_detect_return();
+			if(old_frame)
 			{
-			    train_counter=0;
-			    DBG_PRINT("/**********Face Train Finish**********/ \r\n");
-			}    		    	    
+				face_frame_set(frame_buffer);
+				sensor_buffer_post = old_frame;
+				sensor_buffer_post_flag = 1;
+			}   
 	    }
 	    else
 	    {
-		    if(face_buffer_ck)
-		    {
-				old_frame=face_detect_return();
-				if(old_frame)
-				{
-					face_frame_set(frame_buffer);
-					sensor_buffer_post = old_frame;
-					sensor_buffer_post_flag = 1;
-				}   
-		    }
-		    else
-		    {
-				face_frame_set(frame_buffer);
-				face_buffer_ck=1;
-				sensor_buffer_post_flag = 1;
-				buffer_set=1;	   
-		    }
+			face_frame_set(frame_buffer);
+			face_buffer_ck=1;
+			sensor_buffer_post_flag = 1;
+			buffer_set=1;	   
 	    }
-    }
-    
-    if(drawFace_flag && !sensor_buffer_post_flag)
-	   pic_face(frame_buffer); 
+		
+		if(drawFace_flag && !sensor_buffer_post_flag)
+		   pic_face(frame_buffer);	    
+    } 
 #endif
 
 #if	VIDEO_DISPALY_WITH_PPU == 0           

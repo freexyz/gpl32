@@ -436,7 +436,7 @@ void adc_record_entry(void *param)
 			aud_adc_double_buffer_put((INT16U*)ready_addr, pAudio_Encode_Para->PCMInFrameSize, AUDIO_INPUT_SRC, aud_enc_reqQ);
 			aud_adc_double_buffer_set((INT16U*)free_addr, pAudio_Encode_Para->PCMInFrameSize, AUDIO_INPUT_SRC);
 			adc_hardware_start(pAudio_Encode_Para->SampleRate);
-			#if MCU_VERSION >= GPL326XXB
+			#if (MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA)
 			mic_dagc_enable(1);
 			#endif 
 			
@@ -452,7 +452,7 @@ void adc_record_entry(void *param)
 			aud_adc_double_buffer_put((INT16U*)mic_ready_addr, pAudio_Encode_Para->PCMInFrameSize>>1, BUILD_IN_MIC, aud_enc_reqQ2);
 			aud_adc_double_buffer_set((INT16U*)mic_free_addr, pAudio_Encode_Para->PCMInFrameSize>>1, BUILD_IN_MIC);
 			adc_hardware_start(pAudio_Encode_Para->SampleRate);
-			#if MCU_VERSION >= GPL326XXB
+			#if (MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA)
 			mic_dagc_enable(1);
 			#endif 
 		#elif AUDIO_INPUT_SRC == GPY0050_IN

@@ -72,17 +72,19 @@ struct Drv_FileSystem *FileSysDrv[MAX_DISK_NUM] = {
 #endif
 
 /* N:\> */
-#if NAND_APP_EN == 1
+#if (defined NAND_APP_EN) && (NAND_APP_EN == 1)
 	&FS_NAND_App_driver,
 #elif (MAX_DISK_NUM>9)
     NULL,
 #endif
 
+#if (MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA)
 /* O:\> */
 #if SD_EN == 1
 	&FS_SD2_driver,
 #elif (MAX_DISK_NUM>10)
     NULL,
+#endif
 #endif
 
 /* J:\> */	

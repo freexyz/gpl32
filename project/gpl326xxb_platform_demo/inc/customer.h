@@ -22,8 +22,10 @@
 #define	GPL326XX                    0x10                                   //
 #define GPL326XX_B                  0x11                                   //
 #define GPL326XX_C                  0x12                                   //
-#define GPL326XXB                   0x18                                   //
-#define GPL327XX                  	0x20                                   //
+#define GPL326XXB					0x17                                   //
+#define GP326XXXA                   0x18
+#define GPL327XX                  	0x20
+#define GP327XXXA					0x21                                   //
 #define MCU_VERSION             	GPL326XXB                              //
 //---------------------------------------------------------------------------
 
@@ -39,6 +41,8 @@
 #define BOARD_DEMO_GPL326XX 	(BOARD_EMU_BASE + 0x40)
 #define BOARD_DEMO_GPL327XX 	(BOARD_EMU_BASE + 0x50)
 #define BOARD_DEMO_GPL326XXB 	(BOARD_EMU_BASE + 0x60)
+#define BOARD_DEMO_GP326XXXA 	(BOARD_EMU_BASE + 0x70)
+#define BOARD_DEMO_GP327XXXA 	(BOARD_EMU_BASE + 0x80)
 #define BOARD_TK35_V1_0         (BOARD_TURNKEY_BASE + 0x10)                //
 #define BOARD_TK_V1_0           (BOARD_TURNKEY_BASE + 0x20)                //
 #define BOARD_TK_V2_0           (BOARD_TURNKEY_BASE + 0x30)                //

@@ -229,10 +229,14 @@ void scaler_task_entry(void *parm)
 			        INT32U temp;
 					
 					temp=video_encode_display_frame_ready(scaler_frame);
-					if(temp!=1 && temp!=0)
+					if(temp!=1)
 					{
-						//post ready frame to video encode task
-						OSQPost(vid_enc_task_q, (void *)temp);					
+						if(!temp)
+							//post ready frame to video encode task
+							OSQPost(vid_enc_task_q, (void *)scaler_frame);						
+						else
+							//post ready frame to video encode task
+							OSQPost(vid_enc_task_q, (void *)temp);					
 				    }		    	
 			    #else
 					video_encode_display_frame_ready(scaler_frame);
@@ -401,6 +405,9 @@ INT32S video_encode_task_empty_q(void)
 	return STATUS_OK;
 }
 
+#if (defined APP_QRCODE_BARCODE_EN) && (APP_QRCODE_BARCODE_EN == 1)
+extern INT32U qrcode_frame;
+#endif 
 void video_encode_task_entry(void *parm)
 {
 	INT8U   err, rCnt;
@@ -562,7 +569,9 @@ void video_encode_task_entry(void *parm)
 					DEBUG_MSG(DBG_PRINT("encode_size = 0\r\n"));
 					goto VIDEO_ENCODE_FRAME_MODE_END;
 				}
-				
+				#if (defined APP_QRCODE_BARCODE_EN) && (APP_QRCODE_BARCODE_EN == 1)
+					qrcode_frame = scaler_frame;
+				#endif
 				if(pAviEncPara->avi_encode_status & C_AVI_ENCODE_START && 
 					pAviEncPara->video[rCnt].key_flag == 0) {
 					pAviEncPara->video[rCnt].ready_frame = video_frame;

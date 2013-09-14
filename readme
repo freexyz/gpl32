@@ -1,5 +1,14 @@
 master branch
     - GPL32 Platform Code V1.0.5, PreRelease, svn2536
+    - update GPL32 Platform Code V1.0.5, final, from GP
 
 xyz branch
-    - 
+    - Release Revision History
+	v0.0.1	2013.06.28	T.C.	first edition
+	v0.0.2	2013.06.30	CK	
+	v0.0.3	2013.07.13	Vlad	by email
+	v0.0.4	2013.07.16	T.C.	1. create revision history
+					2. integrate Vlad version
+					3. add default security level
+	v0.0.5	2013.07.26	T.C.	fixed tracking mode GPIO0,1 issue
+

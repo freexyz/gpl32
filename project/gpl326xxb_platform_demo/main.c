@@ -8,11 +8,10 @@
 #define IMAGE_CODEC				  0
 #define VIDEO_DECODE		      0
 #define	VIDEO_ENCODE		      0
-#define MULTIMEDIA_DEMO		      0
+#define MULTIMEDIA_DEMO		      1
 #define	SACM_DECODE			      0
 #define	SACM_ENCODE			      0
-#define	USB_DEMO			      0
-#define	USB_WEB_CAM_DEMO	      0
+#define	USB_DEVICE_WEBCAME_DEMO	  0
 #define IMAGE_ENCODE_BLOCK_RW	  0
 #define IMAGE_ENCODE_BLOCK_READ	  0
 #define GP326XXX_PPU_DEMO		  0
@@ -20,8 +19,10 @@
 #define ID3_TAG_DEMO              0
 #define GPID_DEMO                 0
 #define USBH_ISO_DEMO             0
-#define FACE_DETECT_DEMO          1
+#define FACE_DETECT_DEMO          0
+#define COMAIR_TX_DEMO			  0	
 #define	COMAIR_RX_DEMO            0
+#define QRCODE_BARCODE_DEMO		  0
 
 #define PRINT_OUTPUT_NONE	0x00 
 #define PRINT_OUTPUT_UART	0x01
@@ -35,8 +36,7 @@ extern void Video_Encode_Demo(void);
 extern void Platform_Demo_Code(void);
 extern void Sacm_Decode_Demo(void);
 extern void Sacm_Encode_Demo(void);
-extern void Usb_Device_Demo(void);
-extern void Usb_WebCam_Demo(void);
+extern void Usb_Dvice_WebCam_Demo(void);
 extern void encode_block_rw_demo(void);
 extern void encode_block_demo(void);
 extern void GPL32XXXX_PPU_Hblank_Demo(void);
@@ -47,7 +47,10 @@ extern void gpid_demo(void);
 extern void USBH_ISO_Demo(void);
 extern void set_print_output_type(INT32U type);
 extern void Face_Detect_demo(void);
+extern void COMAIR_SendCmd_Demo(void);
 extern void Comair_RX_Demo(void);
+extern void BarCode_QRCode_Demo(void);
+
 
 INT32U free_memory_start, free_memory_end;
 INT32U MainTaskStack[MainTaskStackSize];
@@ -79,11 +82,8 @@ void Main_task_entry(void *para)
 #if SACM_ENCODE
 	Sacm_Encode_Demo();
 #endif
-#if USB_DEMO
-	Usb_Device_Demo();
-#endif
-#if USB_WEB_CAM_DEMO
-	Usb_WebCam_Demo();
+#if USB_DEVICE_WEBCAME_DEMO
+	Usb_Dvice_WebCam_Demo();
 #endif
 #if USBH_ISO_DEMO
 	USBH_ISO_Demo();
@@ -109,8 +109,14 @@ void Main_task_entry(void *para)
 #if FACE_DETECT_DEMO
 	Face_Detect_demo();
 #endif
+#if COMAIR_TX_DEMO
+	COMAIR_SendCmd_Demo();
+#endif
 #if	COMAIR_RX_DEMO
 	Comair_RX_Demo();
+#endif
+#if QRCODE_BARCODE_DEMO
+	BarCode_QRCode_Demo();
 #endif
 	while(1);
 }

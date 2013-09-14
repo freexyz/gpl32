@@ -1,0 +1,36 @@
+ROM_LOAD 0x00000000 0x800000
+{
+    ROM1 0x00000000 0x800000
+    {
+        startup.o (StartUp, +FIRST)
+    	* (+RO)
+    }
+
+    RAM1 +0
+    {
+        * (+RW,+ZI)
+    }
+
+	VECTOR 0xF8003100
+	{
+		startup.o (ExceptionHandler)
+	}
+	
+	PWR 0xF8003118
+	{
+		drv_l1_system.o (pwr_ctrl)
+		drv_l1_isys.o
+		power_down.o (pwr_ctrl)
+		system_dynamicallyclock.o (pwr_ctrl)
+	}
+	
+    ROM2 0xF8003F80
+	{
+		startup.o (Wakeup)
+	}
+
+	ROM3 0xF8003FC0
+	{
+		startup.o (NorWakeupVector)
+	}
+}
