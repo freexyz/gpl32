@@ -1,5 +1,9 @@
 master branch
-    - GPL32 Platform Code V1.0.5, PreRelease, svn2536
+    - 2013.06.11	GPL32 Platform Code V1.0.5, PreRelease, svn2536
+    - 2013.09.14	update GPL32 ADS Platform Code V1.0.5, final, from GP
+
+gpl326xxb branch
+    - 2013.09.14	GPL326xxB CS Platform Demo V1.0.5
 
 xyz branch
     - Release Revision History
@@ -10,6 +14,4 @@ xyz branch
 					2. integrate Vlad version
 					3. add default security level
 	v0.0.5	2013.07.26	T.C.	fixed tracking mode GPIO0,1 issue
-
-
 
