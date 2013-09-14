@@ -135,7 +135,7 @@ void Main_task_entry(void *para)
 	DBG_PRINT("free memory start = 0x%08x\r\n", free_memory_start);
 	DBG_PRINT("free memory end   = 0x%08x\r\n", free_memory_end);
 
-	PowerDown_Mode(0);
+//	PowerDown_Mode(0);
 	fd_demo();
 #endif
 #if	COMAIR_RX_DEMO
