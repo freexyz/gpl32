@@ -5,6 +5,9 @@
 extern "C" {
 #endif
 
+#include "MultiMediaParser_Cfg.h"
+
+// error id
 #define MEDIAPARSER_FILE_READ_ERR		0x80000001
 #define MEDIAPARSER_FORMAT_ERR			0x80000002
 #define MEDIAPARSER_KERNEL_ERR			0x80000003
@@ -15,7 +18,6 @@ extern "C" {
 #define MEDIAPARSER_FILE_SEEK_ERR		0x80000008
 #define MEDIAPARSER_NO_STREAM_EXIST		0x80000009
 #define MEDIAPARSER_NO_INDEX			0x8000000A
-
 #define MEDIAPARSER_OS_ERR				0x8000000B
 
 
@@ -100,6 +102,11 @@ int MultiMediaParser_GetNumberOfFrameInVidBuf(const void *hWorkMem);
 long MultiMediaParser_GetVidCurTime(const void *hWorkMem);
 long MultiMediaParser_GetVidTrackDur(const void *hWorkMem);
 int MultiMediaParser_RegisterReadFunc(int ReadFunc(short, unsigned int, unsigned int));
+#if SEEK64_EN == 0
+int MultiMediaParser_RegisterSeekFunc(int SeekFunc(short, int, short));
+#else
+int MultiMediaParser_RegisterSeekFunc(long long SeekFunc(short, long long, short));
+#endif
 const char *MultiMediaParser_GetVidBuf(void *hWorkMem, long *Len, long *Duration, int *ErrID);
 
 #ifdef __cplusplus

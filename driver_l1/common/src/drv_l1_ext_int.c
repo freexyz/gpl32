@@ -32,6 +32,23 @@ void ext_int_init(void)
 	vic_irq_enable(VIC_EXT_AB);	
 }
 
+
+void ext_fiq_init(void)
+{
+#if(defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
+	extab_int_clr(EXTA);
+	extab_int_clr(EXTB);
+	R_INT_KECON &= ~0xFF;
+	extab_user_isr_clr(EXTA);
+	extab_user_isr_clr(EXTB);
+
+	vic_fiq_register(VIC_FIQ_EXT_A,extab_int_isr);
+	vic_fiq_enable(VIC_FIQ_EXT_A);	
+	vic_fiq_register(VIC_FIQ_EXT_B,extab_int_isr);
+	vic_fiq_enable(VIC_FIQ_EXT_B);		
+#endif
+}
+
 void extab_int_clr(INT8U ext_src)
 {
 	if (ext_src == EXTA) {

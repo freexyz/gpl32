@@ -100,6 +100,11 @@ extern INT32S usbd_setvendorcmdval(INT8U val);
 extern INT32U get_usb_logger_data(void);	//for USB logger
 extern  INT32U   CSW_Residue;
 extern  INT32U   CSW_Status;
+
+extern INT32U   R_USB_State_Machine ; 
+extern INT32U   USB_Status          ;  
+extern INT32U   R_USB_Suspend       ;  
+extern INT16U USB_UDisk_Eject;
 INT16S Test_USB(void);  //judge USB Device
 INT32U usbd_msdc_lun_change(str_USB_Lun_Info* pNEW_LUN);
 
@@ -696,6 +701,13 @@ void usb_msdc_state()
 		   	//DBG_PRINT("PollingExit U Disk!!\r\n");
 		    	//break;
 		   	}
+		   ////modify dehaiqin for mac eject u disk 20130802
+		   if (USB_UDisk_Eject&&(R_USB_State_Machine==0))
+		   	{
+		   	//DBG_PRINT("USB_UDisk_Eject U Disk!!\r\n");
+		    	break;
+		   	}	
+		   	
 		   	
 		   	if(Usb_Dvice_WebCam_Demo_turn_on_flag){
 		   		if (storage_detection(4) == 0){
@@ -1735,9 +1747,6 @@ _USB_ERROR:
 //
 //
 //***********************************************************/
-extern INT32U   R_USB_State_Machine ; 
-extern INT32U   USB_Status          ;  
-extern INT32U   R_USB_Suspend       ;  
 INT16S Test_USB(void) //judge USB Device
 {
 	unsigned long R_TimeOutCount=0;

@@ -437,6 +437,9 @@ void adc_record_entry(void *param)
 			aud_adc_double_buffer_set((INT16U*)free_addr, pAudio_Encode_Para->PCMInFrameSize, AUDIO_INPUT_SRC);
 			adc_hardware_start(pAudio_Encode_Para->SampleRate);
 			#if (MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA)
+			mic_dagc_setup(1,0x20,0,0,0);
+			mic_dagc_set_att_rel_time(1,0xf8);
+			mic_set_pga_gain(1,0);
 			mic_dagc_enable(1);
 			#endif 
 			

@@ -48,6 +48,7 @@
     #define _DRV_L1_UART                1
     #define _DRV_L1_USBH                1
     #define _DRV_L1_USBD                1
+    #define _DRV_L1_USBD_HID            0
     #define _DRV_L1_WATCHDOG            1
     #define _DRV_L1_XDC                 0
     #if SUPPORT_GPY02XX != GPY02XX_NONE
@@ -156,6 +157,7 @@
 	//#define	__OV5642_DRV_C__ 
 	//#define	__OV7675_DRV_C__ 
 	//#define	__OV2643_DRV_C__ 
+	//#define	__OV2659_DRV_C__ 
 	//#define	__OID_SENSOR_DRV_C__ 
 	//#define	__BF3710_DRV_C__ 
 	//#define	__OV3640_MIPI_DRV_C__	
@@ -327,6 +329,7 @@
     //SPI1
     #define SPI1_RX_IOE3__CLK_IOE1__TX_IOE2 ~(1<<12) /* GPL325XX */
     #define SPI1_RX_IOC4__CLK_IOC5__TX_IOC7  (1<<12) /* GPL325XX */
+    #define SPI1_RX_IOI3__CLK_IOI1__TX_IOI2  (1<<1)  /* GPL326XXB */
     #define SPI1_RX_NONE__CLK_NONE__TX_NONE	 0x80000000
 	
 	//SPI0

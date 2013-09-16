@@ -173,7 +173,33 @@ INT32S vic_fiq_unregister(INT32U irc_num)
 INT32S vic_fiq_enable(INT32U irc_num)
 {
 	INT32S old_mask;
+	
+#if(defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
+	INT32U temp = irc_num;
+	
+	if (irc_num && (irc_num<VIC_MAX_FIQ)) {
+		if(irc_num < 5)
+			irc_num = VIC_MAX_FIQ - irc_num - 6 - 1;
+		else
+			irc_num--;	
 
+	  #if _OPERATING_SYSTEM != _OS_NONE			// Soft Protect for critical section
+		OSSchedLock();
+	  #endif
+		if(temp < 5){
+			old_mask = (R_INT_FIQMASK >> irc_num) & 0x1;
+			R_INT_FIQMASK &= ~(1 << irc_num);
+		} else {
+			old_mask = (R_INT_FIQMASK2 >> irc_num) & 0x1;
+			R_INT_FIQMASK2 &= ~(1 << irc_num);		
+		}
+	  #if _OPERATING_SYSTEM != _OS_NONE
+		OSSchedUnlock();
+	  #endif
+
+		return old_mask;
+	}
+#else
 	if (irc_num && (irc_num<VIC_MAX_FIQ)) {
 		irc_num = VIC_MAX_FIQ - irc_num - 1;
 
@@ -188,7 +214,7 @@ INT32S vic_fiq_enable(INT32U irc_num)
 
 		return old_mask;
 	}
-
+#endif
 	return STATUS_FAIL;
 }
 
@@ -275,7 +301,7 @@ void vic_init(void)
 	R_INT_IRQMASK = C_VIC_IRQ_MASK_SET_ALL;	// Mask all interrupt
 	R_INT_FIQMASK = C_VIC_FIQ_MASK_SET_ALL;	// Mask all fast interrupt
 	R_INT_GMASK = C_VIC_GLOBAL_MASK_CLEAR;	// Clear global mask
-
+	R_INT_FIQMASK2 = C_VIC_FIQ_MASK2_SET_ALL;
 	for (i=0; i<VIC_MAX_IRQ; i++) {
 		irq_isr[i] = NULL;
 	}

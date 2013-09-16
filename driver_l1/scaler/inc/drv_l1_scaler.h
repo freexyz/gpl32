@@ -83,6 +83,9 @@
 #define C_SCALER_X_START_MAX				0x3FFFFFFF
 #define C_SCALER_Y_START_MAX				0x3FFFFFFF
 
+/* Scaler out x offset registers */
+#define C_SCALER_OUT_X_OFFSET_MAX			0x00001FFF
+
 // Input width and height registers
 #define C_SCALER_IN_WIDTH_MAX				0x00001FFF		// Maximum 8191 pixels
 #define C_SCALER_IN_HEIGHT_MAX				0x00001FFF		// Maximum 8191 pixels
@@ -122,6 +125,10 @@
 #define C_SCALER_CTRL_FIFO_256LINE			C_SCALER_CTRL_IN_FIFO_256LINE
 //#define scaler_fifo_line_set				scaler_input_fifo_line_set
 
+// scaler semaphore lock
+extern void scaler_lock(void);
+extern void scaler_unlock(void);
+
 // Scaler init API
 extern void scaler_init(void);
 
@@ -133,6 +140,7 @@ extern INT32S scaler_input_visible_pixels_set(INT32U input_x, INT32U input_y);		
 extern INT32S scaler_input_addr_set(INT32U y_addr, INT32U u_addr, INT32U v_addr);	// Must be 4-byte alignment
 extern INT32S scaler_input_format_set(INT32U format);								// C_SCALER_CTRL_IN_RGB1555/C_SCALER_CTRL_IN_RGB565/C_SCALER_CTRL_IN_RGBG/C_SCALER_CTRL_IN_GRGB/C_SCALER_CTRL_IN_YUYV/C_SCALER_CTRL_IN_UYVY/C_SCALER_CTRL_IN_YUV422/C_SCALER_CTRL_IN_YUV420/C_SCALER_CTRL_IN_YUV411/C_SCALER_CTRL_IN_YUV444/C_SCALER_CTRL_IN_Y_ONLY/C_SCALER_CTRL_IN_YUV422V/C_SCALER_CTRL_IN_YUV411V
 extern INT32S scaler_input_offset_set(INT32U offset_x, INT32U offset_y);			// Set scaler start x and y position offset
+extern INT32S scaler_output_offset_set(INT32U x_out_offset);
 
 extern INT32S scaler_output_pixels_set(INT32U factor_x, INT32U factor_y, INT32U output_x, INT32U output_y);		// factor_x:(input_x<<16)/output_x (1~0x00FFFFFF), factor_y:(input_y<<16)/output_y, output_x: must be multiple of 16 when output format is YUV422/YUV420/YUV444, multiple of 32 when output format is YUV411, multiple of 8 for others(Maximum 2040 for YUYV8X32 and YUYV8X64, Maximum 4088 for YUYV32X32 and YUYV32X64, Maximum 8000 pixels for others), output_y: 1~8000 pixels
 extern INT32S scaler_output_addr_set(INT32U y_addr, INT32U u_addr, INT32U v_addr);	// Must be 4-byte alignment

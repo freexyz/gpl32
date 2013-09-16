@@ -1187,3 +1187,208 @@ static void video_get_file_total(INT32U file_header, INT32U *total)
 	ChangeCodePage(UNI_ENGLISH);   
 	*total = index;   
 }
+
+//=================================================================================================
+//	video decode simple demo code 
+//=================================================================================================
+void Video_Decode_Simple_Demo(void *para)
+{
+	VIDEO_CODEC_STATUS status;
+	VIDEO_INFO	information;
+	VIDEO_ARGUMENT arg;
+	MEDIA_SOURCE   src;	
+
+	// Mount device   
+	while(1) {   
+		if(_devicemount(USE_DISK)) {      
+			DBG_PRINT("Mount Disk Fail[%d]\r\n", USE_DISK);         
+		#if	USE_DISK == FS_NAND1      
+            nRet = _format(FS_NAND1, FAT32_Type);
+			DrvNand_flush_allblk();            
+			_deviceunmount(FS_NAND1);         
+		#endif								                            
+		} else {      
+			DBG_PRINT("Mount Disk success[%d]\r\n", USE_DISK);         	               
+			break;         
+		}      
+	}  
+
+	user_defined_video_codec_entrance();
+	video_decode_entrance();
+	
+	// Initialize display device   
+#if C_DISPLAY_DEVICE >= C_TV_QVGA
+    tv_init();
+#if C_DISPLAY_DEVICE == C_TV_QVGA
+    tv_start (TVSTD_NTSC_J_NONINTL, TV_QVGA, TV_NON_INTERLACE);	
+#elif C_DISPLAY_DEVICE == C_TV_VGA
+    tv_start (TVSTD_NTSC_J, TV_HVGA, TV_INTERLACE);
+#elif C_DISPLAY_DEVICE == C_TV_D1
+    tv_start (TVSTD_NTSC_J, TV_D1, TV_NON_INTERLACE);
+#else
+    while(1);
+#endif
+#else
+	tft_init();   
+	tft_start(C_DISPLAY_DEVICE);   
+#endif
+	
+	arg.bScaler = 0x01;		//scaler output size or not
+	arg.bUseDefBuf = FALSE;	//auto alloc buffer size  
+	arg.AviDecodeBuf1 = NULL;
+	arg.AviDecodeBuf2 = NULL;	
+	arg.DisplayWidth = C_DISPLAY_DEV_HPIXEL;	//display width
+	arg.DisplayHeight = C_DISPLAY_DEV_VPIXEL;	//display height
+	arg.DisplayBufferWidth = C_DISPLAY_DEV_HPIXEL;	//display buffer width
+	arg.DisplayBufferHeight = C_DISPLAY_DEV_VPIXEL;	//display buffer height	
+	arg.OutputFormat = DISPLAY_OUTPUT_FORMAT;	//set output format  
+	
+	src.Format.VideoFormat = MJPEG;	
+	src.type = SOURCE_TYPE_FS;					//play file by file system
+
+#if USE_DISK == FS_SD	
+	chdir("C:\\");
+#elif USE_DISK == FS_NAND1 
+	chdir("A:\\");
+#elif USE_DISK == FS_USBH
+	chdir("G:\\");
+#endif			
+	src.type_ID.FileHandle = open("Demo0091NBA.avi", O_RDONLY);	//open file handle
+	if(src.type_ID.FileHandle < 0) {
+		DBG_PRINT("file open fail\r\n");
+		while(1);
+	}
+						
+	DBG_PRINT("video_decode_start\r\n");	
+	status = video_decode_paser_header(&information, arg, src);
+	if(status != VIDEO_CODEC_STATUS_OK) {
+		DBG_PRINT("paser header fail !!!\r\n");
+		while(1);
+	}
+	
+	DBG_PRINT("Aud SampleRate = %d\r\n", information.AudSampleRate);
+	DBG_PRINT("Vid FrameRate = %d\r\n", information.VidFrameRate);
+	DBG_PRINT("resolution = %d x %d\r\n", information.Width, information.Height);
+	DBG_PRINT("Total Time = %d seconds\r\n", information.TotalDuration);
+			
+	status = video_decode_start(arg, src);
+	if(status != START_OK) {
+		DBG_PRINT("video start fail!!!\r\n");
+		while(1);
+	}
+	
+	audio_decode_volume(0x3F);		
+		
+	while(1) {
+		OSTimeDly(10);
+		if(video_decode_status() == VIDEO_CODEC_PROCESS_END) {
+			break;
+		}
+	}
+	
+	video_decode_stop();
+	video_decode_exit();
+	
+	//unmount disk
+	_deviceunmount(USE_DISK);
+	disk_safe_exit(USE_DISK);	
+}
+
+//=================================================================================================
+//	video encode simple demo code 
+//=================================================================================================
+void Video_Encode_Simple_Demo(void *para)
+{
+	INT32U i;
+	INT64U disk_free;   
+	VIDEO_ARGUMENT arg;   
+	MEDIA_SOURCE   src;   
+	
+	// Mount device   
+	while(1) {   
+		if(_devicemount(USE_DISK)) { 
+			DBG_PRINT("Mount Disk Fail[%d]\r\n", USE_DISK);         
+		#if	USE_DISK == FS_NAND1      
+            nRet = _format(FS_NAND1, FAT32_Type);
+			DrvNand_flush_allblk();            
+			_deviceunmount(FS_NAND1);         
+		#endif								                            
+		} else {      
+			DBG_PRINT("Mount Disk success[%d]\r\n", USE_DISK);         
+			DBG_PRINT("StartTime = %d\r\n", OSTimeGet());         
+			disk_free = vfsFreeSpace(USE_DISK);         
+			DBG_PRINT("Disk Free Size = %dMbyte\r\n", disk_free/1024/1024);         
+			DBG_PRINT("EndTime = %d\r\n", OSTimeGet());			               
+			break;         
+		}      
+	}  
+
+	user_defined_video_codec_entrance();
+	video_encode_entrance();
+	
+	// Initialize display device   
+#if C_DISPLAY_DEVICE >= C_TV_QVGA
+    tv_init();
+#if C_DISPLAY_DEVICE == C_TV_QVGA
+    tv_start (TVSTD_NTSC_J_NONINTL, TV_QVGA, TV_NON_INTERLACE);	
+#elif C_DISPLAY_DEVICE == C_TV_VGA
+    tv_start (TVSTD_NTSC_J, TV_HVGA, TV_INTERLACE);
+#elif C_DISPLAY_DEVICE == C_TV_D1
+    tv_start (TVSTD_NTSC_J, TV_D1, TV_NON_INTERLACE);
+#else
+    while(1);
+#endif
+#else
+	tft_init();   
+	tft_start(C_DISPLAY_DEVICE);   
+#endif
+	
+	arg.bScaler = 1;	// must be 1      
+	arg.TargetWidth = 640; 	//encode width   
+	arg.TargetHeight = 480;	//encode height   
+	arg.SensorWidth	= 640;	//sensor input width    
+	arg.SensorHeight = 480;	//sensor input height   
+	arg.DisplayWidth = C_DISPLAY_DEV_HPIXEL;	//display width      
+	arg.DisplayHeight = C_DISPLAY_DEV_VPIXEL;	//display height     
+	arg.DisplayBufferWidth = C_DISPLAY_DEV_HPIXEL;	//display buffer width    
+	arg.DisplayBufferHeight = C_DISPLAY_DEV_VPIXEL;//display buffer height   
+	arg.VidFrameRate = 30;	//video encode frame rate    
+	arg.AudSampleRate = 8000;//audio record sample rate   
+	arg.OutputFormat = DISPLAY_OUTPUT_FORMAT; //display output format    
+	video_encode_preview_start(arg);
+
+	for(i=0; i<10; i++) {
+		OSTimeDly(100);
+	}
+		  
+	src.type = SOURCE_TYPE_FS;         
+	src.Format.VideoFormat = MJPEG;	         
+	
+#if USE_DISK == FS_SD	
+	chdir("C:\\");
+#elif USE_DISK == FS_NAND1 
+	chdir("A:\\");
+#elif USE_DISK == FS_USBH
+	chdir("G:\\");
+#endif	
+	src.type_ID.FileHandle = open("avi_rec.avi", O_WRONLY|O_CREAT|O_TRUNC);         
+	if(src.type_ID.FileHandle < 0) {         
+		DBG_PRINT("file open fail\r\n");            
+		while(1);
+	}         
+			         	             
+	DBG_PRINT("video_encode_start\r\n");         
+	video_encode_start(src);         
+
+	for(i=0; i<60; i++) {
+		OSTimeDly(100);
+	}
+		
+	video_encode_stop();
+	video_encode_preview_stop();   
+	video_encode_exit();
+	
+	//unmount disk
+	_deviceunmount(USE_DISK);
+	disk_safe_exit(USE_DISK);
+}

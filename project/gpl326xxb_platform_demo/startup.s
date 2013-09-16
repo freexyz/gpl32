@@ -335,11 +335,12 @@ Handle_FIQ
     LDR     R0, =system_power_on_ctrl
 	MOV     LR, PC
 	BX      R0
-	LDR     R0, =0xBBF
-	BX      R0 ;GPL326xx
+	
+	;LDR     R0, =0xBBF
+	;BX      R0 
    
-	;MOV     R2,#0
-    ;MOV     PC,R2
+	MOV     R2,#0
+    MOV     PC,R2
  
 	LTORG
 	

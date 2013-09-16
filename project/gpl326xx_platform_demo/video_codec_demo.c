@@ -1199,19 +1199,15 @@ void Video_Decode_Simple_Demo(void *para)
 	MEDIA_SOURCE   src;	
 
 	// Mount device   
-	while(1)   
-	{   
-		if(_devicemount(USE_DISK))					                   
-		{      
+	while(1) {   
+		if(_devicemount(USE_DISK)) {      
 			DBG_PRINT("Mount Disk Fail[%d]\r\n", USE_DISK);         
 		#if	USE_DISK == FS_NAND1      
             nRet = _format(FS_NAND1, FAT32_Type);
 			DrvNand_flush_allblk();            
 			_deviceunmount(FS_NAND1);         
 		#endif								                            
-		}      
-		else      
-		{      
+		} else {      
 			DBG_PRINT("Mount Disk success[%d]\r\n", USE_DISK);         	               
 			break;         
 		}      
@@ -1237,34 +1233,32 @@ void Video_Decode_Simple_Demo(void *para)
 	tft_start(C_DISPLAY_DEVICE);   
 #endif
 	
-	arg.bScaler = 0x01;	//scaler output size or not
+	arg.bScaler = 0x01;		//scaler output size or not
 	arg.bUseDefBuf = FALSE;	//auto alloc buffer size  
 	arg.AviDecodeBuf1 = NULL;
-	arg.AviDecodeBuf2 = NULL;
-		
-	arg.DisplayWidth = C_DISPLAY_DEV_HPIXEL;		//display width
+	arg.AviDecodeBuf2 = NULL;	
+	arg.DisplayWidth = C_DISPLAY_DEV_HPIXEL;	//display width
 	arg.DisplayHeight = C_DISPLAY_DEV_VPIXEL;	//display height
 	arg.DisplayBufferWidth = C_DISPLAY_DEV_HPIXEL;	//display buffer width
-	arg.DisplayBufferHeight = C_DISPLAY_DEV_VPIXEL;	//display buffer height
-			
-	arg.OutputFormat = DISPLAY_OUTPUT_FORMAT;	//set output format
-			
-	src.type_ID.FileHandle = open("C:\\Demo0091NBA.avi", O_RDONLY);	//open file handle
+	arg.DisplayBufferHeight = C_DISPLAY_DEV_VPIXEL;	//display buffer height	
+	arg.OutputFormat = DISPLAY_OUTPUT_FORMAT;	//set output format  
+	
+	src.Format.VideoFormat = MJPEG;	
+	src.type = SOURCE_TYPE_FS;					//play file by file system
+
+#if USE_DISK == FS_SD	
+	chdir("C:\\");
+#elif USE_DISK == FS_NAND1 
+	chdir("A:\\");
+#elif USE_DISK == FS_USBH
+	chdir("G:\\");
+#endif			
+	src.type_ID.FileHandle = open("Demo0091NBA.avi", O_RDONLY);	//open file handle
 	if(src.type_ID.FileHandle < 0) {
 		DBG_PRINT("file open fail\r\n");
 		while(1);
 	}
-			
-#if 1	
-	src.type = SOURCE_TYPE_FS;	//play file by file system
-#else
-	// add this for play a video in a file special position.	
-	src.type = SOURCE_TYPE_FS_RESOURCE_IN_FILE;
-	nRet = 0x80;
-	lseek(src.type_ID.FileHandle, nRet, SEEK_SET);
-	src.type_ID.temp = 0x1AF2154;	//current avi file size
-#endif
-			
+						
 	DBG_PRINT("video_decode_start\r\n");	
 	status = video_decode_paser_header(&information, arg, src);
 	if(status != VIDEO_CODEC_STATUS_OK) {
@@ -1305,26 +1299,21 @@ void Video_Decode_Simple_Demo(void *para)
 //=================================================================================================
 void Video_Encode_Simple_Demo(void *para)
 {
-	CHAR path[32];
 	INT32U i;
 	INT64U disk_free;   
 	VIDEO_ARGUMENT arg;   
 	MEDIA_SOURCE   src;   
 	
 	// Mount device   
-	while(1)   
-	{   
-		if(_devicemount(USE_DISK))					                   
-		{      
+	while(1) {   
+		if(_devicemount(USE_DISK)) { 
 			DBG_PRINT("Mount Disk Fail[%d]\r\n", USE_DISK);         
 		#if	USE_DISK == FS_NAND1      
             nRet = _format(FS_NAND1, FAT32_Type);
 			DrvNand_flush_allblk();            
 			_deviceunmount(FS_NAND1);         
 		#endif								                            
-		}      
-		else      
-		{      
+		} else {      
 			DBG_PRINT("Mount Disk success[%d]\r\n", USE_DISK);         
 			DBG_PRINT("StartTime = %d\r\n", OSTimeGet());         
 			disk_free = vfsFreeSpace(USE_DISK);         
@@ -1372,13 +1361,18 @@ void Video_Encode_Simple_Demo(void *para)
 		OSTimeDly(100);
 	}
 	
-	sprintf((char *)path, (const char *)"C:\\avi_rec%03d.avi", i);            
-	DBG_PRINT("file name = %s\r\n", path);			  
 	src.type = SOURCE_TYPE_FS;         
 	src.Format.VideoFormat = MJPEG;	         
-	src.type_ID.FileHandle = open((char *)path, O_WRONLY|O_CREAT|O_TRUNC);         
-	if(src.type_ID.FileHandle < 0)         
-	{         
+	
+#if USE_DISK == FS_SD	
+	chdir("C:\\");
+#elif USE_DISK == FS_NAND1 
+	chdir("A:\\");
+#elif USE_DISK == FS_USBH
+	chdir("G:\\");
+#endif	
+	src.type_ID.FileHandle = open("avi_rec.avi", O_WRONLY|O_CREAT|O_TRUNC);         
+	if(src.type_ID.FileHandle < 0) {         
 		DBG_PRINT("file open fail\r\n");            
 		while(1);
 	}         

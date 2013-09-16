@@ -211,15 +211,19 @@ void DisableSDRAMAndGoToSleep(void)
     //disable SDRAM power source
     //R_IOA_O_DATA |= GPIO_3V3_SDRAM_CTRL;	//Control SDRAM VCC 
        
-   	//make sure the button is really up, IOF5 
+#if (EXTA_WAKEUP == 1)
+	//make sure the button is really up, IOF5 
 	while(R_IOF_I_DATA & BIT5) {
 		R_INT_KECON |= BIT6;		//clear EXTA int flag
-	}	
+	}
+#endif
 	
+#if (EXTB_WAKEUP == 1)
 	//wait for the user to release the power button.
 	while(R_IOC_I_DATA & BIT10) {
 		R_INT_KECON |= BIT7;		//clear EXTB int flag
 	}	  
+#endif
    	
 	//1. Write control register (entering Wait/Halt/Sleep mode)
 	R_SYSTEM_SLEEP = 0xA00A;
@@ -288,18 +292,18 @@ void PowerDown_Mode(INT8U mode)
 	volatile INT32S i;
 	INT32U tmp;
 	
-	DBG_PRINT("%d\r\n", __LINE__);
+	DBG_PRINT("%s = %d\r\n", __func__, mode);
 	//========== Disable IRQ and FIQ
 	R_INT_GMASK = 0x00000001; 	
 
-#if (EXTA_WAKEUP == 1)
 	//========== WAKE UP KEY IOF5
+#if (EXTA_WAKEUP == 1)
 	extab_int_clr(EXTA);  		//if EXTB happen ,clear the interrupt flag
 	extab_edge_set(EXTA, 1); 	//rising edge
 	extab_enable_set(EXTA,TRUE);//re-enable interrupt
 #endif	
-#if (EXTB_WAKEUP == 1)
 	//========== WAKE UP KEY IOC10
+#if (EXTB_WAKEUP == 1)
 	extab_int_clr(EXTB);  		//if EXTB happen ,clear the interrupt flag
 	extab_edge_set(EXTB, 1); 	//rising edge
 	extab_enable_set(EXTB,TRUE);//re-enable interrupt		
@@ -345,8 +349,8 @@ void PowerDown_Mode(INT8U mode)
     DBG_PRINT("%d\r\n", __LINE__);
 	jpeg_init();
 	
-#if (defined MCU_VERSION) && (MCU_VERSION < GPL327XX)		
 	//======== TV
+#if (defined MCU_VERSION) && (MCU_VERSION < GPL327XX)		
 	DBG_PRINT("%d\r\n", __LINE__);
 	if(R_TV_CTRL & BIT0) {	
 		while((R_PPU_IRQ_STATUS & BIT11) == 0);	
@@ -369,26 +373,91 @@ void PowerDown_Mode(INT8U mode)
 	R_ANALOG_CTRL &= ~0x01;
 	
 	//============ DISABLE USB
+	DBG_PRINT("%d\r\n", __LINE__);
 	usb_uninitial();
-	
+#if (defined MCU_VERSION) && (MCU_VERSION >= GPL326XX)	
+	*P_USBD_CONFIG |= 0x800;        //Switch to USB20PHY         
+	*P_USBD_CONFIG1 |= 0x100;		//[8],SW Suspend For PHY 
+#endif	
+
 	//======== DISABLE SPI
 	spi_disable(SPI_0);
     spi_disable(SPI_1);
 	
 	//======= DISABLE ADC
 	R_ADC_SETUP = 0x0000;
-	
+
+	//======= DISABLE MIC
+#if (defined MCU_VERSION) && (MCU_VERSION >= GPL326XX)		
+	R_MIC_SETUP = 0x0000;
+#endif	
+
 	//======= DISABLE RTC
 	DBG_PRINT("%d\r\n", __LINE__);
-#if (defined MCU_VERSION) && (MCU_VERSION < GPL326XX)
-	R_RTC_CTRL=0;
+#if (RTC_WAKEUP == 0)
+	R_RTC_CTRL = 0;
 	R_RTC_INT_CTRL = 0x0000;
-#else
-	R_RTC_CTRL = 0x8200;
-	R_RTC_INT_CTRL = 0x04;
-	//R_RTC_INT_STATUS |= 0x51F;
-#endif
-	
+	R_RTC_INT_STATUS = 0x51F;
+#else	
+#if 1 // rtc MINIF wake up
+	R_RTC_CTRL &= ~(0x07 << 8);
+	R_RTC_CTRL |= 0x8200;		//enable DHMSEN
+	R_RTC_INT_STATUS |= 0x51F;
+	R_RTC_INT_CTRL = (1 << 2);	//wake up source MINIF
+#elif 0	//rtc ALMEN wake up
+	{
+		t_rtc time;
+		
+		R_RTC_CTRL &= ~(0x07 << 8);
+		R_RTC_CTRL |= 0x8400;		//enable ALMEN
+		R_RTC_INT_STATUS |= 0x51F;
+		
+		time.rtc_sec = R_RTC_SEC;
+		time.rtc_min = R_RTC_MIN;
+		time.rtc_hour = R_RTC_HOUR;
+		
+		time.rtc_sec += 10;
+		if(time.rtc_sec >= 60) {
+			time.rtc_min++;
+			time.rtc_sec = 0;
+		}
+		
+		if(time.rtc_min >= 60) {
+			time.rtc_hour++;
+			time.rtc_min = 0;
+		}
+		
+		R_RTC_ALARM_SEC = time.rtc_sec;
+		R_RTC_ALARM_MIN = time.rtc_min;
+		R_RTC_ALARM_HOUR = time.rtc_hour;
+		
+		rtc_int_clear(RTC_ALM_IEN);
+		rtc_int_set(RTC_ALM_IEN, RTC_ALM_IEN);
+	}
+#else //idp rtc ALM pin wake up
+	{
+		t_rtc time;
+		
+		idp_rtc_alm_pin_wakeup_set(1);
+		rtc_time_get(&time);
+		
+		time.rtc_sec += 10;
+		if(time.rtc_sec >= 60) {
+			time.rtc_min++;
+			time.rtc_sec = 0;
+		}
+		
+		if(time.rtc_min >= 60) {
+			time.rtc_hour++;
+			time.rtc_min = 0;
+		}
+		rtc_alarm_set(&time); 
+		idp_rtc_int_clear(GPX_RTC_ALM_IEN);
+		idp_rtc_int_set(GPX_RTC_ALM_IEN, GPX_RTC_ALM_IEN);
+	}
+#endif	
+#endif	//RTC_WAKEUP
+
 	//===== DISABLE TIME AND TIME BASE
 	R_TIMERA_CTRL = 0;
 	R_TIMERB_CTRL = 0;
@@ -402,10 +471,10 @@ void PowerDown_Mode(INT8U mode)
 	R_TIMEBASEC_CTRL = 0;
 	
 	//======= DISABLE UART
-
 	R_UART_CTRL = 0;
-#if (defined MCU_VERSION) && (MCU_VERSION < GPL327XX)
+	
 	//======= DISABLE SPU
+#if (defined MCU_VERSION) && (MCU_VERSION < GPL327XX)
 	if(R_SPU_CH_STATUS != 0) {
 		R_SPU_CH_RAMPDOWN = 0xFFFF;
 		while(R_SPU_CH_STATUS != 0);
@@ -423,6 +492,7 @@ void PowerDown_Mode(INT8U mode)
 	*P_SPU_CH_EN_HIGH = 0;
 	*P_SPU_CONTROL_FLAG &= ~BIT11;
 #endif
+
 	//====== DISABLE DMA
 	while((R_DMA0_CTRL&BIT1) == BIT1);	//wait untill DMA0 is idle
 	R_DMA0_CTRL &= ~BIT0;				//disable DMA0
@@ -448,45 +518,35 @@ void PowerDown_Mode(INT8U mode)
 	R_SYSTEM_CTRL |= 0x80;				//the regulator will enter the sleep mode if system is in halt or standby mode
 	
 	//======= SYSTEM CLK
-	R_SYSTEM_CTRL |= 0x20;				//Set the 6M to weak mode(strong mode in order to ensure the 32K clock start correctly)
-	
+	R_SYSTEM_CTRL |= 0x20;				//Set the 6M to weak mode(strong mode in order to ensure the 32K clock start correctly)	
 	R_SYSTEM_CTRL &= ~((1<<12) | (1<<8));	//disable RTC schedule funtion  ,disable CSI Clock 
 	R_SYSTEM_CLK_CTRL &= ~((1<<8) | (1<<4));//turn off Time Base 32K Clock, Disable DA/AD PLL 	
 	
-	if(mode==0) { 						//sleep
+	if(mode==0) { 
+		//sleep mode and wake up reset						
 		void (*pFunc)(void);
-		
-		R_SYSTEM_CTRL |= BIT0;			//let the 6MHz XTAL PAD enter sleep mode when system is in Halt mode.	
 
+		R_SYSTEM_CTRL &= ~(1 << 0);		//Disable 6MHz XTAL PAD.	
 		R_SYSTEM_PLL_WAIT_CLK = 0x100;	//set pll wait clock to 8 ms when wakeup/
-		
 		pFunc = DisableSDRAMAndGoToSleep;
-		
-		pFunc();						//Disable SDRAM						
-	} else if(mode==1) { 				//halt next instruction after weekup
-		R_SYSTEM_CTRL |= BIT0;			//let the 6MHz XTAL PAD enter sleep mode when system is in Halt mode.	
-		
+		pFunc();						//Disable SDRAM
+	} else if(mode==1) {
+		//halt mode and wake up next instruction  				
+		R_SYSTEM_CTRL |= (1 << 0);		//let the 6MHz XTAL PAD enter sleep mode when system is in Halt mode.	
 		sys_sdram_auto_refresh_set(64); //auto enter self refresh mode 
-
 		R_SYSTEM_PLL_WAIT_CLK = 0x100; 	//set pll wait clock to 8 ms when wakeup
-	
 		R_SYSTEM_CTRL |= 0x2; 			//next instruction after weekup
-	 
-		R_SYSTEM_HALT = 0x500A;			//halt mode
-	} else if(mode==4) { 				//halt reset
+		R_SYSTEM_HALT = 0x500A;			
+	} else if(mode==4) { 
+		//halt mode and wake up reset				
 	#if (defined MCU_VERSION) && (MCU_VERSION >= GPL327XX)
 		//set halt mode reset address
-		HALT_MODE_RESET_VECTOR = 0xF80003A0;
-	#endif		
+		HALT_MODE_RESET_VECTOR = 0xF80003A0; 
+	#endif				
+		R_SYSTEM_CTRL |= (1 << 0);		//let the 6MHz XTAL PAD enter sleep mode when system is in Halt mode.	
+		R_SYSTEM_PLL_WAIT_CLK = 0x100; 	//set pll wait clock to 8 ms when wakeup/	
+		R_SYSTEM_CTRL &= ~0x2; 			//reset after wake up
 		
-		R_SYSTEM_CTRL |= BIT0;		//let the 6MHz XTAL PAD enter sleep mode when system is in Halt mode.	
-		
-		sys_sdram_auto_refresh_set(64); //auto enter self refresh mode 
-
-		R_SYSTEM_PLL_WAIT_CLK = 0x100; 	//set pll wait clock to 8 ms when wakeup/
-	
-		R_SYSTEM_CTRL &= ~0x2; 			//reset after weekup
-
 	#if (EXTA_WAKEUP == 1)
 	 	while(R_IOF_I_DATA & BIT5) { 	//IOF5
 			R_INT_KECON |= BIT6;		//clear EXTA int flag
@@ -496,14 +556,13 @@ void PowerDown_Mode(INT8U mode)
 		while(R_IOC_I_DATA & BIT10)	{	//IOC10 wait for the user to release the power button.
 			R_INT_KECON |= BIT7;		//clear EXTB int flag
 		}	   
-	#endif		
-		R_SYSTEM_HALT = 0x500A;			//halt mode
-	} else {							//wait		
-		sys_sdram_auto_refresh_set(64); //auto enter self refresh mode
-
+	#endif
+		
+		R_SYSTEM_HALT = 0x500A;			
+	} else {
+		//wait mode 													
 		R_SYSTEM_PLL_WAIT_CLK = 0x100; 	//set pll wait clock to 8 ms when wakeup
-	
-		R_SYSTEM_WAIT = 0x5005;			//wait mode
+		R_SYSTEM_WAIT = 0x5005;			
 	}
 	
     tmp = R_CACHE_CTRL; 

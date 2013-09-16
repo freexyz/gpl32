@@ -46,10 +46,11 @@ INT32S audio_decode_task_start(void)
 	nRet = STATUS_OK;
 	SEND_MESSAGE(aud_dec_q, MSG_AUD_DEC_START, aud_dec_ack_m, 0, msg, err);
 	// audio start play 
-	if(p_vid_dec_para->upsample_flag)
+	if(p_vid_dec_para->upsample_flag) {
 		aud_dec_dac_start(p_vid_dec_para->aud_dec_ch_no, p_vid_dec_para->aud_dec_sr);	
-	else
+	} else {
 		aud_dec_dac_start(p_wave_info->nChannels, p_wave_info->nSamplesPerSec);		
+	}
 Return:	
 	return nRet;
 }
@@ -73,10 +74,11 @@ INT32S audio_decode_task_pause(void)
 
 INT32S audio_decode_task_resume(void)
 {
-	if(p_vid_dec_para->upsample_flag)
+	if(p_vid_dec_para->upsample_flag) {
 		aud_dec_dac_start(p_vid_dec_para->aud_dec_ch_no, p_vid_dec_para->aud_dec_sr);	
-	else
+	} else {
 		aud_dec_dac_start(p_wave_info->nChannels, p_wave_info->nSamplesPerSec);		
+	}
 	return 0;
 }
 
@@ -86,13 +88,19 @@ INT32S audio_decode_task_create(INT8U prio)
 	INT32S nRet;
 	
 	aud_dec_q = OSQCreate(aud_dec_q_buffer, C_AUDIO_Q_ACCEPT_MAX);
-	if(!aud_dec_q) RETURN(STATUS_FAIL);
+	if(!aud_dec_q) {
+		RETURN(STATUS_FAIL);
+	}
 	
 	aud_dec_ack_m = OSMboxCreate(NULL);
-	if(!aud_dec_ack_m) RETURN(STATUS_FAIL);
+	if(!aud_dec_ack_m) {
+		RETURN(STATUS_FAIL);
+	}
 	
 	err = OSTaskCreate(audio_decode_task_entry, NULL, (void *)&audio_decode_stack[C_AUDIO_DECODE_STACK_SIZE - 1], prio);
-	if(err != OS_NO_ERR) RETURN(STATUS_FAIL);
+	if(err != OS_NO_ERR) {
+		RETURN(STATUS_FAIL);
+	}
 	
 	nRet = STATUS_OK;
 Return:  
@@ -122,17 +130,19 @@ void audio_decode_task_end(void)
 
 void audio_decode_task_entry(void *param)
 {
-	INT8U  err;
+	INT8U  err, end_flag;
 	INT32S cwlen, nRet, buf_RI, buf_WI;
 	INT32U i, msg_id, pcm_addr;
+	INT32U buf_addr[2], buf_len[2];
 	INT64S delta_ta[AUDIO_FRAME_NO];
 	OS_CPU_SR cpu_sr;
 	
 	while(1) 
 	{
 		msg_id = (INT32U) OSQPend(aud_dec_q, 0, &err);
-		if(err != OS_NO_ERR)
+		if(err != OS_NO_ERR) {
 			continue;
+		}
 
 		switch(msg_id)
 		{
@@ -146,79 +156,93 @@ void audio_decode_task_entry(void *param)
 			OS_EXIT_CRITICAL();
 			
 			buf_RI++;
-			if(buf_RI>=AUDIO_FRAME_NO) buf_RI -= AUDIO_FRAME_NO;
+			if(buf_RI>=AUDIO_FRAME_NO) {
+				buf_RI -= AUDIO_FRAME_NO;
+			}
 			
 			//decoder next buffer
 			pcm_addr = vid_dec_get_next_aud_buffer();
 			cwlen = pfun_decode_one_frame((INT16S*) pcm_addr);
- 			if(cwlen <= 0)
-			{
+ 			if(cwlen <= 0) {
 				//check audio end
-				if(MultiMediaParser_IsEOA(p_vid_dec_para->media_handle))	
-				{
-					if(aud_dec_dma_status_get() == 0)
-					{
-						if(vid_dec_get_status() & C_AUDIO_DECODE_PLAYING)
-                    	{
-							DEBUG_MSG(DBG_PRINT("AudDecEnd.\r\n"));
-							audio_decode_task_end();
-							aud_dec_special_effect_stop();
-							aud_dec_ramp_down_handle(p_wave_info->nChannels);
-							vid_dec_clear_status(C_AUDIO_DECODE_PLAYING);
-							vid_dec_end_callback();
-							OSQFlush(aud_dec_q);
-						}
-					}
-					break;
+				if(MultiMediaParser_IsEOA(p_vid_dec_para->media_handle)) {
+					end_flag = 1;
+				} else if(vid_dec_get_status() & C_VIDEO_DECODE_ERR) {
+					end_flag = 1;
+				} else {
+					end_flag = 0;
 				}
-				else
-				{
-					DEBUG_MSG(DBG_PRINT("AudDecGetDataFail\r\n"));
+
+				if(end_flag) {
+					DEBUG_MSG(DBG_PRINT("AudDecEnd.\r\n"));
+					goto __AudDecEnd;
+				} else {
+					DEBUG_MSG(DBG_PRINT("WaitAudDecGetBs\r\n"));
 					i = 150;
-					while(i--)
-					{
+					while(i--) {
 						cwlen = pfun_decode_one_frame((INT16S*) pcm_addr);
-                    	if((cwlen > 0) || (cwlen < 0) || (vid_dec_get_status() & C_VIDEO_DECODE_ERR))
-                    		break;
-                    	else if(cwlen == 0)
+						if(cwlen > 0) {
+							end_flag = 0;
+							break;
+						} else if(cwlen < 0) {
+							end_flag = 1;
+							break;
+						} else if(MultiMediaParser_IsEOA(p_vid_dec_para->media_handle)) {
+							end_flag = 1;
+							break;
+						} else if(vid_dec_get_status() & C_VIDEO_DECODE_ERR) {
+							end_flag = 1;
+							break;
+                    	} else {
+                    		end_flag = 0;
                     		OSTimeDly(1);
+                    	}
                     }
                    	
-                    if((cwlen <= 0) || (vid_dec_get_status() & C_VIDEO_DECODE_ERR))
-                    {
-                    	//wait dma done
-                    	DEBUG_MSG(DBG_PRINT("GetAudBsFailStop!!!\r\n"));
-                    	while(aud_dec_dma_status_get())	OSTimeDly(1);
-                    	if(vid_dec_get_status() & C_AUDIO_DECODE_PLAYING)
-                    	{
-                    		audio_decode_task_end();
-                    		aud_dec_special_effect_stop();
-							aud_dec_ramp_down_handle(p_wave_info->nChannels);
-							vid_dec_clear_status(C_AUDIO_DECODE_PLAYING);
-							vid_dec_end_callback();
-							OSQFlush(aud_dec_q);
-                    	}
+                    if(end_flag) {
+                    	DEBUG_MSG(DBG_PRINT("AudDecGetBsFailStop!!!\r\n"));
+                    	goto __AudDecEnd;
                     }
 				}
 			}
 			
 			// x2 because DAC output rate would be twice of sample rate if mono audio
 			// mp3 is hardware decode, force to 2 channel
-			if(p_wave_info->wFormatTag == WAVE_FORMAT_MPEGLAYER3) 
+			if(p_wave_info->wFormatTag == WAVE_FORMAT_MPEGLAYER3) { 
 				delta_ta[buf_WI] = (INT64S)p_vid_dec_para->VidTickRate * cwlen;
-			else if(p_wave_info->nChannels == 1)
+			} else if(p_wave_info->nChannels == 1) {
 				delta_ta[buf_WI] = (INT64S)p_vid_dec_para->VidTickRate * (cwlen<<1);
-			else
+			} else {
 				delta_ta[buf_WI] = (INT64S)p_vid_dec_para->VidTickRate * cwlen;
+			}
 			
-			if(p_vid_dec_para->upsample_flag)
+			if(p_vid_dec_para->upsample_flag) {
 				delta_ta[buf_WI] >>= 1;
+			}
 					
 			buf_WI++;
-			if(buf_WI >= AUDIO_FRAME_NO) buf_WI -= AUDIO_FRAME_NO;
+			if(buf_WI >= AUDIO_FRAME_NO) {
+				buf_WI -= AUDIO_FRAME_NO;
+			}
+			break;
+		
+		__AudDecEnd:
+			//wait dma done
+			while((aud_dec_dma_status_get() > 0) || (aud_dec_dma_dbf_status_get() > 0))	{
+				OSTimeDly(1);
+			}
+			
+			if(vid_dec_get_status() & C_AUDIO_DECODE_PLAYING) {
+				audio_decode_task_end();
+				aud_dec_ramp_down_handle(p_wave_info->nChannels);
+				aud_dec_special_effect_stop();
+				vid_dec_end_callback(C_AUDIO_DECODE_PLAYING);
+				OSQFlush(aud_dec_q);
+			}
 			break;
 		
 		case MSG_AUD_DEC_START:
+			DEBUG_MSG(DBG_PRINT("MSG_AUD_DEC_START\r\n"));
 			buf_RI = buf_WI = 0;
 			aud_dec_special_effect_start();
 			switch(p_wave_info->wFormatTag)
@@ -251,58 +275,79 @@ void audio_decode_task_entry(void *param)
 				while(1);
 			}
 			
-			if(nRet < 0) goto AUD_DEC_START_FAIL;
-			for(i=0; i<AUDIO_FRAME_NO; i++)
-			{
+			if(nRet < 0) {
+				goto __AudDecStartFail;
+			}
+			
+			for(i=0; i<AUDIO_FRAME_NO; i++) {
 				pcm_addr = vid_dec_get_next_aud_buffer();
-				while(1)
-				{
+				while(1) {
 					cwlen = pfun_decode_one_frame((INT16S*) pcm_addr);
-					if(cwlen > 0)
+					if(cwlen > 0) {
 						break;
-					else if(cwlen < 0 || MultiMediaParser_IsEOA(p_vid_dec_para->media_handle))
-						goto AUD_DEC_START_FAIL;
-					else
+					} else if(cwlen < 0) {
+						goto __AudDecStartFail;
+					} else if(MultiMediaParser_IsEOA(p_vid_dec_para->media_handle)) {
+						goto __AudDecStartFail;
+					} else if(vid_dec_get_status() & C_VIDEO_DECODE_ERR) {
+						goto __AudDecStartFail;	
+					} else {
 						OSTimeDly(1);
+					}
 				}
 				
-				if(p_wave_info->wFormatTag == WAVE_FORMAT_MPEGLAYER3) 
+				if(i <= 1) {
+					buf_addr[i] = pcm_addr;
+					buf_len[i] = cwlen; 
+				}
+				
+				if(p_wave_info->wFormatTag == WAVE_FORMAT_MPEGLAYER3) { 
 					delta_ta[buf_WI] = (INT64S)p_vid_dec_para->VidTickRate * cwlen;
-				else if(p_wave_info->nChannels == 1)
+				} else if(p_wave_info->nChannels == 1) {
 					delta_ta[buf_WI] = (INT64S) p_vid_dec_para->VidTickRate * (cwlen << 1);
-				else
+				} else {
 					delta_ta[buf_WI] = (INT64S) p_vid_dec_para->VidTickRate * cwlen;
+				}
 				
-				if(i == 0)
-					aud_dec_double_buffer_put((INT16U *)pcm_addr, cwlen, aud_dec_q);
-				else if(i == 1)
-					aud_dec_double_buffer_set((INT16U *)pcm_addr, cwlen);
-				
-				if(p_vid_dec_para->upsample_flag)
+				if(p_vid_dec_para->upsample_flag) {
 					delta_ta[buf_WI] >>= 1;
+				}
 					
 				buf_WI++;
-				if(buf_WI >= AUDIO_FRAME_NO) buf_WI -= AUDIO_FRAME_NO;
-			}	
+				if(buf_WI >= AUDIO_FRAME_NO) {
+					buf_WI -= AUDIO_FRAME_NO;
+				}
+			}
+			
+			aud_dec_double_buffer_put((INT16U *)buf_addr[0], buf_len[0], aud_dec_q);
+			aud_dec_double_buffer_set((INT16U *)buf_addr[1], buf_len[1]);
 			OSMboxPost(aud_dec_ack_m, (void*)C_ACK_SUCCESS);
 			break;
-AUD_DEC_START_FAIL:
+			
+		__AudDecStartFail:
 			DEBUG_MSG(DBG_PRINT("AudioDecodeStartFail\r\n"));
 			audio_decode_task_end();
+			aud_dec_ramp_down_handle(p_wave_info->nChannels);
 			aud_dec_special_effect_stop();
 			OSMboxPost(aud_dec_ack_m, (void*)C_ACK_FAIL);
 			break;
 		
 		case MSG_AUD_DEC_STOP:
-			//while(aud_dec_dma_status_get())	OSTimeDly(1);	//wait dac done
+			DEBUG_MSG(DBG_PRINT("MSG_AUD_DEC_STOP\r\n"));
+			//wait dma done
+			while((aud_dec_dma_status_get() > 0) || (aud_dec_dma_dbf_status_get() > 0))	{
+				OSTimeDly(1);	
+			}
+			
 			audio_decode_task_end();
-			aud_dec_special_effect_stop();
 			aud_dec_ramp_down_handle(p_wave_info->nChannels);
+			aud_dec_special_effect_stop();
 			OSQFlush(aud_dec_q);	
 			OSMboxPost(aud_dec_ack_m, (void*)C_ACK_SUCCESS);
 			break;
 			
 		case MSG_AUD_DEC_EXIT:
+			DEBUG_MSG(DBG_PRINT("MSG_AUD_DEC_EXIT\r\n"));
 			OSMboxPost(aud_dec_ack_m, (void*)C_ACK_SUCCESS);
 			OSTaskDel(OS_PRIO_SELF);
 			break;

@@ -260,7 +260,7 @@ INT16U mic_dagc_get_update_freq(void)
 
 void mic_dagc_setup(INT16U mode, INT16U threshold, INT16U att_scale, INT16U rel_scale, INT16U dis_zc)
 {
-	INT16U val;
+	INT16U val=0;
 	
 	if(mode == 1)
 		val |= 0x8000;		// Peak mode
@@ -282,7 +282,7 @@ void mic_dagc_setup(INT16U mode, INT16U threshold, INT16U att_scale, INT16U rel_
 
 INT16U mic_dagc_get_threshold(void)
 {
-	return ((R_DAGC_CTRL & 0x7F00) >> 8);	
+	return ((R_DAGC_CTRL & 0x0300) >> 8);	
 }
 
 void mic_dagc_set_att_rel_time(INT16U att_time, INT16U rel_time)

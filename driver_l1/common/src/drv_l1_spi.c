@@ -23,8 +23,9 @@
 // Constant definitions used in this file only go here
 
 // Type definitions used in this file only go here
-#define SPI_TRANS_POLLING 1
-#define SPI_TRANS_INT 0
+#define SPI_TRANS_POLLING	1
+#define SPI_TRANS_INT		0
+#define SPI_TRANS_QUEUE		0
 
 // Global inline functions(Marcos) used in this file only go here
 
@@ -571,55 +572,108 @@ static INT32S spi_transceive_int(INT8U spi_num)
 
 static INT32S spi_transceive_dma(INT8U spi_num)
 {
+	INT8S done1,done2;
+	INT32S status, ret;
 	DMA_STRUCT dma_struct;
-	INT8S      done1,done2;
-	INT32S     status;
-	//INT8U      dummy;
+	
+#if (SPI_TRANS_QUEUE == 1)
+	INT8U err;
+	INT32U msg;	
+	OS_EVENT *SpiTx_q, *SpiRx_q;
+	void *SpiTx_q_buf[1], *SpiRx_q_buf[1];
+#endif
+
+#if (SPI_TRANS_QUEUE == 1)	
+	SpiTx_q = OSQCreate(SpiTx_q_buf, 1);
+	if(!SpiTx_q) {
+		ret = -1;
+		goto __return;
+	}
+	
+	SpiRx_q = OSQCreate(SpiRx_q_buf, 1);
+	if(!SpiRx_q) {
+		ret = -1;
+		goto __return;
+	}
+#endif
 	
 	spi_txrx_level_set(spi_master[spi_num].spi_num,0,0);
 	
+	// RX setting
 	done1 = C_DMA_STATUS_WAITING;
 	dma_struct.s_addr = (INT32U) &spi_master[spi_num].spi_sfr->RX_DATA;
-	dma_struct.width = DMA_DATA_WIDTH_1BYTE;		// DMA_DATA_WIDTH_1BYTE or DMA_DATA_WIDTH_2BYTE or DMA_DATA_WIDTH_4BYTE
+	dma_struct.width = DMA_DATA_WIDTH_1BYTE;
 	if (spi_master[spi_num].rcv_len == 0) {
 		dma_struct.t_addr = (INT32U) 0x60000000; /* reserved memory */
 		dma_struct.count = (INT32U) (spi_master[spi_num].len);
-	}
-	else {
+	} else {
 		dma_struct.t_addr = (INT32U) spi_master[spi_num].rx_buf;
-		//dma_struct.count = (INT32U) (spi_master[spi_num].rcv_len);
 		dma_struct.count = (INT32U) (spi_master[spi_num].len);
 	}
 	dma_struct.notify = &done1;
 	dma_struct.timeout = 128;	
+
+#if (SPI_TRANS_QUEUE == 1)	
+	status = dma_transfer_with_queue(&dma_struct, SpiRx_q);
+#else
 	status = dma_transfer(&dma_struct);
+#endif
 	if (status != 0) {
-		return status;
+		ret = -1;
+		goto __return;
 	}
 	
+	// TX setting
 	done2 = C_DMA_STATUS_WAITING;
 	dma_struct.s_addr = (INT32U) spi_master[spi_num].tx_buf;
 	dma_struct.t_addr = (INT32U) &spi_master[spi_num].spi_sfr->TX_DATA;
-	dma_struct.width = DMA_DATA_WIDTH_1BYTE;		// DMA_DATA_WIDTH_1BYTE or DMA_DATA_WIDTH_2BYTE or DMA_DATA_WIDTH_4BYTE
+	dma_struct.width = DMA_DATA_WIDTH_1BYTE;
 	dma_struct.count = (INT32U) (spi_master[spi_num].len);
 	dma_struct.notify = &done2;
 	dma_struct.timeout = 128;	
 	
+#if (SPI_TRANS_QUEUE == 1)		
+	status = dma_transfer_with_queue(&dma_struct, SpiTx_q);
+#else
 	status = dma_transfer(&dma_struct);
-	
+#endif	
 	if (status != 0) {
-		return status;
+		ret = -1;
+		goto __return;
+	}
+
+#if (SPI_TRANS_QUEUE == 1)	
+	msg = (INT32U) OSQPend(SpiTx_q, 0, &err);
+	if(msg != C_DMA_STATUS_DONE) {
+		ret = -1;
 	}
 	
+	msg = (INT32U) OSQPend(SpiRx_q, 0, &err);
+	if(msg != C_DMA_STATUS_DONE) {
+		ret = -1;
+	}	
+#else	
 	while (done1 == C_DMA_STATUS_WAITING);	
 	while (done2 == C_DMA_STATUS_WAITING);
-		
 	if (done1 == C_DMA_STATUS_TIMEOUT || done2 == C_DMA_STATUS_TIMEOUT) {
-		return SPI_TIMEOUT;
-	}  
-		
+		ret = SPI_TIMEOUT;
+	}
+#endif	
+
 	//spi_master[spi_num].rx_count = spi_master[spi_num].len;
-	return STATUS_OK;
+__return:
+#if (SPI_TRANS_QUEUE == 1)
+	if(SpiTx_q) {
+		OSQFlush(SpiTx_q);
+		OSQDel(SpiTx_q, OS_DEL_ALWAYS, &err);
+	}
+	
+	if(SpiRx_q) {
+		OSQFlush(SpiRx_q);
+		OSQDel(SpiRx_q, OS_DEL_ALWAYS, &err);
+	}
+#endif	
+	return ret;
 }
 
 static SPI_SFR * get_SPI_SFR_base(INT8U spi_num)

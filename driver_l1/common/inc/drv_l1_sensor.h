@@ -43,7 +43,7 @@
 #define CSI_CLOCK_13_5MHZ			3
 #if (defined __HSB0357_DRV_C__)
 	#define CSI_CLOCK				CSI_CLOCK_SYS_CLK_DIV4
-#elif (defined __OV3640_MIPI_DRV_C__)
+#elif (defined __OV3640_MIPI_DRV_C__) || (defined __GC0307_DRV_C_)
 	#define CSI_CLOCK				CSI_CLOCK_13_5MHZ
 #else
 	#define CSI_CLOCK				CSI_CLOCK_27MHZ
@@ -64,9 +64,12 @@
 #define OV3640_ID				0x78
 #define OV7675_ID				0x42
 #define OV2643_ID				0x60
+#define OV2659_ID				0x60
 #define OID_SENSOR_ID			0x92
 #define BF3710_ID				0xDC
 #define HSB0357_ID				0x60
+#define GC0307_ID				0x42
+#define GC0308_ID				0x42
 
 extern void sccb_init(void);
 extern INT32S sccb_write_Reg8Data8(INT8U id, INT8U addr, INT8U data);

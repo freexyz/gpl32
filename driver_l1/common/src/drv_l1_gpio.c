@@ -487,7 +487,10 @@ void gpio_pad_init2(void)
     iosrsel &= ~(1<<12);
 #elif SPI1_POS == SPI1_RX_IOC4__CLK_IOC5__TX_IOC7
     iosrsel |= (1<<12);
+#elif SPI1_POS == SPI1_RX_IOI3__CLK_IOI1__TX_IOI2
+	funpos3 |= (1<<1);
 #endif
+
 #if SPI0_POS == SPI0_RX_IOC3__CLK_IOC1__TX_IOC2
     funpos1 &= ~(3<<8);
 #elif SPI0_POS == SPI0_RX_IOC7__CLK_IOF5__TX_IOC4

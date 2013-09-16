@@ -1,0 +1,129 @@
+Release data: 20130807
+
+1. update .\liba\gpxxxxxx\ for all project to fix inconsistent libraries problem while generating by gpmake (svn2785)
+
+2. update AVI encoder flow to improve performance while scaler is executing especially for Face Detection of GPL326XXB.
+So that it will not wait until scaler H/W is done.
+update files:
+(svn3070)
+./application/task/avi_encoder/src/avi_encoder_app.c
+./application/task/avi_encoder/src/avi_encoder_scaler_jpeg.c
+./application/task/avi_encoder/inc/avi_encoder_app.h
+./application/task/avi_encoder/inc/avi_encoder_scaler_jpeg.h
+./gplib/inc/gplib.h
+./driver_l1/scaler/inc/drv_l1_scaler.h
+./liba/drv_l1_scaler.a
+./project/gpl326xxb_platform_demo/Face_Detection/inc/Face_Detection_Demo.h
+./project/gpl326xxb_platform_demo/Face_Detection/src/Face_Detection_Demo.c (svn3086)
+
+3. fix bug that the system will hang up while sdc is removed during video decoder is running.
+(svn3070)
+./application/task_video_decoder/inc/MultiMediaParser.h
+./application/task_video_decoder/inc/MultiMediaParser_Cfg.h
+./application/task_video_decoder/inc/task_video_decoder.h
+./application/task_video_decoder/inc/task_video_decoder_cfg.h
+./application/task_video_decoder/src/audio_decoder_task.c
+./application/task_video_decoder/src/video_decoder_app.c
+./application/task_video_decoder/src/video_decoder_state.c
+./application/task_video_decoder/src/video_decoder_task.c
+./gplib/inc/gplib.h
+
+4. update PGA & DAGC parameters and fix API bug for microphone recording
+(svn3070)
+./application/task_audio_record/inc/audio_record.h
+./application/task_audio_record/src/audio_record.c
+./driver_l1/common/src/drv_l1_mic.c
+
+5. Modify power down function and remove SDRAM self-refresh in halt mode (wake up from reset) and wait mode.
+Also modify startup.s so that it wakes up from address 0x0 in sleep and halt mode.
+(svn3070)
+./application/app_power_down/inc/power_down.h
+./application/app_power_down/src/power_down.c
+./driver_l1/common/src/drv_l1_system.c
+./project/gpxxxxxx/startup.s
+
+6. Fix the USB device ejection problem in MAC OS ( successful safe remove disk)
+(svn3101)
+./application/task_umi/state_usb/src/ap_usb.c
+./liba/gpxxxxxx/drv_l1_usbD20.a
+
+7. Fix NAND flash H/W re-entry issue where NAND semaphore is not created correctly.
+(svn3087)
+./driver_l2/nand_flash/user/drv_l2_nand_config.c
+
+8. Add SDC2 driver for semaphore protection
+./liba/gpxxxxxx/drv_l1_sdc.a
+./liba/gpxxxxxx/drv_l2_sd.a
+
+9. Fix FFT H/W re-entry issue in A6400 and MP3 library for GPL326XX/ GPL326XXB/ GP326XXXA series
+(svn3070)
+./gplib/liba/gplib_a6400_decode.a
+./gplib/liba/gplib_mp3_decode.a
+
+10. fix get day count error in calendar
+(svn3070)
+./gplib/calendar/src/gplib_calendar.c
+
+11. low-level (driver_l1) driver bug fix and modification and new peripheral support
+
+a. Add EXTA/EXTB FIQ support and update IRQ/ FIQ vector table for GPL326xxB and GP326XXXA series and update
+(svn3070)
+./driver_l1/inc/driver_l1.h
+./driver_l1/common/inc/drv_l1_interrupt.h
+./driver_l1/common/src/drv_l1_interrupt.c
+./driver_l1/common/src/drv_l1_ext_int.c
+./driver_l1/spu/inc/drv_l1_spu.h
+
+b. update DMA source definition for SPI1 TX/RX and fix SPI0/1 register definition
+(svn3070)
+./driver_l1/drv_l1_sfr.h
+./driver_l1/common/inc/drv_l1_dma.h
+./driver_l1/common/src/drv_l1_spi.c
+
+c. Add SPI1 support in gpio driver for GPL326XXB/ GP326XXXA series
+(svn3070)
+./driver_l1/common/inc/drv_l1_gpio.h
+./driver_l1/common/src/drv_l1_gpio.c
+./project/gpxxxxxx/inc/drv_l1_cfg.h
+
+d. support OV2659 and GC0308/GC0307
+(svn3070)
+./driver_l1/common/inc/drv_l1_sensor.h
+./driver_l1/common/src/drv_l1_sensor.c
+./project/gpxxxxxx/inc/drv_l1_cfg.h
+
+e. fix the problem that the interrupt of independent RTC module is not cleared at the beginning. 
+Add API to set ALM pin high/low for independent RTC module.
+(svn3070)
+./driver_l1/common/inc/drv_l1_rtc.h
+./driver_l1/common/src/drv_l1_rtc.c
+
+12. fix the bug that Video_Decode_Simple_Demo cannot work
+(svn3070)
+./project/gpxxxxxx/video_codec_demo.c
+
+13. update linker script and startup.s for RW/ZI/CODE region especially for Sourcery CodeBench project
+(svn3070)
+./project/gpxxxxxx/startup.s
+./project/gpxxxxxx/GPXXXXXX.ld
+
+14. update project setting for GPL327XX/ GP327XXXA Sourcery CodeBench project
+
+15. update AD_Key table for GPL326XXB 
+(svn3085)
+./driver_l2/ad_key/inc/ad_key.h
+
+16. update X32K setting to strong mode
+(svn3106)
+./driver_l1/common/src/drv_l1_isys.c
+
+==================================================================================
+IMPORTANT NOTES:
+==================================================================================
+All related patch files are tested with V1.0.5 platfrom code under following setup.
+Generalplus recommand users use following setup for development with V1.0.5 and its patches
+
+1. ADS V1.2
+2. Sourcery CodeBench IDE Version: 2012.03-87
+3. SEGGER VERSION V.4.24a
+4. JLINIK ICE Version.6/ Version.7/ Version. 8

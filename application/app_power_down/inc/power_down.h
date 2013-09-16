@@ -6,7 +6,7 @@
 /* wake up source enable */
 #define EXTA_WAKEUP				1
 #define EXTB_WAKEUP				1
-#define RTC_WAKEUP				1
+#define RTC_WAKEUP				0
 
 /* bit define */
 #define	BIT0					(1<<0)

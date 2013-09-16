@@ -1,9 +1,8 @@
+#include <stdlib.h>
 #include "avi_encoder_app.h"
 #include "jpeg_header.h"
 #include "font.h"
-#if (defined MCU_VERSION) && ((MCU_VERSION >= GPL326XXB)&& (MCU_VERSION < GPL327XX))
-#include "define.h"
-#endif
+
 /* global varaible */
 AviEncPara_t AviEncPara, *pAviEncPara;
 AviEncAudPara_t AviEncAudPara, *pAviEncAudPara;
@@ -30,111 +29,6 @@ static INT8U g_pcm_index;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // avi encode api	
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-static void scaler_lock(void)
-{
-	INT8U err;
-	OSSemPend(scaler_hw_sem, 0, &err);
-}
-
-static void scaler_unlock(void)
-{
-	OSSemPost(scaler_hw_sem);
-}
-
-#if (defined MCU_VERSION) && ((MCU_VERSION >= GPL326XXB)&& (MCU_VERSION < GPL327XX))
-int Scaler_clip(gpImage *srcImg, gpImage *dstImg, gpRect *clip)
-{
-	return 0;
-}
-#endif
-int Scaler_wait_end(void)
-{
-
-	return 0;
-}
-#if (defined MCU_VERSION) && ((MCU_VERSION >= GPL326XXB)&& (MCU_VERSION < GPL327XX))
-int Scaler_Start( gpImage *src, gpImage *dst)
-{
-	// IMAGE Src, Dst;
-	int src_width, dst_width;
-	int in_format, out_format;
-	long scale[2];
-	long inv_scale[2];
-	
-	
-	switch(src->format)
-	{
-	case IMG_FMT_GRAY:
-		src_width = src->widthStep;
-		in_format = C_SCALER_CTRL_IN_Y_ONLY;
-		break;
-	case IMG_FMT_YUYV:
-	case IMG_FMT_YCbYCr:
-		src_width = src->widthStep >> 1;
-		in_format = C_SCALER_CTRL_IN_UYVY;
-		break;
-	case IMG_FMT_UYVY:
-	case IMG_FMT_CbYCrY:
-		src_width = src->widthStep >> 1;
-		in_format = C_SCALER_CTRL_IN_YUYV;
-		break;
-	default:
-		while(1);
-	}
-		
-	switch(dst->format)
-	{
-	case IMG_FMT_GRAY:
-		dst_width = dst->widthStep >> 3 << 3;
-		while(dst_width != dst->widthStep);
-		out_format = C_SCALER_CTRL_OUT_Y_ONLY;
-		break;
-	case IMG_FMT_YUYV:
-	case IMG_FMT_YCbYCr:
-		dst_width = dst->widthStep >> 4 << 4;
-		while(dst_width != dst->widthStep);
-		dst_width >>= 1;
-		out_format = C_SCALER_CTRL_OUT_UYVY;
-		break;
-	case IMG_FMT_UYVY:
-	case IMG_FMT_CbYCrY:
-		dst_width = dst->widthStep >> 4 << 4;
-		while(dst_width != dst->widthStep);
-		dst_width >>= 1;
-		out_format = C_SCALER_CTRL_OUT_YUYV;
-		break;
-	default:
-		while(1);
-	}
-		
-	if((int)(src->ptr) & 3) while(1);
-	if((int)(dst->ptr) & 3) while(1);
-
-	// scaler_wait_idle();
-	scaler_lock();
-	scaler_input_pixels_set(src_width, src->height);
-	scaler_input_visible_pixels_set(src->width, src->height);
-	scaler_input_addr_set((int)src->ptr, 0, 0);
-		
-	scaler_input_format_set(in_format);
-	scaler_input_offset_set(0, 0);
-
-	scale[0] = scale[1] = (long)dst->width  * 65536 / src->width;
-
-	inv_scale[0] = 0x7FFFFFFF / scale[0] << 1;
-	inv_scale[1] = 0x7FFFFFFF / scale[0] << 1;
-	scaler_output_pixels_set(inv_scale[0] , inv_scale[1], dst_width, dst->height);
-	scaler_output_addr_set((int)dst->ptr, 0, 0);
-	scaler_output_format_set(out_format);
-
-	// scaler_set_callback(callback, callback_param);
-	scaler_start();
-	scaler_wait_idle();
-	scaler_stop();
-	scaler_unlock();
-	return 0;
-}
-#endif
 void avi_encode_init(void)
 {
     pAviEncPara = &AviEncPara;
@@ -1230,95 +1124,166 @@ void vid_enc_csi_frame_end(void)
 	}
 }
 
-INT32S scaler_zoom_once(ScalerPara_t *pScale)
-{
-	FP32    zoom_temp, ratio;
-	INT32S  scaler_status;
-	INT32U  temp_x, temp_y;
+INT32S scaler_clip(INT8U wait_done, gpImage *src, gpImage *dst, gpRect *clip)
+{	
+	// IMAGE Src, Dst;
+	INT32S src_width, dst_width;
+	INT32S in_format, out_format;
+	ScalerFormat_t scale;
 	
-	scaler_lock();	
-	
-  	// Initiate Scaler
-  	scaler_init();
-	switch(pScale->scaler_mode) 
+	switch(src->format)
 	{
-	case C_SCALER_FULL_SCREEN:	
-		scaler_image_pixels_set(pScale->input_x, pScale->input_y, pScale->output_buffer_x, pScale->output_buffer_y);	
+	case IMG_FMT_GRAY:
+		src_width = src->widthStep >> 1 << 1; //align2
+		in_format = C_SCALER_CTRL_IN_Y_ONLY;
 		break;
-		
-	case C_SCALER_FIT_RATIO:	
-		temp_x = (pScale->input_x<<16) / pScale->output_x;
-		temp_y = (pScale->input_y<<16) / pScale->output_y;
-		scaler_input_pixels_set(pScale->input_x, pScale->input_y);
-		scaler_input_visible_pixels_set(pScale->input_x, pScale->input_y);
-		scaler_output_pixels_set(temp_x, temp_y, pScale->output_buffer_x, pScale->output_buffer_y);
-	#if SCALE_INTP_EN == 1	
-		scaler_input_offset_set(0x8000, 0x8000);
-	#else
-		scaler_input_offset_set(0, 0);
-	#endif	
+	case IMG_FMT_YUYV:
+	case IMG_FMT_YCbYCr:
+		src_width = src->widthStep >> 2 << 1; //align2
+		in_format = C_SCALER_CTRL_IN_UYVY;
 		break;
-	
-	case C_NO_SCALER_FIT_BUFFER:
-		if((pScale->input_x <= pScale->output_x) && (pScale->input_y <= pScale->output_y)) {
-			temp_x = temp_y = (1<<16);
-		} else {
-			if(pScale->output_y*pScale->input_x > pScale->output_x*pScale->input_y) {
-	      		temp_x = temp_y = (pScale->input_x<<16) / pScale->output_x;
-	      		pScale->output_y = (pScale->output_y<<16) / temp_x;
-	      	} else {
-	      		temp_x = temp_y = (pScale->input_y<<16) / pScale->output_y;
-	      		pScale->output_x = (pScale->input_x<<16) / temp_x;
-	      	}
-		}
-		scaler_input_pixels_set(pScale->input_x, pScale->input_y);
-		scaler_input_visible_pixels_set(pScale->input_x, pScale->input_y);
-		scaler_output_pixels_set(temp_x, temp_y, pScale->output_buffer_x, pScale->output_buffer_y);
-	#if SCALE_INTP_EN == 1	
-		scaler_input_offset_set(0x8000, 0x8000);
-	#else
-		scaler_input_offset_set(0, 0);
-	#endif
+	case IMG_FMT_UYVY:
+	case IMG_FMT_CbYCrY:
+		src_width = src->widthStep >> 2 << 1; //align2
+		in_format = C_SCALER_CTRL_IN_YUYV;
 		break;
-		
-	case C_SCALER_FIT_BUFFER:
-		if (pScale->output_y*pScale->input_x > pScale->output_x*pScale->input_y) {
-      		temp_x = (pScale->input_x<<16) / pScale->output_x;
-      		pScale->output_y = (pScale->output_y<<16) / temp_x;
-      	} else {
-      		temp_x = (pScale->input_y<<16) / pScale->output_y;
-      		pScale->output_x = (pScale->input_x<<16) / temp_x;
-      	}
-      	scaler_input_pixels_set(pScale->input_x, pScale->input_y);
-		scaler_input_visible_pixels_set(pScale->input_x, pScale->input_y);
-      	scaler_output_pixels_set(temp_x, temp_x, pScale->output_buffer_x, pScale->output_buffer_y);
-	#if SCALE_INTP_EN == 1	
-		scaler_input_offset_set(0x8000, 0x8000);
-	#else
-		scaler_input_offset_set(0, 0);
-	#endif	
-		break;
-		
-	case C_SCALER_ZOOM_FIT_BUFFER:
-		scaler_input_pixels_set(pScale->input_x, pScale->input_y);
-		scaler_input_visible_pixels_set(pScale->input_x, pScale->input_y);	
-		ratio = (FP32)pScale->output_x/pScale->input_x;
-		zoom_temp = 65536 / (ratio * pScale->scaler_factor);
-		scaler_output_pixels_set((int)zoom_temp, (int)zoom_temp, pScale->output_x, pScale->output_y);
-		zoom_temp = 1 - (1 / pScale->scaler_factor);
-		scaler_input_offset_set((int)((float)(pScale->output_x/2)*zoom_temp)<<16, (int)((float)(pScale->output_y/2)*zoom_temp)<<16);
-		break;	
-		
 	default:
-		return -1;
+        return STATUS_FAIL;
 	}
-	scaler_input_addr_set(pScale->input_addr_y, pScale->input_addr_u, pScale->input_addr_v);
-   	scaler_output_addr_set(pScale->output_addr_y, pScale->output_addr_u, pScale->output_addr_v);
-   	scaler_fifo_line_set(C_SCALER_CTRL_FIFO_DISABLE);
-	scaler_input_format_set(pScale->input_format);
-	scaler_output_format_set(pScale->output_format);
-	scaler_out_of_boundary_color_set(pScale->boundary_color);
+		
+	switch(dst->format)
+	{
+	case IMG_FMT_GRAY:
+		dst_width = dst->widthStep >> 1 << 1; //align2
+		out_format = C_SCALER_CTRL_OUT_Y_ONLY;
+		break;
+	case IMG_FMT_YUYV:
+	case IMG_FMT_YCbYCr:
+		dst_width = dst->widthStep >> 4 << 3; //align8
+		out_format = C_SCALER_CTRL_OUT_UYVY;
+		break;
+	case IMG_FMT_UYVY:
+	case IMG_FMT_CbYCrY:
+		dst_width = dst->widthStep >> 4 << 3; //align8
+		out_format = C_SCALER_CTRL_OUT_YUYV;
+		break;
+	default:
+		return STATUS_FAIL;
+	}
+		
+	scale.input_format = in_format;
+	scale.input_width = src_width;
+	scale.input_height = src->height;
+	scale.input_visible_width = clip->x + clip->width;
+	scale.input_visible_height = clip->y + clip->height;
+	scale.input_x_offset = clip->x;
+	scale.input_y_offset = clip->y;
+	
+	scale.input_addr_y = (INT32U)src->ptr;
+	scale.input_addr_u = 0;
+	scale.input_addr_v = 0;
+	
+	scale.output_format = out_format;
+	scale.output_width = dst_width;
+	scale.output_height = dst->height;
+	scale.output_buf_width = dst_width;
+	scale.output_buf_height = dst->height;
+	scale.output_x_offset = 0;
+	
+	scale.output_addr_y = (INT32U)dst->ptr;
+	scale.output_addr_u = 0;
+	scale.output_addr_v = 0;
+		
+	scale.fifo_mode = C_SCALER_CTRL_FIFO_DISABLE;
+	scale.scale_mode = C_SCALER_FULL_SCREEN_BY_RATIO;
+	scale.digizoom_m = 10;
+	scale.digizoom_n = 10;
+		
+	return scaler_trigger(wait_done, &scale, 0x008080);
+}
 
+INT32S scaler_once(INT8U wait_done, gpImage *src, gpImage *dst)
+{
+	// IMAGE Src, Dst;
+	INT32S src_width, dst_width;
+	INT32S in_format, out_format;
+	ScalerFormat_t scale;
+	
+	switch(src->format)
+	{
+	case IMG_FMT_GRAY:
+		src_width = src->widthStep >> 1 << 1; //align2
+		in_format = C_SCALER_CTRL_IN_Y_ONLY;
+		break;
+	case IMG_FMT_YUYV:
+	case IMG_FMT_YCbYCr:
+		src_width = src->widthStep >> 2 << 1; //align2
+		in_format = C_SCALER_CTRL_IN_UYVY;
+		break;
+	case IMG_FMT_UYVY:
+	case IMG_FMT_CbYCrY:
+		src_width = src->widthStep >> 2 << 1; //align2
+		in_format = C_SCALER_CTRL_IN_YUYV;
+		break;
+	default:
+        return STATUS_FAIL;
+	}
+		
+	switch(dst->format)
+	{
+	case IMG_FMT_GRAY:
+		dst_width = dst->widthStep >> 1 << 1; //align2
+		out_format = C_SCALER_CTRL_OUT_Y_ONLY;
+		break;
+	case IMG_FMT_YUYV:
+	case IMG_FMT_YCbYCr:
+		dst_width = dst->widthStep >> 4 << 3; //align8
+		out_format = C_SCALER_CTRL_OUT_UYVY;
+		break;
+	case IMG_FMT_UYVY:
+	case IMG_FMT_CbYCrY:
+		dst_width = dst->widthStep >> 4 << 3; //align8
+		out_format = C_SCALER_CTRL_OUT_YUYV;
+		break;
+	default:
+		return STATUS_FAIL;
+	}
+		
+	scale.input_format = in_format;
+	scale.input_width = src_width;
+	scale.input_height = src->height;
+	scale.input_visible_width = src->width;
+	scale.input_visible_height = src->height;
+	scale.input_x_offset = 0;
+	scale.input_y_offset = 0;
+	
+	scale.input_addr_y = (INT32U)src->ptr;
+	scale.input_addr_u = 0;
+	scale.input_addr_v = 0;
+	
+	scale.output_format = out_format;
+	scale.output_width = dst_width;
+	scale.output_height = dst->height;
+	scale.output_buf_width = dst_width;
+	scale.output_buf_height = dst->height;
+	scale.output_x_offset = 0;
+	
+	scale.output_addr_y = (INT32U)dst->ptr;
+	scale.output_addr_u = 0;
+	scale.output_addr_v = 0;
+		
+	scale.fifo_mode = C_SCALER_CTRL_FIFO_DISABLE;
+	scale.scale_mode = C_SCALER_FULL_SCREEN_BY_RATIO;
+	scale.digizoom_m = 10;
+	scale.digizoom_n = 10;
+		
+	return scaler_trigger(wait_done, &scale, 0x008080);
+}
+
+INT32S scaler_wait_done(void)
+{
+	INT32S scaler_status;
+	
 	while(1) {	
 		scaler_status = scaler_wait_idle();
 		if(scaler_status == C_SCALER_STATUS_STOP) { 
@@ -1335,12 +1300,273 @@ INT32S scaler_zoom_once(ScalerPara_t *pScale)
   		} else {
 	  		DEBUG_MSG(DBG_PRINT("Un-handled Scaler status!\r\n"));
 	  	}
-  	}
-	
-	scaler_unlock();
-			
+ 	}
+ 	
+ 	scaler_unlock();
 	return scaler_status;
 }
+
+INT32S scaler_trigger(INT8U wait_done, ScalerFormat_t *pScale, INT32U boundary_color)
+{
+	INT8U mode = 0;
+	INT32S ret;
+	INT32U tempx, tempy;
+	
+	/* scaler lock */
+	scaler_lock();	
+	
+	if(pScale->input_visible_width > pScale->input_width) {
+		pScale->input_visible_width = 0;
+	}
+	
+	if(pScale->input_visible_height > pScale->input_height) {
+		pScale->input_visible_height = 0;
+	}
+	
+	if(pScale->output_width > pScale->output_buf_width) {
+		pScale->output_width = pScale->output_buf_width;
+	}
+	
+	if(pScale->output_height > pScale->output_buf_height) {
+		pScale->output_height = pScale->output_buf_height;
+	}
+	
+	/* start scaling */
+  	scaler_init();
+	switch(pScale->scale_mode) 
+	{
+	case C_SCALER_FULL_SCREEN:	
+		ret = scaler_image_pixels_set(pScale->input_width, pScale->input_height, pScale->output_buf_width, pScale->output_buf_height);	
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_image_pixels_set Fail!\r\n"));
+			goto __exit;
+		}
+		break;
+		
+	case C_SCALER_BY_RATIO:	
+		mode = 1;
+	case C_SCALER_FULL_SCREEN_BY_RATIO:
+		ret = scaler_input_pixels_set(pScale->input_width, pScale->input_height);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_pixels_set Fail!\r\n"));
+			goto __exit;
+		}
+	
+		ret = scaler_input_visible_pixels_set(pScale->input_visible_width, pScale->input_visible_height);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_visible_pixels_set Fail!\r\n"));
+			goto __exit;
+		}
+		
+		if(pScale->input_visible_width) {
+			tempx = pScale->input_visible_width;
+		} else {
+			tempx = pScale->input_width;
+		}
+		
+		if(pScale->input_visible_height) {
+			tempy = pScale->input_visible_height;
+	    } else {
+			tempy = pScale->input_height;
+	    }
+		
+		if(pScale->input_x_offset > tempx) {
+			pScale->input_x_offset = 0;
+		}
+		
+		if(pScale->input_y_offset > tempy) {
+			pScale->input_y_offset = 0;
+		}
+		
+		if(pScale->input_x_offset) {
+			tempx -= pScale->input_x_offset;
+		}
+		
+		if(pScale->input_y_offset) {
+			tempy -= pScale->input_y_offset;
+		}
+		
+		if(mode) {
+			/* scale by ratio */
+			tempx = (tempx << 16) / pScale->output_width;
+			tempy = (tempy << 16) / pScale->output_height;
+		} else {
+			/* scale full screen by ratio */
+			if (pScale->output_buf_height*tempx > pScale->output_buf_width*tempy) {
+		      	tempx = tempy = (tempx << 16) / pScale->output_buf_width;
+		      	pScale->output_height = (pScale->output_buf_height << 16) / tempx;
+		    } else {
+		      	tempx = tempy = (tempy << 16) / pScale->output_buf_height;
+		      	pScale->output_width = (pScale->output_buf_width << 16) / tempy;
+			}
+		}
+		
+		ret = scaler_output_pixels_set(tempx, tempy, pScale->output_buf_width, pScale->output_buf_height);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_output_pixels_set Fail!\r\n"));
+			goto __exit;
+		}
+	
+		tempx = pScale->input_x_offset << 16;
+		tempy = pScale->input_y_offset << 16;
+	#if SCALE_INTP_EN == 1	
+		tempx += 0x8000;
+		tempy += 0x8000;
+	#endif	
+	
+		ret = scaler_input_offset_set(tempx, tempy);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_offset_set Fail!\r\n"));
+			goto __exit;
+		}
+		break;
+		
+	case C_SCALER_FULL_SCREEN_BY_DIGI_ZOOM:
+		ret = scaler_input_pixels_set(pScale->input_width, pScale->input_height);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_pixels_set Fail!\r\n"));
+			goto __exit;
+		}
+		
+		ret = scaler_input_visible_pixels_set(pScale->input_visible_width, pScale->input_visible_height);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_visible_pixels_set Fail!\r\n"));
+			goto __exit;
+		}
+		
+		/* mutiple * 100 */
+		if(pScale->digizoom_n == 0) {
+			pScale->digizoom_n = 10;
+		}
+
+		if(pScale->digizoom_m == 0) {
+			pScale->digizoom_m = 10;
+		}
+		tempx = 100 * (pScale->output_width * pScale->digizoom_m) / (pScale->input_width * pScale->digizoom_n);
+		tempx = 65536 * 100 / tempx;
+			
+		tempx = pScale->output_width * (abs(pScale->digizoom_m - pScale->digizoom_n));
+		tempx >>= 1;
+		tempx =	(tempx << 16) / pScale->digizoom_n;
+		tempy = pScale->output_height * (abs(pScale->digizoom_m - pScale->digizoom_n));
+		tempy >>= 1;
+		tempy = (tempy << 16) / pScale->digizoom_n;
+		ret = scaler_input_offset_set(tempx, tempy);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_offset_set Fail!\r\n"));
+			goto __exit;
+		}
+	default:
+		while(1);
+	}
+	
+	ret = scaler_output_offset_set(pScale->output_x_offset);
+	if(ret < 0) {
+		DEBUG_MSG(DBG_PRINT("scaler_output_offset_set Fail!\r\n"));
+		goto __exit;
+	}
+	
+	ret = scaler_input_addr_set(pScale->input_addr_y, pScale->input_addr_u, pScale->input_addr_v);
+   	if(ret < 0) {
+   		DEBUG_MSG(DBG_PRINT("scaler_input_addr_set Fail!\r\n"));
+		goto __exit;
+	}
+   	
+   	ret = scaler_output_addr_set(pScale->output_addr_y, pScale->output_addr_u, pScale->output_addr_v);
+   	if(ret < 0) {
+   		DEBUG_MSG(DBG_PRINT("scaler_output_addr_set Fail!\r\n"));
+		goto __exit;
+	}
+   	
+	ret = scaler_input_format_set(pScale->input_format);
+	if(ret < 0) {
+		DEBUG_MSG(DBG_PRINT("scaler_input_format_set Fail!\r\n"));
+		goto __exit;
+	}
+	
+	ret = scaler_output_format_set(pScale->output_format);
+	if(ret < 0) {
+		DEBUG_MSG(DBG_PRINT("scaler_output_format_set Fail!\r\n"));
+		goto __exit;
+	}
+	
+	switch(pScale->fifo_mode)
+	{
+	case C_SCALER_CTRL_FIFO_DISABLE:
+		ret = scaler_input_fifo_line_set(C_SCALER_CTRL_IN_FIFO_DISABLE);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_fifo_line_set Fail!\r\n"));
+			goto __exit;
+		}
+
+		ret = scaler_output_fifo_line_set(C_SCALER_CTRL_OUT_FIFO_DISABLE);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_output_fifo_line_set Fail!\r\n"));
+			goto __exit;
+		}
+		break;	
+		
+	case C_SCALER_CTRL_IN_FIFO_16LINE:
+	case C_SCALER_CTRL_IN_FIFO_32LINE:
+	case C_SCALER_CTRL_IN_FIFO_64LINE:
+	case C_SCALER_CTRL_IN_FIFO_128LINE:
+	case C_SCALER_CTRL_IN_FIFO_256LINE:
+		ret = scaler_input_fifo_line_set(pScale->fifo_mode);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_fifo_line_set Fail!\r\n"));
+			goto __exit;
+		}
+		
+		ret = scaler_output_fifo_line_set(C_SCALER_CTRL_OUT_FIFO_DISABLE);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_output_fifo_line_set Fail!\r\n"));
+			goto __exit;
+		}
+		break;
+
+	case C_SCALER_CTRL_OUT_FIFO_16LINE:
+	case C_SCALER_CTRL_OUT_FIFO_32LINE:
+	case C_SCALER_CTRL_OUT_FIFO_64LINE:
+		ret = scaler_input_fifo_line_set(C_SCALER_CTRL_IN_FIFO_DISABLE);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_input_fifo_line_set Fail!\r\n"));
+			goto __exit;
+		}
+
+		ret = scaler_output_fifo_line_set(pScale->fifo_mode);
+		if(ret < 0) {
+			DEBUG_MSG(DBG_PRINT("scaler_output_fifo_line_set Fail!\r\n"));
+			goto __exit;
+		}
+		break;
+		
+	default:
+		while(1);
+	}
+	
+	ret = scaler_out_of_boundary_color_set(boundary_color);
+__exit:	
+	if(ret >= 0) {
+		if(wait_done) {
+			ret = scaler_wait_done();
+		} else {
+			ret = scaler_wait_idle();
+			if(ret == C_SCALER_STATUS_STOP) { 
+				scaler_start();
+			} else {
+				ret = -1;
+				DEBUG_MSG(DBG_PRINT("ScalerStartFail!\r\n"));
+			}
+		}
+	} 
+	
+	if(ret < 0) {
+		scaler_unlock();	
+	}
+
+	return ret;
+}
+
 // jpeg once encode
 INT32U jpeg_encode_once(JpegPara_t *pJpegEnc)
 {

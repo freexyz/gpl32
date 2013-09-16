@@ -30,6 +30,7 @@ typedef struct
     INT32U video_total_sample;
     INT32U video_total_time;
     INT32U video_cur_time;
+	INT32U video_seek_time;
     INT32U video_decode_addr[VIDEO_FRAME_NO];
     
     // deblock 
@@ -200,6 +201,7 @@ extern void vid_dec_aud_dec_memory_free(void);
 extern INT32S aud_dec_double_buffer_put(INT16U *pdata,INT32U cwlen, OS_EVENT *os_q);
 extern INT32U aud_dec_double_buffer_set(INT16U *pdata, INT32U cwlen);
 extern INT32S aud_dec_dma_status_get(void);
+extern INT32S aud_dec_dma_dbf_status_get(void);
 extern void aud_dec_double_buffer_free(void);
 extern void aud_dec_dac_start(INT8U channel, INT32U sample_rate);
 extern void aud_dec_dac_stop(void);
@@ -240,7 +242,6 @@ extern INT32S vid_dec_start(void);
 extern INT32S vid_dec_stop(void);
 extern INT32S vid_dec_pause(void);
 extern INT32S vid_dec_resume(void);
-extern INT32S vid_dec_end_callback(void);
 extern INT32S vid_dec_get_total_samples(void);
 extern INT32S vid_dec_get_total_time(void);
 extern INT32S vid_dec_get_current_time(void);
@@ -248,6 +249,7 @@ extern INT32S vid_dec_set_play_time(INT32U second);
 extern INT32S vid_dec_set_play_speed(INT32U speed);
 extern INT32S vid_dec_set_reverse_play(INT32U Enable);
 extern INT32S vid_dec_nth_frame(INT32U nth);
+extern INT32S vid_dec_end_callback(INT32U bflag);
 
 extern INT32S video_decode_state_task_create(INT8U pori);
 extern INT32S video_decode_state_task_del(INT8U pori);

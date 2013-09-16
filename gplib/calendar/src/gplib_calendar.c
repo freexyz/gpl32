@@ -260,6 +260,13 @@ INT32S cal_time_get(TIME_T  *tm)
     }
 
     cal_rtc_time_get(&r_time);
+   
+#if MCU_VERSION >= GPL326XX    
+    if(day_count == 0xFFFFFFFF) {
+    	LAST_JULIAN_DATE = cal_last_jd_get();
+		day_count = cal_day_get();
+    }
+#endif
     
     j = day_count;
 

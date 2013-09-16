@@ -1868,6 +1868,9 @@ extern void get_string(CHAR *s);
 
 
 /* MP3 */
+/////////////////////////////////////////////////////////////////////////////
+//		Constant Definition
+/////////////////////////////////////////////////////////////////////////////
 #define MP3_DEC_FRAMESIZE					1152	// ???
 #define MP3_DEC_BITSTREAM_BUFFER_SIZE   	4096    // size in bytes
 #if GPLIB_MP3_HW_EN == 1
@@ -1876,7 +1879,10 @@ extern void get_string(CHAR *s);
 	#define MP3_DEC_MEMORY_SIZE 			13500
 	#define MP3_DECODE_RAM     				7176
 #endif
-/* MP3 error code */
+
+/////////////////////////////////////////////////////////////////////////////
+//		Error Code
+/////////////////////////////////////////////////////////////////////////////
 #define MP3_DEC_ERR_NONE			0x00000000	/* no error */
 
 #define MP3_DEC_ERR_BUFLEN	   	   	0x80000001	/* input buffer too small (or EOF) */
@@ -1905,79 +1911,179 @@ extern void get_string(CHAR *s);
 #define MP3_DEC_ERR_BADHUFFDATA	    0x80000238	/* Huffman data overrun */
 #define MP3_DEC_ERR_BADSTEREO	    0x80000239	/* incompatible block_type for JS */
 
+/////////////////////////////////////////////////////////////////////////////
+//		Function Definition
+/////////////////////////////////////////////////////////////////////////////
 #if GPLIB_MP3_HW_EN == 1
 // MP3 Decoder Version
+// @return  return version of mp3 decoder library
 extern const char * mp3_dec_get_version(void);
-// MP3 Decoder Initial
-extern int mp3_dec_init(void *p_workmem, void *p_bsbuf);
-// MP3 set ring size
-extern int mp3_dec_set_ring_size(void *p_workmem, int size);
-// MP3 header parsing
-extern int mp3_dec_parsing(void *p_workmem, int wi);
-// MP3 Decoder
-extern int mp3_dec_run(void *p_workmem, short *p_pcmbuf, int wi, int granule);
-// Get Read Index
-extern int mp3_dec_get_ri(void *p_workmem);
-// p_workmem:    pointer to working memory
-// return value: read index of bitstream ring buffer
 
-extern void mp3_dec_set_ri(char *mp3dec_workmem, int ri);
+// MP3 Decoder Initial
+// @param  *p_workmem: pointer to working memory
+// @param  *p_bsbuf: pointer to bitstream buffer
+// @return  return 0 (success), others(fail)
+extern int mp3_dec_init(void *p_workmem, void *p_bsbuf);
+
+// tell the size of bitstream buffer to decoder
+// @param   *p_workmem: pointer to working memory
+// @param   size: size of bitstream
+// @return  return size of bitstream buffer, it must be the mutiple of 512
+extern int mp3_dec_set_ring_size(void *p_workmem, int size);
+
+// MP3 header parsing
+// @param   *p_workmem: pointer to working memory
+// @param   wi: write index of bitstream buffer
+// @return  return error number
+extern int mp3_dec_parsing(void *p_workmem, int wi);
+
+// MP3 Decoder
+// @param   *p_workmem: pointer to working memory
+// @param   *p_pcmbuf: pointer to PCM buffer
+// @param   wi: write index of bitstream buffer
+// @param   granule: if set(1), it will output the last granule from decoder
+// @return  return the number of sample. if return 0, decoder need more bitstream
+extern int mp3_dec_run(void *p_workmem, short *p_pcmbuf, int wi, int granule);
+
+// Get Read Index
+// @param  *p_workmem: pointer to working memory
+// @return  return read index of bitstream buffer
+extern int mp3_dec_get_ri(void *p_workmem);
+
+// Set Read Index
+// @param  *p_workmem: pointer to working memory
+// @param  ri: read index of bitstream buffer
+extern void mp3_dec_set_ri(char *p_workmem, int ri);
 
 // Get mpeg id
+// @param   *p_workmem: pointer to working memory
+// @return  return MPEG id: 1 or 2 or 2.5
 extern const char *mp3_dec_get_mpegid(void *p_workmem);
-// return value: MP3 Decoder Working memory size
+
+// Get the size of MP3 Decoder Working memory
+// @return   return size of MP3 Decoder Working memory
 extern int mp3_dec_get_mem_block_size (void);
-// return error number.
+
+// get error number.
+// @param   *p_workmem: pointer to working memory
+// @return  return error number 
 extern int mp3_dec_get_errno(void *p_workmem);
-// return layer.
+
+// get layer.
+// @param   *p_workmem: pointer to working memory
+// @return  return number of layer
 extern int mp3_dec_get_layer(void *p_workmem);
-// return channel.
+
+// get channel.
+// @param   *p_workmem: pointer to working memory
+// @return  return 1(mono), 2(stereo)
 extern int mp3_dec_get_channel(void *p_workmem);
-// return bitrate in kbps.
+
+// get bitrate in kbps.
+// @param   *p_workmem: pointer to working memory
+// @return  return bitrate in kbps
 extern int mp3_dec_get_bitrate(void *p_workmem);
-// return sampling rate in Hz.
+
+// get sampling rate in Hz.
+// @param   *p_workmem: pointer to working memory
+// @return  return sampling rate in Hz
 extern int mp3_dec_get_samplerate(void *p_workmem);
 
-extern int mp3_dec_end(void *p_workmem,int wi);
+// to check the end of decoder (it's not really good)
+// @param   *p_workmem: pointer to working memory
+// @param   wi: write index of bitstream buffer
+// @return  return 1(end), 0(not end)
+extern int mp3_dec_end(void *p_workmem, int wi);
 
 // set EQ table
-extern void mp3_dec_set_eq_table(void *mp3dec_workmem, short *eqtable);
+// @param   *p_workmem: pointer to working memory
+// @param   *eqtable: pointer to EQ Table (short EQ_Tab[12])
+extern void mp3_dec_set_eq_table(void *p_workmem, short *eqtable);
 
 // set EQ band out
-extern void mp3_dec_set_band_addr(void *mp3dec_workmem, short *band);
+// @param   *p_workmem: pointer to working memory
+// @param   *band: pointer to EQ Band (short EQ_Band[32])
+extern void mp3_dec_set_band_addr(void *p_workmem, short *band);
 
 #else
-// get library version
+// MP3 Decoder Version
+// @return  return version of mp3 decoder library
 extern const unsigned char * mp3_dec_get_version(void);
+
 // MP3 Decoder Initial
+// @param  *p_workmem: pointer to working memory
+// @param  *p_bsbuf: pointer to bitstream buffer
+// @param  *ram: pointer to ram buffer
+// @return  return 0 (success), others(fail)
 extern int mp3_dec_init(char *p_workmem, unsigned char *p_bsbuf, char *ram);
-// MP3 header parsing
+
+// tell the size of bitstream buffer to decoder
+// @param   *p_workmem: pointer to working memory
+// @param   wi: write index of bitstream buffer
+// @return  return 0 (success), others(fail)
 extern int mp3_dec_parsing(char *p_workmem, unsigned int wi);
+
 // MP3 Decoder
+// @param   *p_workmem: pointer to working memory
+// @param   *p_pcmbuf: pointer to PCM buffer
+// @param   wi: write index of bitstream buffer
+// @return  return the number of sample. if return 0, decoder need more bitstream
 extern int mp3_dec_run(char *p_workmem, short *p_pcmbuf, unsigned int wi);
+
 // Get Read Index
+// @param  *p_workmem: pointer to working memory
+// @return  return read index of bitstream buffer
 extern int mp3_dec_get_ri(char *p_workmem);
+
 // Set Read Index
+// @param  *p_workmem: pointer to working memory
+// @param  ri: read index of bitstream buffer
 extern void mp3_dec_set_ri(char *mp3dec_workmem, int ri);
-// Set bitstream buffer size
+
+// Set bitstream size
+// @param  *p_workmem: pointer to working memory
+// @param  bs_buf_size: size of bitstream buffer
 extern void mp3_dec_set_bs_buf_size(char *mp3dec_workmem, int bs_buf_size);
 
 // Get mpeg id
+// @param   *p_workmem: pointer to working memory
+// @return  return MPEG id: 1 or 2 or 2.5
 extern const char *mp3_dec_get_mpegid(char *p_workmem);
-int mp3_dec_get_mem_block_size (void);
-// return value: MP3 Decoder Working memory size
-// return error number.
+
+// Get the size of MP3 Decoder Working memory
+// @return   return size of MP3 Decoder Working memory
+extern int mp3_dec_get_mem_block_size (void);
+
+// get error number.
+// @param   *p_workmem: pointer to working memory
+// @return  return error number 
 extern int mp3_dec_get_errno(char *p_workmem);
-// return layer.
+
+// get layer.
+// @param   *p_workmem: pointer to working memory
+// @return  return number of layer
 extern int mp3_dec_get_layer(char *p_workmem);
-// return channel.
+
+// get channel.
+// @param   *p_workmem: pointer to working memory
+// @return  return 1(mono), 2(stereo)
 extern int mp3_dec_get_channel(char *p_workmem);
-// return bitrate in kbps.
+
+// get bitrate in kbps.
+// @param   *p_workmem: pointer to working memory
+// @return  return bitrate in kbps
 extern int mp3_dec_get_bitrate(char *p_workmem);
-// return sampling rate in Hz.
+
+// get sampling rate in Hz.
+// @param   *p_workmem: pointer to working memory
+// @return  return sampling rate in Hz
 extern int mp3_dec_get_samplerate(char *p_workmem);
-// set EQ
+
+// set EQ table
+// @param   *p_workmem: pointer to working memory
+// @param   *eqtable: pointer to EQ Table (short EQ_Tab[12])
 extern void mp3_dec_set_EQ(unsigned char *mp3dec_workmem, unsigned short *EQ_table);
+
 // set volume gain, Q.14 (1 = 0x4000)
 extern void mp3_dec_set_volume(char *mp3dec_workmem, unsigned short vol);
 #endif

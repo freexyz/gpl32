@@ -468,27 +468,27 @@
 #define SPI1_BASE	0xC0090000
 #endif
 
-#define P_SPI0_CTRL       		    ((volatile INT32U *) SPI0_BASE + 0x00)
-#define P_SPI0_TX_DATA       		((volatile INT32U *) SPI0_BASE + 0x08)
-#define P_SPI0_RX_DATA       		((volatile INT32U *) SPI0_BASE + 0x10)
+#define P_SPI0_CTRL       		    ((volatile INT32U *) (SPI0_BASE + 0x00))
+#define P_SPI0_TX_DATA       		((volatile INT32U *) (SPI0_BASE + 0x08))
+#define P_SPI0_RX_DATA       		((volatile INT32U *) (SPI0_BASE + 0x10))
 
-#define R_SPI0_CTRL          		(*((volatile INT32U *) SPI0_BASE + 0x00))
-#define R_SPI0_TX_STATUS     		(*((volatile INT32U *) SPI0_BASE + 0x04))
-#define R_SPI0_TX_DATA       		(*((volatile INT32U *) SPI0_BASE + 0x08))
-#define R_SPI0_RX_STATUS     		(*((volatile INT32U *) SPI0_BASE + 0x0C))
-#define R_SPI0_RX_DATA       		(*((volatile INT32U *) SPI0_BASE + 0x10))
-#define R_SPI0_MISC          		(*((volatile INT32U *) SPI0_BASE + 0x14))
+#define R_SPI0_CTRL          		(*((volatile INT32U *) (SPI0_BASE + 0x00)))
+#define R_SPI0_TX_STATUS     		(*((volatile INT32U *) (SPI0_BASE + 0x04)))
+#define R_SPI0_TX_DATA       		(*((volatile INT32U *) (SPI0_BASE + 0x08)))
+#define R_SPI0_RX_STATUS     		(*((volatile INT32U *) (SPI0_BASE + 0x0C)))
+#define R_SPI0_RX_DATA       		(*((volatile INT32U *) (SPI0_BASE + 0x10)))
+#define R_SPI0_MISC          		(*((volatile INT32U *) (SPI0_BASE + 0x14)))
 
-#define P_SPI1_CTRL       		    ((volatile INT32U *) SPI1_BASE + 0x00)
-#define P_SPI1_TX_DATA       		((volatile INT32U *) SPI1_BASE + 0x08)
-#define P_SPI1_RX_DATA       		((volatile INT32U *) SPI1_BASE + 0x10)
+#define P_SPI1_CTRL       		    ((volatile INT32U *) (SPI1_BASE + 0x00))
+#define P_SPI1_TX_DATA       		((volatile INT32U *) (SPI1_BASE + 0x08))
+#define P_SPI1_RX_DATA       		((volatile INT32U *) (SPI1_BASE + 0x10))
 
-#define R_SPI1_CTRL          		(*((volatile INT32U *) SPI1_BASE + 0x00))
-#define R_SPI1_TX_STATUS     		(*((volatile INT32U *) SPI1_BASE + 0x04))
-#define R_SPI1_TX_DATA       		(*((volatile INT32U *) SPI1_BASE + 0x08))
-#define R_SPI1_RX_STATUS     		(*((volatile INT32U *) SPI1_BASE + 0x0C))
-#define R_SPI1_RX_DATA       		(*((volatile INT32U *) SPI1_BASE + 0x10))
-#define R_SPI1_MISC          		(*((volatile INT32U *) SPI1_BASE + 0x14))
+#define R_SPI1_CTRL          		(*((volatile INT32U *) (SPI1_BASE + 0x00)))
+#define R_SPI1_TX_STATUS     		(*((volatile INT32U *) (SPI1_BASE + 0x04)))
+#define R_SPI1_TX_DATA       		(*((volatile INT32U *) (SPI1_BASE + 0x08)))
+#define R_SPI1_RX_STATUS     		(*((volatile INT32U *) (SPI1_BASE + 0x0C)))
+#define R_SPI1_RX_DATA       		(*((volatile INT32U *) (SPI1_BASE + 0x10)))
+#define R_SPI1_MISC          		(*((volatile INT32U *) (SPI1_BASE + 0x14)))
 
 /******************************************************************************
  * Session: SDC SFR
@@ -817,7 +817,7 @@
 #define R_INT_IRQMASK				(*((volatile INT32U *) 0xD0100030))
 #define R_INT_FIQMASK				(*((volatile INT32U *) 0xD0100034))
 #define R_INT_GMASK					(*((volatile INT32U *) 0xD0100038))
-
+#define R_INT_FIQMASK2				(*((volatile INT32U *) 0xD010003C))
 
 /******************************************************************************
  * Session: Memory control SFR

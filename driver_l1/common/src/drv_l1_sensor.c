@@ -106,11 +106,12 @@ void sccb_delay (
 //===================================================================
 void sccb_start (void)
 {
-	gpio_write_io(SCCB_SCL, DATA_HIGH);					//SCL1
+	gpio_write_io(SCCB_SCL, DATA_HIGH);					//SCL
+	gpio_write_io(SCCB_SDA, DATA_HIGH);					//SDA
 	sccb_delay (1);
-	gpio_write_io(SCCB_SDA, DATA_HIGH);					//SDA1
+	gpio_write_io(SCCB_SDA, DATA_LOW);					//SDA
 	sccb_delay (1);
-	gpio_write_io(SCCB_SDA, DATA_LOW);					//SDA0	
+	gpio_write_io(SCCB_SCL, DATA_LOW);					//SCL
 	sccb_delay (1);
 }
 
@@ -125,12 +126,12 @@ void sccb_start (void)
 //===================================================================
 void sccb_stop (void)
 {
+	gpio_write_io(SCCB_SCL, DATA_LOW);					//SCL
+	gpio_write_io(SCCB_SDA, DATA_LOW);					//SDA
 	sccb_delay (1);
-	gpio_write_io(SCCB_SDA, DATA_LOW);					//SDA0	
+	gpio_write_io(SCCB_SCL, DATA_HIGH);					//SCL
 	sccb_delay (1);
-	gpio_write_io(SCCB_SCL, DATA_HIGH);					//SCL1
-	sccb_delay (1);
-	gpio_write_io(SCCB_SDA, DATA_HIGH);					//SDA1
+	gpio_write_io(SCCB_SDA, DATA_HIGH);					//SDA
 	sccb_delay (1);
 }
 
@@ -3456,161 +3457,203 @@ void OV3640_Init (
 		
 #else
 	//Init ov3640
-	{
-		sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x90);	// [7]:Reset; [6:4]=001->XGA mode
-		sccb_write_Reg16Data8(OV3640_ID, 0x30a9, 0xdb);	// for 1.5V
-		sccb_write_Reg16Data8(OV3640_ID, 0x304d, 0x45);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3087, 0x16);
-		sccb_write_Reg16Data8(OV3640_ID, 0x309c, 0x1a);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30a2, 0xe4);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30aa, 0x42);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30b0, 0xff);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30b1, 0xff);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30b2, 0x10);
-		sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x32);
-		sccb_write_Reg16Data8(OV3640_ID, 0x300f, 0x21);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3010, 0x20);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x01);
-		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x10);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30d9, 0x0d);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30db, 0x08);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3016, 0x82);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3018, 0x48);	// Luminance High Range=72 after Gamma=0x86=134; 0x40->134
-		sccb_write_Reg16Data8(OV3640_ID, 0x3019, 0x40);	// Luminance Low Range=64 after Gamma=0x8f=143; 0x38->125
-		sccb_write_Reg16Data8(OV3640_ID, 0x301a, 0x82);
-		sccb_write_Reg16Data8(OV3640_ID, 0x307d, 0x00);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3087, 0x02);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3082, 0x20);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3070, 0x00);	// 50Hz Banding MSB
-		sccb_write_Reg16Data8(OV3640_ID, 0x3071, 0xbb);	// 50Hz Banding LSB
-		sccb_write_Reg16Data8(OV3640_ID, 0x3072, 0x00);	// 60Hz Banding MSB
-		sccb_write_Reg16Data8(OV3640_ID, 0x3073, 0xa6);	// 60Hz Banding LSB
-		sccb_write_Reg16Data8(OV3640_ID, 0x301c, 0x07);	// max_band_step_50hz
-		sccb_write_Reg16Data8(OV3640_ID, 0x301d, 0x08);	// max_band_step_60hz
-		sccb_write_Reg16Data8(OV3640_ID, 0x3015, 0x12);	// [6:4]:1 dummy frame; [2:0]:AGC gain 8x
-		sccb_write_Reg16Data8(OV3640_ID, 0x3014, 0x84);	// [7]:50hz; [6]:auto banding detection disable; [3]:night modedisable
-		sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf7);	// AE_en
-		sccb_write_Reg16Data8(OV3640_ID, 0x3030, 0x11);	// Avg_win_Weight0
-		sccb_write_Reg16Data8(OV3640_ID, 0x3031, 0x11);	// Avg_win_Weight1
-		sccb_write_Reg16Data8(OV3640_ID, 0x3032, 0x11);	// Avg_win_Weight2
-		sccb_write_Reg16Data8(OV3640_ID, 0x3033, 0x11);	// Avg_win_Weight3
-		sccb_write_Reg16Data8(OV3640_ID, 0x3034, 0x11);	// Avg_win_Weight4
-		sccb_write_Reg16Data8(OV3640_ID, 0x3035, 0x11);	// Avg_win_Weight5
-		sccb_write_Reg16Data8(OV3640_ID, 0x3036, 0x11);	// Avg_win_Weight6
-		sccb_write_Reg16Data8(OV3640_ID, 0x3037, 0x11);	// Avg_win_Weight7
-		sccb_write_Reg16Data8(OV3640_ID, 0x3038, 0x01);	// Avg_Win_Hstart=285
-		sccb_write_Reg16Data8(OV3640_ID, 0x3039, 0x1d);	// Avg_Win_Hstart=285
-		sccb_write_Reg16Data8(OV3640_ID, 0x303a, 0x00);	// Avg_Win_Vstart=10
-		sccb_write_Reg16Data8(OV3640_ID, 0x303b, 0x0a);	// Avg_Win_Vstart=10
-		sccb_write_Reg16Data8(OV3640_ID, 0x303c, 0x02);	// Avg_Win_Width=512x4=2048
-		sccb_write_Reg16Data8(OV3640_ID, 0x303d, 0x00);	// Avg_Win_Width=512x4=2048
-		sccb_write_Reg16Data8(OV3640_ID, 0x303e, 0x01);	// Avg_Win_Height=384x4=1536
-		sccb_write_Reg16Data8(OV3640_ID, 0x303f, 0x80);	// Avg_Win_Height=384x4=1536
-		sccb_write_Reg16Data8(OV3640_ID, 0x3047, 0x00);	// [7]:avg_based AE
-		sccb_write_Reg16Data8(OV3640_ID, 0x30b8, 0x20);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30b9, 0x17);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30ba, 0x04);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30bb, 0x08);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30a9, 0xdb);	// for 1.5V
+	sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x90);	// [7]:Reset; [6:4]=001->XGA mode
+	sccb_write_Reg16Data8(OV3640_ID, 0x30a9, 0xdb);	// for 1.5V
+	sccb_write_Reg16Data8(OV3640_ID, 0x304d, 0x45);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3087, 0x16);
+	sccb_write_Reg16Data8(OV3640_ID, 0x309c, 0x1a);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30a2, 0xe4);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30aa, 0x42);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30b0, 0xff);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30b1, 0xff);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30b2, 0x10);
+	sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x32);
+	sccb_write_Reg16Data8(OV3640_ID, 0x300f, 0x21);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3010, 0x20);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x01);
+	sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x10);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30d9, 0x0d);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30db, 0x08);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3016, 0x82);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3018, 0x48);	// Luminance High Range=72 after Gamma=0x86=134; 0x40->134
+	sccb_write_Reg16Data8(OV3640_ID, 0x3019, 0x40);	// Luminance Low Range=64 after Gamma=0x8f=143; 0x38->125
+	sccb_write_Reg16Data8(OV3640_ID, 0x301a, 0x82);
+	sccb_write_Reg16Data8(OV3640_ID, 0x307d, 0x00);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3087, 0x02);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3082, 0x20);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3070, 0x00);	// 50Hz Banding MSB
+	sccb_write_Reg16Data8(OV3640_ID, 0x3071, 0xbb);	// 50Hz Banding LSB
+	sccb_write_Reg16Data8(OV3640_ID, 0x3072, 0x00);	// 60Hz Banding MSB
+	sccb_write_Reg16Data8(OV3640_ID, 0x3073, 0xa6);	// 60Hz Banding LSB
+	sccb_write_Reg16Data8(OV3640_ID, 0x301c, 0x07);	// max_band_step_50hz
+	sccb_write_Reg16Data8(OV3640_ID, 0x301d, 0x08);	// max_band_step_60hz
+	sccb_write_Reg16Data8(OV3640_ID, 0x3015, 0x12);	// [6:4]:1 dummy frame; [2:0]:AGC gain 8x
+	sccb_write_Reg16Data8(OV3640_ID, 0x3014, 0x84);	// [7]:50hz; [6]:auto banding detection disable; [3]:night modedisable
+	sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf7);	// AE_en
+	sccb_write_Reg16Data8(OV3640_ID, 0x3030, 0x11);	// Avg_win_Weight0
+	sccb_write_Reg16Data8(OV3640_ID, 0x3031, 0x11);	// Avg_win_Weight1
+	sccb_write_Reg16Data8(OV3640_ID, 0x3032, 0x11);	// Avg_win_Weight2
+	sccb_write_Reg16Data8(OV3640_ID, 0x3033, 0x11);	// Avg_win_Weight3
+	sccb_write_Reg16Data8(OV3640_ID, 0x3034, 0x11);	// Avg_win_Weight4
+	sccb_write_Reg16Data8(OV3640_ID, 0x3035, 0x11);	// Avg_win_Weight5
+	sccb_write_Reg16Data8(OV3640_ID, 0x3036, 0x11);	// Avg_win_Weight6
+	sccb_write_Reg16Data8(OV3640_ID, 0x3037, 0x11);	// Avg_win_Weight7
+	sccb_write_Reg16Data8(OV3640_ID, 0x3038, 0x01);	// Avg_Win_Hstart=285
+	sccb_write_Reg16Data8(OV3640_ID, 0x3039, 0x1d);	// Avg_Win_Hstart=285
+	sccb_write_Reg16Data8(OV3640_ID, 0x303a, 0x00);	// Avg_Win_Vstart=10
+	sccb_write_Reg16Data8(OV3640_ID, 0x303b, 0x0a);	// Avg_Win_Vstart=10
+	sccb_write_Reg16Data8(OV3640_ID, 0x303c, 0x02);	// Avg_Win_Width=512x4=2048
+	sccb_write_Reg16Data8(OV3640_ID, 0x303d, 0x00);	// Avg_Win_Width=512x4=2048
+	sccb_write_Reg16Data8(OV3640_ID, 0x303e, 0x01);	// Avg_Win_Height=384x4=1536
+	sccb_write_Reg16Data8(OV3640_ID, 0x303f, 0x80);	// Avg_Win_Height=384x4=1536
+	sccb_write_Reg16Data8(OV3640_ID, 0x3047, 0x00);	// [7]:avg_based AE
+	sccb_write_Reg16Data8(OV3640_ID, 0x30b8, 0x20);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30b9, 0x17);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30ba, 0x04);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30bb, 0x08);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30a9, 0xdb);	// for 1.5V
 
-		sccb_write_Reg16Data8(OV3640_ID, 0x3104, 0x02);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3105, 0xfd);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3106, 0x00);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3107, 0xff);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3100, 0x02);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3104, 0x02);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3105, 0xfd);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3106, 0x00);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3107, 0xff);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3100, 0x02);
 
-		sccb_write_Reg16Data8(OV3640_ID, 0x3300, 0x13);	// [0]: LENC disable; [1]: AF enable
-		sccb_write_Reg16Data8(OV3640_ID, 0x3301, 0xde);	// [1]: BC_en; [2]: WC_en; [4]: CMX_en
-		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf);	// [0]: AWB_en; [1]: AWB_gain_en; [2]: Gamma_en; [7]: Special_Effect_en
-		sccb_write_Reg16Data8(OV3640_ID, 0x3304, 0xfc);	// [4]: Add bias to gamma result; [5]: Enable Gamma bias function
-		sccb_write_Reg16Data8(OV3640_ID, 0x3306, 0x5c);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3307, 0x11);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3308, 0x00);	// [7]: AWB_mode=advanced
-		sccb_write_Reg16Data8(OV3640_ID, 0x330b, 0x1c);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x330c, 0x18);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x330d, 0x18);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x330e, 0x56);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x330f, 0x5c);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3310, 0xd0);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3311, 0xbd);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3312, 0x26);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3313, 0x2b);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3314, 0x42);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3315, 0x42);	// Reserved ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x331b, 0x09);	// Gamma YST1
-		sccb_write_Reg16Data8(OV3640_ID, 0x331c, 0x18);	// Gamma YST2
-		sccb_write_Reg16Data8(OV3640_ID, 0x331d, 0x30);	// Gamma YST3
-		sccb_write_Reg16Data8(OV3640_ID, 0x331e, 0x58);	// Gamma YST4
-		sccb_write_Reg16Data8(OV3640_ID, 0x331f, 0x66);	// Gamma YST5
-		sccb_write_Reg16Data8(OV3640_ID, 0x3320, 0x72);	// Gamma YST6
-		sccb_write_Reg16Data8(OV3640_ID, 0x3321, 0x7d);	// Gamma YST7
-		sccb_write_Reg16Data8(OV3640_ID, 0x3322, 0x86);	// Gamma YST8
-		sccb_write_Reg16Data8(OV3640_ID, 0x3323, 0x8f);	// Gamma YST9
-		sccb_write_Reg16Data8(OV3640_ID, 0x3324, 0x97);	// Gamma YST10
-		sccb_write_Reg16Data8(OV3640_ID, 0x3325, 0xa5);	// Gamma YST11
-		sccb_write_Reg16Data8(OV3640_ID, 0x3326, 0xb2);	// Gamma YST12
-		sccb_write_Reg16Data8(OV3640_ID, 0x3327, 0xc7);	// Gamma YST13
-		sccb_write_Reg16Data8(OV3640_ID, 0x3328, 0xd8);	// Gamma YST14
-		sccb_write_Reg16Data8(OV3640_ID, 0x3329, 0xe8);	// Gamma YST15
-		sccb_write_Reg16Data8(OV3640_ID, 0x332a, 0x20);	// Gamma YSLP15
-		sccb_write_Reg16Data8(OV3640_ID, 0x332b, 0x00);	// [3]: WB_mode=auto
-		sccb_write_Reg16Data8(OV3640_ID, 0x332d, 0x64);	// [6]:de-noise auto mode; [5]:edge auto mode; [4:0]:edge threshold
-		sccb_write_Reg16Data8(OV3640_ID, 0x3355, 0x06);	// Special_Effect_CTRL: [1]:Sat_en; [2]: Cont_Y_en
-		sccb_write_Reg16Data8(OV3640_ID, 0x3358, 0x40);	// Special_Effect_Sat_U
-		sccb_write_Reg16Data8(OV3640_ID, 0x3359, 0x40);	// Special_Effect_Sat_V
-		sccb_write_Reg16Data8(OV3640_ID, 0x336a, 0x52);	// LENC R_A1
-		sccb_write_Reg16Data8(OV3640_ID, 0x3370, 0x46);	// LENC G_A1
-		sccb_write_Reg16Data8(OV3640_ID, 0x3376, 0x38);	// LENC B_A1
+	sccb_write_Reg16Data8(OV3640_ID, 0x3300, 0x13);	// [0]: LENC disable; [1]: AF enable
+	sccb_write_Reg16Data8(OV3640_ID, 0x3301, 0xde);	// [1]: BC_en; [2]: WC_en; [4]: CMX_en
+	sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf);	// [0]: AWB_en; [1]: AWB_gain_en; [2]: Gamma_en; [7]: Special_Effect_en
+	sccb_write_Reg16Data8(OV3640_ID, 0x3304, 0xfc);	// [4]: Add bias to gamma result; [5]: Enable Gamma bias function
+	sccb_write_Reg16Data8(OV3640_ID, 0x3306, 0x5c);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3307, 0x11);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3308, 0x00);	// [7]: AWB_mode=advanced
+	sccb_write_Reg16Data8(OV3640_ID, 0x330b, 0x1c);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x330c, 0x18);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x330d, 0x18);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x330e, 0x56);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x330f, 0x5c);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3310, 0xd0);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3311, 0xbd);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3312, 0x26);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3313, 0x2b);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3314, 0x42);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3315, 0x42);	// Reserved ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x331b, 0x09);	// Gamma YST1
+	sccb_write_Reg16Data8(OV3640_ID, 0x331c, 0x18);	// Gamma YST2
+	sccb_write_Reg16Data8(OV3640_ID, 0x331d, 0x30);	// Gamma YST3
+	sccb_write_Reg16Data8(OV3640_ID, 0x331e, 0x58);	// Gamma YST4
+	sccb_write_Reg16Data8(OV3640_ID, 0x331f, 0x66);	// Gamma YST5
+	sccb_write_Reg16Data8(OV3640_ID, 0x3320, 0x72);	// Gamma YST6
+	sccb_write_Reg16Data8(OV3640_ID, 0x3321, 0x7d);	// Gamma YST7
+	sccb_write_Reg16Data8(OV3640_ID, 0x3322, 0x86);	// Gamma YST8
+	sccb_write_Reg16Data8(OV3640_ID, 0x3323, 0x8f);	// Gamma YST9
+	sccb_write_Reg16Data8(OV3640_ID, 0x3324, 0x97);	// Gamma YST10
+	sccb_write_Reg16Data8(OV3640_ID, 0x3325, 0xa5);	// Gamma YST11
+	sccb_write_Reg16Data8(OV3640_ID, 0x3326, 0xb2);	// Gamma YST12
+	sccb_write_Reg16Data8(OV3640_ID, 0x3327, 0xc7);	// Gamma YST13
+	sccb_write_Reg16Data8(OV3640_ID, 0x3328, 0xd8);	// Gamma YST14
+	sccb_write_Reg16Data8(OV3640_ID, 0x3329, 0xe8);	// Gamma YST15
+	sccb_write_Reg16Data8(OV3640_ID, 0x332a, 0x20);	// Gamma YSLP15
+	sccb_write_Reg16Data8(OV3640_ID, 0x332b, 0x00);	// [3]: WB_mode=auto
+	sccb_write_Reg16Data8(OV3640_ID, 0x332d, 0x64);	// [6]:de-noise auto mode; [5]:edge auto mode; [4:0]:edge threshold
+	sccb_write_Reg16Data8(OV3640_ID, 0x3355, 0x06);	// Special_Effect_CTRL: [1]:Sat_en; [2]: Cont_Y_en
+	sccb_write_Reg16Data8(OV3640_ID, 0x3358, 0x40);	// Special_Effect_Sat_U
+	sccb_write_Reg16Data8(OV3640_ID, 0x3359, 0x40);	// Special_Effect_Sat_V
+	sccb_write_Reg16Data8(OV3640_ID, 0x336a, 0x52);	// LENC R_A1
+	sccb_write_Reg16Data8(OV3640_ID, 0x3370, 0x46);	// LENC G_A1
+	sccb_write_Reg16Data8(OV3640_ID, 0x3376, 0x38);	// LENC B_A1
 
-		sccb_write_Reg16Data8(OV3640_ID, 0x3400, 0x00);	// [2:0];Format input source=DSP TUV444
-		sccb_write_Reg16Data8(OV3640_ID, 0x3403, 0x42);	// DVP Win Addr
-		sccb_write_Reg16Data8(OV3640_ID, 0x3404, 0x00);	// [5:0]: yuyv
+	sccb_write_Reg16Data8(OV3640_ID, 0x3400, 0x00);	// [2:0];Format input source=DSP TUV444
+	sccb_write_Reg16Data8(OV3640_ID, 0x3403, 0x42);	// DVP Win Addr
+	sccb_write_Reg16Data8(OV3640_ID, 0x3404, 0x00);	// [5:0]: yuyv
 
-		sccb_write_Reg16Data8(OV3640_ID, 0x3507, 0x06);	// ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x350a, 0x4f);	// ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3507, 0x06);	// ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x350a, 0x4f);	// ???
 
-		sccb_write_Reg16Data8(OV3640_ID, 0x3600, 0xc0);	// VSYNC_CTRL
+	sccb_write_Reg16Data8(OV3640_ID, 0x3600, 0xc0);	// VSYNC_CTRL
 
-		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf);	// [0]: AWB_enable
-		sccb_write_Reg16Data8(OV3640_ID, 0x300d, 0x01);	// PCLK/2
-		sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x10);	// [6:4]=001->XGA mode
-		sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf7);	// AE_enable
-		sccb_write_Reg16Data8(OV3640_ID, 0x3020, 0x01);	// HS=285
-		sccb_write_Reg16Data8(OV3640_ID, 0x3021, 0x1d);	// HS=285
-		sccb_write_Reg16Data8(OV3640_ID, 0x3022, 0x00);	// VS = 6
-		sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x06);	// VS = 6
-		sccb_write_Reg16Data8(OV3640_ID, 0x3024, 0x08);	// HW=2072
-		sccb_write_Reg16Data8(OV3640_ID, 0x3025, 0x18);	// HW=2072
-		sccb_write_Reg16Data8(OV3640_ID, 0x3026, 0x03);	// VW=772
-		sccb_write_Reg16Data8(OV3640_ID, 0x3027, 0x04);	// VW=772
-		sccb_write_Reg16Data8(OV3640_ID, 0x3028, 0x09);	// HTotalSize=2375
-		sccb_write_Reg16Data8(OV3640_ID, 0x3029, 0x47);	// HTotalSize=2375
-		sccb_write_Reg16Data8(OV3640_ID, 0x302a, 0x03);	// VTotalSize=784
-		sccb_write_Reg16Data8(OV3640_ID, 0x302b, 0x10);	// VTotalSize=784
-		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
-		sccb_write_Reg16Data8(OV3640_ID, 0x3075, 0x24);	// VSYNCOPT
-		sccb_write_Reg16Data8(OV3640_ID, 0x3086, 0x00);	// Sleep/Wakeup
-		sccb_write_Reg16Data8(OV3640_ID, 0x3088, 0x04);	// x_output_size=1024
-		sccb_write_Reg16Data8(OV3640_ID, 0x3089, 0x00);	// x_output_size=1024
-		sccb_write_Reg16Data8(OV3640_ID, 0x308a, 0x03);	// y_output_size=768
-		sccb_write_Reg16Data8(OV3640_ID, 0x308b, 0x00);	// y_output_size=768
-		sccb_write_Reg16Data8(OV3640_ID, 0x308d, 0x04);
-		sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x90);	// ???
-		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xef);	// [5]: Scale_en, [0]: AWB_enable
-		sccb_write_Reg16Data8(OV3640_ID, 0x335f, 0x34);	// Scale_VH_in
-		sccb_write_Reg16Data8(OV3640_ID, 0x3360, 0x0c);	// Scale_H_in = 0x40c = 1036
-		sccb_write_Reg16Data8(OV3640_ID, 0x3361, 0x04);	// Scale_V_in = 0x304 = 772
-		sccb_write_Reg16Data8(OV3640_ID, 0x3362, 0x34);	// Scale_VH_out
-		sccb_write_Reg16Data8(OV3640_ID, 0x3363, 0x08);	// Scale_H_out = 0x408 = 1032
-		sccb_write_Reg16Data8(OV3640_ID, 0x3364, 0x04);	// Scale_V_out = 0x304 = 772
+	sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf);	// [0]: AWB_enable
+	sccb_write_Reg16Data8(OV3640_ID, 0x300d, 0x01);	// PCLK/2
+	sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x10);	// [6:4]=001->XGA mode
+	sccb_write_Reg16Data8(OV3640_ID, 0x3013, 0xf7);	// AE_enable
+	sccb_write_Reg16Data8(OV3640_ID, 0x3020, 0x01);	// HS=285
+	sccb_write_Reg16Data8(OV3640_ID, 0x3021, 0x1d);	// HS=285
+	sccb_write_Reg16Data8(OV3640_ID, 0x3022, 0x00);	// VS = 6
+	sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x06);	// VS = 6
+	sccb_write_Reg16Data8(OV3640_ID, 0x3024, 0x08);	// HW=2072
+	sccb_write_Reg16Data8(OV3640_ID, 0x3025, 0x18);	// HW=2072
+	sccb_write_Reg16Data8(OV3640_ID, 0x3026, 0x03);	// VW=772
+	sccb_write_Reg16Data8(OV3640_ID, 0x3027, 0x04);	// VW=772
+	sccb_write_Reg16Data8(OV3640_ID, 0x3028, 0x09);	// HTotalSize=2375
+	sccb_write_Reg16Data8(OV3640_ID, 0x3029, 0x47);	// HTotalSize=2375
+	sccb_write_Reg16Data8(OV3640_ID, 0x302a, 0x03);	// VTotalSize=784
+	sccb_write_Reg16Data8(OV3640_ID, 0x302b, 0x10);	// VTotalSize=784
+	sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3075, 0x24);	// VSYNCOPT
+	sccb_write_Reg16Data8(OV3640_ID, 0x3086, 0x00);	// Sleep/Wakeup
+	sccb_write_Reg16Data8(OV3640_ID, 0x3088, 0x04);	// x_output_size=1024
+	sccb_write_Reg16Data8(OV3640_ID, 0x3089, 0x00);	// x_output_size=1024
+	sccb_write_Reg16Data8(OV3640_ID, 0x308a, 0x03);	// y_output_size=768
+	sccb_write_Reg16Data8(OV3640_ID, 0x308b, 0x00);	// y_output_size=768
+	sccb_write_Reg16Data8(OV3640_ID, 0x308d, 0x04);
+	sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x90);	// ???
+	sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xef);	// [5]: Scale_en, [0]: AWB_enable
+	sccb_write_Reg16Data8(OV3640_ID, 0x335f, 0x34);	// Scale_VH_in
+	sccb_write_Reg16Data8(OV3640_ID, 0x3360, 0x0c);	// Scale_H_in = 0x40c = 1036
+	sccb_write_Reg16Data8(OV3640_ID, 0x3361, 0x04);	// Scale_V_in = 0x304 = 772
+	sccb_write_Reg16Data8(OV3640_ID, 0x3362, 0x34);	// Scale_VH_out
+	sccb_write_Reg16Data8(OV3640_ID, 0x3363, 0x08);	// Scale_H_out = 0x408 = 1032
+	sccb_write_Reg16Data8(OV3640_ID, 0x3364, 0x04);	// Scale_V_out = 0x304 = 772
+	sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x32);
+	sccb_write_Reg16Data8(OV3640_ID, 0x300f, 0x21);
+	sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x00);	// for 30 FPS
+	sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
+
+	//V Flip & Mirror
+	sccb_write_Reg16Data8(OV3640_ID, 0x307c, 0x13); 
+	sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x09); 
+	sccb_write_Reg16Data8(OV3640_ID, 0x3090, 0xc9); 
+	
+	if(nWidthH == 640 && nWidthV == 480){
+		//set output size to 640x480	
+		sccb_write_Reg16Data8(OV3640_ID, 0x3012, 0x10);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3020, 0x01);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3021, 0x1d);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3022, 0x00);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3023, 0x06);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3024, 0x08);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3025, 0x18);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3026, 0x03);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3027, 0x04);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x302a, 0x03);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x302b, 0x10);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3075, 0x24);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x300d, 0x01);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x30d7, 0x90);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3069, 0x04);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xef);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x335f, 0x34);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3360, 0x0c);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3361, 0x04);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3362, 0x12);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3363, 0x88);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3364, 0xe4);   //
+		sccb_write_Reg16Data8(OV3640_ID, 0x3403, 0x42);   //
+
+		sccb_write_Reg16Data8(OV3640_ID, 0x302c, 0x0e);   //EXHTS
+		sccb_write_Reg16Data8(OV3640_ID, 0x302d, 0x00);   //EXVTS[15:8]
+		sccb_write_Reg16Data8(OV3640_ID, 0x302e, 0x10);   //EXVTS[7:0]
+
+		sccb_write_Reg16Data8(OV3640_ID, 0x3088, 0x02);   // x_output_size=640
+		sccb_write_Reg16Data8(OV3640_ID, 0x3089, 0x80);   // x_output_size=640
+		sccb_write_Reg16Data8(OV3640_ID, 0x308a, 0x01);   // y_output_size=480
+		sccb_write_Reg16Data8(OV3640_ID, 0x308b, 0xe0);   // y_output_size=480
+		
 		sccb_write_Reg16Data8(OV3640_ID, 0x300e, 0x32);
 		sccb_write_Reg16Data8(OV3640_ID, 0x300f, 0x21);
 		sccb_write_Reg16Data8(OV3640_ID, 0x3011, 0x00);	// for 30 FPS
 		sccb_write_Reg16Data8(OV3640_ID, 0x304c, 0x82);
-	}
-	
-	if(nWidthH == 1024 && nWidthV == 768) {	
+	} else if(nWidthH == 1024 && nWidthV == 768) {	
 		//set output size to 1024x768
 		sccb_write_Reg16Data8(OV3640_ID, 0x3302, 0xcf);	// [0]: AWB_enable
 		sccb_write_Reg16Data8(OV3640_ID, 0x300d, 0x01);	// PCLK/2
@@ -5877,6 +5920,419 @@ void OV2643_Init (
 #endif	        
 }               
 #endif          
+
+#ifdef	__OV2659_DRV_C__
+//====================================================================================================
+//	Description:	OV2659 Initialization
+//	Syntax:			void OV2659_Init (
+//						INT16S nWidthH,			// Active H Width
+//						INT16S nWidthV,			// Active V Width
+//						INT16U uFlag				// Flag Type
+//					);
+//	Return:			None
+//====================================================================================================
+void OV2659_Init (
+	INT16S nWidthH,			// Active H Width
+	INT16S nWidthV,			// Active V Width
+	INT16U uFlag			// Flag Type
+) {
+	INT16U uCtrlReg1, uCtrlReg2;
+	
+	// Enable CSI clock to let sensor initialize at first
+#if CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV2
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL48M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL &= ~0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_27MHZ
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL &= ~0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV4
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL48M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL |= 0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_13_5MHZ
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL |= 0x4000; 
+#endif		
+	
+	uCtrlReg1 = CSIEN | YUV_YUYV | CAP;								// Default CSI Control Register 1
+	if (uFlag & FT_CSI_RGB1555) {									// RGB1555?
+		uCtrlReg2 |= CSI_RGB1555;
+	}
+	
+	if (uFlag & FT_CSI_CCIR656)	{									// CCIR656?
+		uCtrlReg1 |= CCIR656 | VADD_FALL | VRST_FALL | HRST_FALL;	// CCIR656
+		uCtrlReg2 |= D_TYPE1;										// CCIR656
+	} else {
+		uCtrlReg1 |= VADD_RISE | VRST_FALL | HRST_RISE | HREF;		// NOT CCIR656
+		uCtrlReg2 |= D_TYPE0;										// NOT CCIR656
+	}
+	
+	if (uFlag & FT_CSI_YUVIN) {										// YUVIN?
+		uCtrlReg1 |= YUVIN;
+	}
+	
+	if (uFlag & FT_CSI_YUVOUT) {									// YUVOUT?
+		uCtrlReg1 |= YUVOUT;
+	}
+	
+	// Whether compression or not?
+	R_CSI_TG_HRATIO = 0;					
+	R_CSI_TG_VRATIO = 0;					
+
+	R_CSI_TG_VL0START = 0x0000;						// Sensor field 0 vertical latch start register.
+	R_CSI_TG_VL1START = 0x0000;						//*P_Sensor_TG_V_L1Start = 0x0000;				
+	R_CSI_TG_HSTART = 0x0000;						// Sensor horizontal start register.
+	
+	R_CSI_TG_CTRL0 = 0;								//reset control0
+	R_CSI_TG_CTRL1 = CSI_NOSTOP|CLKOEN;				//enable CSI CLKO
+	drv_msec_wait(100); 							//wait 100ms for CLKO stable
+
+	// CMOS Sensor Initialization Start...
+	sccb_init();
+	sccb_delay(200);
+			
+	if(nWidthH == 800 && nWidthV == 600) {
+		//@@ YUV SVGA 800x600 15fps
+		sccb_write_Reg16Data8(OV2659_ID, 0x0103, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3000, 0x0f);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3001, 0xff);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3002, 0xff);
+		sccb_write_Reg16Data8(OV2659_ID, 0x0100, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3633, 0x3d);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3620, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3631, 0x11);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3612, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3630, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x4702, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x370c, 0x34);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3004, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3005, 0x18);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3800, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3801, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3802, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3803, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3804, 0x06);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3805, 0x5f);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3806, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3807, 0xb7);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3808, 0x03);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3809, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380a, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380b, 0x58);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380c, 0x05);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380d, 0x14);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380e, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380f, 0x68);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3811, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3813, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3814, 0x31);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3815, 0x31);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a02, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a03, 0x68);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a08, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a09, 0x5c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0a, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0b, 0x4d);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0d, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0e, 0x06);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a14, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a15, 0x28);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3623, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3634, 0x76);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3701, 0x44);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3702, 0x18);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3703, 0x24);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3704, 0x24);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3705, 0x0c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3820, 0x81);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3821, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x370a, 0x52);
+		sccb_write_Reg16Data8(OV2659_ID, 0x4608, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x4609, 0x80);
+		sccb_write_Reg16Data8(OV2659_ID, 0x4300, 0x30);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5086, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5000, 0xfb);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5001, 0x1f);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5002, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5025, 0x0e);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5026, 0x18);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5027, 0x34);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5028, 0x4c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5029, 0x62);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502a, 0x74);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502b, 0x85);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502c, 0x92);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502d, 0x9e);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502e, 0xb2);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502f, 0xc0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5030, 0xcc);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5031, 0xe0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5032, 0xee);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5033, 0xf6);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5034, 0x11);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5070, 0x1c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5071, 0x5b);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5072, 0x05);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5073, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5074, 0x94);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5075, 0xb4);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5076, 0xb4);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5077, 0xaf);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5078, 0x05);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5079, 0x98);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507a, 0x21);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5035, 0x6a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5036, 0x11);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5037, 0x92);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5038, 0x21);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5039, 0xe1);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503a, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503c, 0x05);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503d, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503e, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503f, 0x64);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5040, 0x58);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5041, 0x2a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5042, 0xc5);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5043, 0x2e);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5044, 0x3a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5045, 0x3c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5046, 0x44);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5047, 0xf8);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5048, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5049, 0x70);
+		sccb_write_Reg16Data8(OV2659_ID, 0x504a, 0xf0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x504b, 0xf0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x500c, 0x03);
+		sccb_write_Reg16Data8(OV2659_ID, 0x500d, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x500e, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x500f, 0x5c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5010, 0x48);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5011, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5012, 0x66);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5013, 0x03);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5014, 0x30);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5015, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5016, 0x7c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5017, 0x40);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5018, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5019, 0x66);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501a, 0x03);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501b, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501c, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501d, 0x7c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501e, 0x3a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501f, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5020, 0x66);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506e, 0x44);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5064, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5065, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5066, 0x12);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5067, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506c, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506d, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506f, 0xa6);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5068, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5069, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506a, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506b, 0x12);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507e, 0x40);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507f, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507b, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507a, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5084, 0x0c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5085, 0x3e);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5005, 0x80);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0f, 0x30);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a10, 0x28);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a1b, 0x32);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a1e, 0x26);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a11, 0x60);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a1f, 0x14);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5060, 0x69);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5061, 0x7d);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5062, 0x7d);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5063, 0x69);
+
+		sccb_write_Reg16Data8(OV2659_ID, 0x3004, 0x20);
+	} else {
+		//@@ YUV Full 1600x1200 5fps
+		sccb_write_Reg16Data8(OV2659_ID, 0x0103, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3000, 0x0f);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3001, 0xff);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3002, 0xff);
+		sccb_write_Reg16Data8(OV2659_ID, 0x0100, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3633, 0x3d);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3620, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3631, 0x11);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3612, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3630, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x4702, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x370c, 0x34);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3004, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3005, 0x24);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3800, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3801, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3802, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3803, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3804, 0x06);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3805, 0x5f);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3806, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3807, 0xbb);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3808, 0x06);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3809, 0x40);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380a, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380b, 0xb0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380c, 0x07);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380d, 0x9f);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380e, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x380f, 0xd0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3811, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3813, 0x06);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3814, 0x11);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3815, 0x11);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a02, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a03, 0xd0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a08, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a09, 0xb8);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0a, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0b, 0x9a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0d, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0e, 0x06);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a14, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a15, 0x50);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3623, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3701, 0x44);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3702, 0x30);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3703, 0x48);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3704, 0x48);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3705, 0x18);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3820, 0x80);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3821, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x370a, 0x12);
+		sccb_write_Reg16Data8(OV2659_ID, 0x4608, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x4609, 0x80);
+		sccb_write_Reg16Data8(OV2659_ID, 0x4300, 0x30);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5086, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5000, 0xfb);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5001, 0x1f);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5002, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5025, 0x12);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5026, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5027, 0x39);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5028, 0x4e);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5029, 0x62);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502a, 0x74);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502b, 0x85);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502c, 0x92);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502d, 0x9e);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502e, 0xb2);
+		sccb_write_Reg16Data8(OV2659_ID, 0x502f, 0xc0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5030, 0xcc);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5031, 0xe0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5032, 0xee);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5033, 0xf6);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5034, 0x11);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5070, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5071, 0x5b);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5072, 0x05);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5073, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5074, 0x94);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5075, 0xb4);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5076, 0xb4);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5077, 0xaf);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5078, 0x05);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5079, 0x98);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507a, 0x21);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5035, 0x6a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5036, 0x11);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5037, 0x92);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5038, 0x21);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5039, 0xe1);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503a, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503c, 0x05);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503d, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503e, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x503f, 0x64);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5040, 0x58);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5041, 0x2a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5042, 0xc5);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5043, 0x2e);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5044, 0x3a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5045, 0x3c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5046, 0x44);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5047, 0xf8);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5048, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5049, 0x70);
+		sccb_write_Reg16Data8(OV2659_ID, 0x504a, 0xf0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x504b, 0xf0);
+		sccb_write_Reg16Data8(OV2659_ID, 0x500c, 0x03);
+		sccb_write_Reg16Data8(OV2659_ID, 0x500d, 0x20);
+		sccb_write_Reg16Data8(OV2659_ID, 0x500e, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x500f, 0x5c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5010, 0x48);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5011, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5012, 0x66);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5013, 0x03);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5014, 0x30);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5015, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5016, 0x7c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5017, 0x40);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5018, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5019, 0x66);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501a, 0x03);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501b, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501c, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501d, 0x7c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501e, 0x3a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x501f, 0x00);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5020, 0x66);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506e, 0x44);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5064, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5065, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5066, 0x12);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5067, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506c, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506d, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506f, 0xa6);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5068, 0x08);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5069, 0x10);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506a, 0x04);
+		sccb_write_Reg16Data8(OV2659_ID, 0x506b, 0x12);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507e, 0x40);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507f, 0x18);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507b, 0x02);
+		sccb_write_Reg16Data8(OV2659_ID, 0x507a, 0x01);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5084, 0x0c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5085, 0x7c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5005, 0x80);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a0f, 0x34);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a10, 0x2c);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a1b, 0x36);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a1e, 0x2a);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a11, 0x70);
+		sccb_write_Reg16Data8(OV2659_ID, 0x3a1f, 0x18);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5060, 0x69);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5061, 0x7d);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5062, 0x7d);
+		sccb_write_Reg16Data8(OV2659_ID, 0x5063, 0x69);
+		                                       
+		sccb_write_Reg16Data8(OV2659_ID, 0x3004, 0x30);
+	}                     
+	      		          
+	R_CSI_TG_CTRL1 = uCtrlReg2;					//*P_Sensor_TG_Ctrl2 = uCtrlReg2;
+#if CSI_IRQ_MODE == CSI_IRQ_PPU_IRQ	
+	R_CSI_TG_CTRL0 = uCtrlReg1;					//*P_Sensor_TG_Ctrl1 = uCtrlReg1;
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO8_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (1 << 20) | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO16_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (2 << 20) | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO32_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (3 << 20) | (1 << 16);
+#endif        
+}               
+#endif
                 
 static INT32U gFrameBuffA;
 static INT32U gFrameBuffB;
@@ -6412,9 +6868,1520 @@ void BF3710_Init (
 }
 #endif //__BF3710_DRV_C__
 
+#ifdef	__GC0307_DRV_C_
+#define GC0307_MIRROR_MODE	2	//0:NORMAL, 1:H_MIRROR , 2:V_MIRROR, 3.HV_MIRROR(180 degree)
+//====================================================================================================
+//	Description:	OV7670 Initialization
+//	Syntax:			void OV7670_Init (
+//						INT16S nWidthH,			// Active H Width
+//						INT16S nWidthV,			// Active V Width
+//						INT16U uFlag				// Flag Type
+//					);
+//	Return:			None
+//====================================================================================================
+void GC0307_Init (
+	INT16S nWidthH,			// Active H Width
+	INT16S nWidthV,			// Active V Width
+	INT16U uFlag				// Flag Type
+) {
+	INT16U uCtrlReg1, uCtrlReg2;
+	INT16S nReso;
+	
+	// Enable CSI clock to let sensor initialize at first
+	// Enable CSI clock to let sensor initialize at first
+#if CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV2
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL48M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL &= ~0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_27MHZ
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL &= ~0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV4
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL48M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL |= 0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_13_5MHZ
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL |= 0x4000; 
+#endif	
+
+	uCtrlReg1 = CSIEN | YUV_YUYV | CAP;									// Default CSI Control Register 1
+	if (uFlag & FT_CSI_RGB1555)											// RGB1555
+	{
+		uCtrlReg2 |= CSI_RGB1555;
+	}
+	if (uFlag & FT_CSI_CCIR656)										// CCIR656?
+	{
+		uCtrlReg1 |= CCIR656 | VADD_FALL | VRST_FALL | HRST_FALL;	// CCIR656
+		uCtrlReg2 |= D_TYPE1;										// CCIR656
+	}
+	else
+	{
+		uCtrlReg1 |= VADD_RISE | VRST_FALL | HRST_RISE | HREF;		// NOT CCIR656
+		uCtrlReg2 |= D_TYPE0;										// NOT CCIR656
+	}
+	if (uFlag & FT_CSI_YUVIN)										// YUVIN?
+	{
+		uCtrlReg1 |= YUVIN;
+	}
+	if (uFlag & FT_CSI_YUVOUT)										// YUVOUT?
+	{
+		uCtrlReg1 |= YUVOUT;
+	}
+
+	// Whether compression or not?
+	nReso = ((nWidthH == 320) && (nWidthV == 240)) ? 1 : 0;
+	if (nReso == 1)								// VGA
+	{
+#ifdef	__TV_QVGA__
+		R_CSI_TG_HRATIO = 0x0102;					// Scale to 1/2
+		R_CSI_TG_VRATIO = 0x0102;					// Scale to 1/2
+		R_CSI_TG_HWIDTH = nWidthH;					// Horizontal frame width
+		R_CSI_TG_VHEIGHT = nWidthV*2;				// Vertical frame width
+#endif	// __TV_QVGA__
+	}
+	else
+	{
+		R_CSI_TG_HRATIO = 0;
+		R_CSI_TG_VRATIO = 0;
+	}
+
+	R_CSI_TG_VL0START = 0x0000;						// Sensor field 0 vertical latch start register.
+	R_CSI_TG_VL1START = 0x0000;						//*P_Sensor_TG_V_L1Start = 0x0000;
+	R_CSI_TG_HSTART = 0x0000;						// Sensor horizontal start register.
+
+	R_CSI_TG_CTRL0 = 0;								//reset control0
+	R_CSI_TG_CTRL1 = CSI_NOSTOP|CLKOEN;				//enable CSI CLKO
+	drv_msec_wait(100); 							//wait 100ms for CLKO stable
+
+	// CMOS Sensor Initialization Start...
+	sccb_init ();
+	sccb_delay (200);
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x18, 0x80);   
+#if 0
+	//========= close output
+	sccb_write_Reg8Data8(GC0307_ID, 0x43  ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x44  ,0xa2); 
+	
+	//======== close some functions
+	//open thm after configure their parmameters
+	sccb_write_Reg8Data8(GC0307_ID, 0x40  ,0x10);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x41  ,0x00);  			
+	sccb_write_Reg8Data8(GC0307_ID, 0x42  ,0x10); 					  	
+	sccb_write_Reg8Data8(GC0307_ID, 0x47  ,0x00);  //mode1,				  	
+	sccb_write_Reg8Data8(GC0307_ID, 0x48  ,0xc3);  //mode2, 	
+	sccb_write_Reg8Data8(GC0307_ID, 0x49  ,0x00);  //dither_mode 		
+	sccb_write_Reg8Data8(GC0307_ID, 0x4a  ,0x00);  //clock_gating_en
+	sccb_write_Reg8Data8(GC0307_ID, 0x4b  ,0x00);  //mode_reg3
+	sccb_write_Reg8Data8(GC0307_ID, 0x4E  ,0x23);  //sync mode
+	sccb_write_Reg8Data8(GC0307_ID, 0x4F  ,0x01);  //AWB, AEC, every N frame	
+	
+	//======== frame timing
+	sccb_write_Reg8Data8(GC0307_ID, 0x01  ,0x74); //HB
+	sccb_write_Reg8Data8(GC0307_ID, 0x02  ,0x70); //VB
+	sccb_write_Reg8Data8(GC0307_ID, 0x1C  ,0x00); //Vs_st
+	sccb_write_Reg8Data8(GC0307_ID, 0x1D  ,0x00); //Vs_et
+	sccb_write_Reg8Data8(GC0307_ID, 0x10  ,0x00); //high 4 bits of VB, HB
+	sccb_write_Reg8Data8(GC0307_ID, 0x11  ,0x05); //row_tail,  AD_pipe_number
+	
+	//======== windowing
+	sccb_write_Reg8Data8(GC0307_ID, 0x05  ,0x00); //row_start
+	sccb_write_Reg8Data8(GC0307_ID, 0x06  ,0x00);
+	sccb_write_Reg8Data8(GC0307_ID, 0x07  ,0x00); //col start
+	sccb_write_Reg8Data8(GC0307_ID, 0x08  ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x09  ,0x01); //win height
+	sccb_write_Reg8Data8(GC0307_ID, 0x0A  ,0xE8);
+	sccb_write_Reg8Data8(GC0307_ID, 0x0B  ,0x02); //win width, pixel array only 640
+	sccb_write_Reg8Data8(GC0307_ID, 0x0C  ,0x80);
+	
+	//======== analog
+	sccb_write_Reg8Data8(GC0307_ID, 0x0D ,0x22); //rsh_width
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x0E ,0x02); //CISCTL mode2,  
+	sccb_write_Reg8Data8(GC0307_ID, 0x0F ,0x82); //CISCTL mode1
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x12 ,0x70); //7 hrst, 6_4 darsg,
+	sccb_write_Reg8Data8(GC0307_ID, 0x13 ,0x00); //7 CISCTL_restart, 0 apwd
+	sccb_write_Reg8Data8(GC0307_ID, 0x14 ,0x00); //NA
+	sccb_write_Reg8Data8(GC0307_ID, 0x15 ,0xba); //7_4 vref
+	sccb_write_Reg8Data8(GC0307_ID, 0x16 ,0x13); //5to4 _coln_r,  __1to0__da18
+	sccb_write_Reg8Data8(GC0307_ID, 0x17 ,0x52); //opa_r, ref_r, sRef_r
+	sccb_write_Reg8Data8(GC0307_ID, 0x18 ,0xc0); //analog_mode, best case for left band.
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x1E ,0x0d); //tsp_width 		   
+	sccb_write_Reg8Data8(GC0307_ID, 0x1F ,0x32); //sh_delay
+	
+	//======== offset
+	sccb_write_Reg8Data8(GC0307_ID, 0x47 ,0x00);  //7__test_image, __6__fixed_pga, __5__auto_DN, __4__CbCr_fix, 
+	 											  //__to2__dark_sequence, __1__allow_pclk_vcync, __0__LSC_test_image
+	sccb_write_Reg8Data8(GC0307_ID, 0x19 ,0x06);  //pga_o			 
+	sccb_write_Reg8Data8(GC0307_ID, 0x1a ,0x06);  //pga_e			 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x31 ,0x00);  //4	//pga_oFFset ,	 high 8bits of 11bits
+	sccb_write_Reg8Data8(GC0307_ID, 0x3B ,0x00);  //global_oFFset, low 8bits of 11bits
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x59 ,0x0f);  //offset_mode 	
+	sccb_write_Reg8Data8(GC0307_ID, 0x58 ,0x88);  //DARK_VALUE_RATIO_G,  DARK_VALUE_RATIO_RB
+	sccb_write_Reg8Data8(GC0307_ID, 0x57 ,0x08);  //DARK_CURRENT_RATE
+	sccb_write_Reg8Data8(GC0307_ID, 0x56 ,0x77);  //PGA_OFFSET_EVEN_RATIO, PGA_OFFSET_ODD_RATIO
+	
+	//======== blk
+	sccb_write_Reg8Data8(GC0307_ID, 0x35 ,0xd8);  //blk_mode
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x36 ,0x40);  
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x3C ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x3D ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x3E ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x3F ,0x00); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0xb5 ,0x70); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xb6 ,0x40); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xb7 ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xb8 ,0x38); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xb9 ,0xc3); 		  
+	sccb_write_Reg8Data8(GC0307_ID, 0xba ,0x0f); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x7e ,0x35); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x7f ,0x86); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x5c ,0x68); //78
+	sccb_write_Reg8Data8(GC0307_ID, 0x5d ,0x78); //88
+	
+	//======== manual_gain 
+	sccb_write_Reg8Data8(GC0307_ID, 0x61 ,0x80); //manual_gain_g1	
+	sccb_write_Reg8Data8(GC0307_ID, 0x63 ,0x80); //manual_gain_r
+	sccb_write_Reg8Data8(GC0307_ID, 0x65 ,0x98); //manual_gai_b, 0xa0=1.25, 0x98=1.1875
+	sccb_write_Reg8Data8(GC0307_ID, 0x67 ,0x80); //manual_gain_g2
+	sccb_write_Reg8Data8(GC0307_ID, 0x68 ,0x18); //global_manual_gain	 2.4bits
+	
+	//========CC _R
+	sccb_write_Reg8Data8(GC0307_ID, 0x69 ,0x58);  //54
+	sccb_write_Reg8Data8(GC0307_ID, 0x6A ,0xf6);  //ff
+	sccb_write_Reg8Data8(GC0307_ID, 0x6B ,0xfb);  //fe
+	sccb_write_Reg8Data8(GC0307_ID, 0x6C ,0xf4);  //ff
+	sccb_write_Reg8Data8(GC0307_ID, 0x6D ,0x5a);  //5f
+	sccb_write_Reg8Data8(GC0307_ID, 0x6E ,0xe6);  //e1
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x6f  ,0x00); 	
+	
+	//========lsc							  
+	sccb_write_Reg8Data8(GC0307_ID, 0x70 ,0x14); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x71 ,0x1c); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x72 ,0x20); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x73 ,0x10); 	
+	sccb_write_Reg8Data8(GC0307_ID, 0x74 ,0x3c); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x75 ,0x52); 
+	
+	//========dn																			 
+	sccb_write_Reg8Data8(GC0307_ID, 0x7d ,0x2f);  //dn_mode   	
+	sccb_write_Reg8Data8(GC0307_ID, 0x80 ,0x0c); //when auto_dn, check 7e,7f
+	sccb_write_Reg8Data8(GC0307_ID, 0x81 ,0x0c);
+	sccb_write_Reg8Data8(GC0307_ID, 0x82 ,0x44);
+															
+	//dd																	   
+	sccb_write_Reg8Data8(GC0307_ID, 0x83 ,0x18);  //DD_TH1 					  
+	sccb_write_Reg8Data8(GC0307_ID, 0x84 ,0x18);  //DD_TH2 					  
+	sccb_write_Reg8Data8(GC0307_ID, 0x85 ,0x04);  //DD_TH3 																							  
+	sccb_write_Reg8Data8(GC0307_ID, 0x87 ,0x34);  //32 b DNDD_low_range X16,  DNDD_low_range_C_weight_center					
+	
+	//========intp-ee																		   
+	sccb_write_Reg8Data8(GC0307_ID, 0x88 ,0x04);  													   
+	sccb_write_Reg8Data8(GC0307_ID, 0x89 ,0x01);  										  
+	sccb_write_Reg8Data8(GC0307_ID, 0x8a ,0x50);//60  										   
+	sccb_write_Reg8Data8(GC0307_ID, 0x8b ,0x50);//60  										   
+	sccb_write_Reg8Data8(GC0307_ID, 0x8c ,0x07);  												 				  
+															  
+	sccb_write_Reg8Data8(GC0307_ID, 0x50 ,0x0c);   						   		
+	sccb_write_Reg8Data8(GC0307_ID, 0x5f ,0x3c); 																					 
+															 
+	sccb_write_Reg8Data8(GC0307_ID, 0x8e ,0x02);  															  
+	sccb_write_Reg8Data8(GC0307_ID, 0x86 ,0x02);  																  
+															
+	sccb_write_Reg8Data8(GC0307_ID, 0x51 ,0x20);  																
+	sccb_write_Reg8Data8(GC0307_ID, 0x52 ,0x08);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x53 ,0x00); 
+	
+	//======== YCP 
+	//contrast center																			  
+	sccb_write_Reg8Data8(GC0307_ID, 0x77 ,0x80); //contrast_center 																  
+	sccb_write_Reg8Data8(GC0307_ID, 0x78 ,0x00); //fixed_Cb																		  
+	sccb_write_Reg8Data8(GC0307_ID, 0x79 ,0x00); //fixed_Cr																		  
+	sccb_write_Reg8Data8(GC0307_ID, 0x7a ,0x00); //luma_offset 																																							
+	sccb_write_Reg8Data8(GC0307_ID, 0x7b ,0x40); //hue_cos 																		  
+	sccb_write_Reg8Data8(GC0307_ID, 0x7c ,0x00); //hue_sin 																		  
+																 
+	//saturation																				  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa0 ,0x40); //40global_saturation
+	sccb_write_Reg8Data8(GC0307_ID, 0xa1 ,0x40); //luma_contrast																	  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa2 ,0x34); //saturation_Cb																	  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa3 ,0x34); //saturation_Cr
+												
+	sccb_write_Reg8Data8(GC0307_ID, 0xa4 ,0xc8); 																  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa5 ,0x02); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xa6 ,0x28); 																			  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa7 ,0x02); 
+	
+	//skin																							  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa8 ,0xee); 															  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa9 ,0x12); 															  
+	sccb_write_Reg8Data8(GC0307_ID, 0xaa ,0x01); 														  
+	sccb_write_Reg8Data8(GC0307_ID, 0xab ,0x20); 													  
+	sccb_write_Reg8Data8(GC0307_ID, 0xac ,0xf0); 														  
+	sccb_write_Reg8Data8(GC0307_ID, 0xad ,0x10); 															  
+	
+	//======== ABS
+	sccb_write_Reg8Data8(GC0307_ID, 0xae ,0x18); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xaf ,0x74); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xb0 ,0xe0); 	  
+	sccb_write_Reg8Data8(GC0307_ID, 0xb1 ,0x20); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xb2 ,0x6c); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xb3 ,0x40); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xb4 ,0x04); 
+	
+	//======== AWB 
+	sccb_write_Reg8Data8(GC0307_ID, 0xbb ,0x42); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xbc ,0x60); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xbd ,0x50); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xbe ,0x50); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0xbf ,0x0c); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xc0 ,0x06); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xc1 ,0x70); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xc2 ,0xf1);  //f4
+	sccb_write_Reg8Data8(GC0307_ID, 0xc3 ,0x40); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xc4 ,0x20); //18
+	sccb_write_Reg8Data8(GC0307_ID, 0xc5 ,0x33); //33
+	sccb_write_Reg8Data8(GC0307_ID, 0xc6 ,0x1d);   
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0xca ,0x70);// 70  
+	sccb_write_Reg8Data8(GC0307_ID, 0xcb ,0x70); // 70
+	sccb_write_Reg8Data8(GC0307_ID, 0xcc ,0x78); // 78
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0xcd ,0x80); //R_ratio 									 
+	sccb_write_Reg8Data8(GC0307_ID, 0xce ,0x80); //G_ratio  , cold_white white 								   
+	sccb_write_Reg8Data8(GC0307_ID, 0xcf ,0x80); //B_ratio  	
+	
+	//========  aecT  
+	sccb_write_Reg8Data8(GC0307_ID, 0x20 ,0x02); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x21 ,0xc0); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x22 ,0x60);    
+	sccb_write_Reg8Data8(GC0307_ID, 0x23 ,0x88); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x24 ,0x96); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x25 ,0x30); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x26 ,0xd0); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x27 ,0x00); 
+
+	sccb_write_Reg8Data8(GC0307_ID, 0x28 ,0x02); //AEC_exp_level_1bit11to8   
+	sccb_write_Reg8Data8(GC0307_ID, 0x29 ,0x58); //AEC_exp_level_1bit7to0	  
+	sccb_write_Reg8Data8(GC0307_ID, 0x2a ,0x03); //AEC_exp_level_2bit11to8   
+	sccb_write_Reg8Data8(GC0307_ID, 0x2b ,0x84); //AEC_exp_level_2bit7to0			 
+	sccb_write_Reg8Data8(GC0307_ID, 0x2c ,0x09); //AEC_exp_level_3bit11to8   659 - 8FPS,  8ca - 6FPS  //	 
+	sccb_write_Reg8Data8(GC0307_ID, 0x2d ,0x60); //AEC_exp_level_3bit7to0			 
+	sccb_write_Reg8Data8(GC0307_ID, 0x2e ,0x0a); //AEC_exp_level_4bit11to8   4FPS 
+	sccb_write_Reg8Data8(GC0307_ID, 0x2f ,0x8c); //AEC_exp_level_4bit7to0	 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x30 ,0x20); 						  
+	sccb_write_Reg8Data8(GC0307_ID, 0x31 ,0x00); 					   
+	sccb_write_Reg8Data8(GC0307_ID, 0x32 ,0x1c); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x33 ,0x90); 			  
+	sccb_write_Reg8Data8(GC0307_ID, 0x34 ,0x10);	
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0xd0 ,0x34); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0xd1 ,0x50); //AEC_target_Y						   
+	sccb_write_Reg8Data8(GC0307_ID, 0xd2 ,0xf2); 	  
+	sccb_write_Reg8Data8(GC0307_ID, 0xd4 ,0x96); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xd5 ,0x10); 
+	sccb_write_Reg8Data8(GC0307_ID, 0xd6 ,0x96); //antiflicker_step 					   
+	sccb_write_Reg8Data8(GC0307_ID, 0xd7 ,0x10); //AEC_exp_time_min 			   
+	sccb_write_Reg8Data8(GC0307_ID, 0xd8 ,0x02); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0xdd  ,0x12); 
+											
+	//========= measure window										
+	sccb_write_Reg8Data8(GC0307_ID, 0xe0 ,0x03); 						 
+	sccb_write_Reg8Data8(GC0307_ID, 0xe1 ,0x02); 							 
+	sccb_write_Reg8Data8(GC0307_ID, 0xe2 ,0x27); 								 
+	sccb_write_Reg8Data8(GC0307_ID, 0xe3 ,0x1e); 				 
+	sccb_write_Reg8Data8(GC0307_ID, 0xe8 ,0x3b); 					 
+	sccb_write_Reg8Data8(GC0307_ID, 0xe9 ,0x6e); 						 
+	sccb_write_Reg8Data8(GC0307_ID, 0xea ,0x2c); 					 
+	sccb_write_Reg8Data8(GC0307_ID, 0xeb ,0x50); 					 
+	sccb_write_Reg8Data8(GC0307_ID, 0xec ,0x73); 		 
+	
+	//========= close_frame													
+	sccb_write_Reg8Data8(GC0307_ID, 0xed ,0x00); //close_frame_num1 ,can be use to reduce FPS				 
+	sccb_write_Reg8Data8(GC0307_ID, 0xee ,0x00); //close_frame_num2  
+	sccb_write_Reg8Data8(GC0307_ID, 0xef ,0x00); //close_frame_num
+	
+	// page1  
+	sccb_write_Reg8Data8(GC0307_ID, 0xf0 ,0x01); //select page1 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x00 ,0x20); 							  
+	sccb_write_Reg8Data8(GC0307_ID, 0x01 ,0x20); 							  
+	sccb_write_Reg8Data8(GC0307_ID, 0x02 ,0x20); 									
+	sccb_write_Reg8Data8(GC0307_ID, 0x03 ,0x20); 							
+	sccb_write_Reg8Data8(GC0307_ID, 0x04 ,0x78); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x05 ,0x78); 					 
+	sccb_write_Reg8Data8(GC0307_ID, 0x06 ,0x78); 								  
+	sccb_write_Reg8Data8(GC0307_ID, 0x07 ,0x78); 									 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x10 ,0x04); 						  
+	sccb_write_Reg8Data8(GC0307_ID, 0x11 ,0x04);							  
+	sccb_write_Reg8Data8(GC0307_ID, 0x12 ,0x04); 						  
+	sccb_write_Reg8Data8(GC0307_ID, 0x13 ,0x04); 							  
+	sccb_write_Reg8Data8(GC0307_ID, 0x14 ,0x01); 							  
+	sccb_write_Reg8Data8(GC0307_ID, 0x15 ,0x01); 							  
+	sccb_write_Reg8Data8(GC0307_ID, 0x16 ,0x01); 						 
+	sccb_write_Reg8Data8(GC0307_ID, 0x17 ,0x01); 						 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x20 ,0x00); 					  
+	sccb_write_Reg8Data8(GC0307_ID, 0x21 ,0x00); 					  
+	sccb_write_Reg8Data8(GC0307_ID, 0x22 ,0x00); 						  
+	sccb_write_Reg8Data8(GC0307_ID, 0x23 ,0x00); 						  
+	sccb_write_Reg8Data8(GC0307_ID, 0x24 ,0x00); 					  
+	sccb_write_Reg8Data8(GC0307_ID, 0x25 ,0x00); 						  
+	sccb_write_Reg8Data8(GC0307_ID, 0x26 ,0x00); 					  
+	sccb_write_Reg8Data8(GC0307_ID, 0x27 ,0x00);  						  
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x40 ,0x11); 
+	
+	//============================lscP 
+	sccb_write_Reg8Data8(GC0307_ID, 0x45 ,0x06); 	 
+	sccb_write_Reg8Data8(GC0307_ID, 0x46 ,0x06); 			 
+	sccb_write_Reg8Data8(GC0307_ID, 0x47 ,0x05); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x48 ,0x04); 	
+	sccb_write_Reg8Data8(GC0307_ID, 0x49 ,0x03); 		 
+	sccb_write_Reg8Data8(GC0307_ID, 0x4a ,0x03); 
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x62 ,0xd8); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x63 ,0x24); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x64 ,0x24); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x65 ,0x24); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x66 ,0xd8); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x67 ,0x24);
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x5a ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x5b ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x5c ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x5d ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x5e ,0x00); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x5f ,0x00); 
+	
+	//============================ ccP 	
+	sccb_write_Reg8Data8(GC0307_ID, 0x69 ,0x03); //cc_mode
+	
+	//CC_G    
+	sccb_write_Reg8Data8(GC0307_ID, 0x70 ,0x5d); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x71 ,0xed); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x72 ,0xff); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x73 ,0xe5); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x74 ,0x5f); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x75 ,0xe6); 
+	
+	//CC_
+	sccb_write_Reg8Data8(GC0307_ID, 0x76 ,0x41); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x77 ,0xef); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x78 ,0xff); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x79 ,0xff); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x7a ,0x5f); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x7b ,0xfa); 	 
+
+	//============================ AGP     
+	sccb_write_Reg8Data8(GC0307_ID, 0x7e ,0x00);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x7f ,0x00);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x80 ,0xc8);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x81 ,0x06);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x82 ,0x08);  
+	
+	sccb_write_Reg8Data8(GC0307_ID, 0x83 ,0x23);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x84 ,0x38);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x85 ,0x4F);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x86 ,0x61);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x87 ,0x72);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x88 ,0x80);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x89 ,0x8D);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x8a ,0xA2);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x8b ,0xB2);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x8c ,0xC0);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x8d ,0xCA);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x8e ,0xD3);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x8f ,0xDB);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x90 ,0xE2);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x91 ,0xED);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x92 ,0xF6);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x93 ,0xFD);  
+	
+	//about gama1 is hex r oct
+	sccb_write_Reg8Data8(GC0307_ID, 0x94 ,0x04);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x95 ,0x0E);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x96 ,0x1B);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x97 ,0x28);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x98 ,0x35);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x99 ,0x41);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x9a ,0x4E);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x9b ,0x67);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x9c ,0x7E);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x9d ,0x94);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x9e ,0xA7);  
+	sccb_write_Reg8Data8(GC0307_ID, 0x9f ,0xBA);  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa0 ,0xC8);  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa1 ,0xD4);  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa2 ,0xE7);  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa3 ,0xF4);  
+	sccb_write_Reg8Data8(GC0307_ID, 0xa4 ,0xFA); 
+	
+	//========= open functions	
+	sccb_write_Reg8Data8(GC0307_ID, 0xf0 ,0x00); //set back to page0																		  
+	sccb_write_Reg8Data8(GC0307_ID, 0x45 ,0x24);
+	sccb_write_Reg8Data8(GC0307_ID, 0x40 ,0x7e); 
+	sccb_write_Reg8Data8(GC0307_ID, 0x41 ,0x2F);
+	sccb_write_Reg8Data8(GC0307_ID, 0x47 ,0x20); 	
+	
+#if (GC0307_MIRROR_MODE == 0)	// IMAGE_NORMAL:
+    sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0xb2);
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x27);
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x2c);   
+#elif (GC0307_MIRROR_MODE == 1) // IMAGE_H_MIRROR: ç”®      
+    sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0xa2);
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x26);
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x28); 
+#elif (GC0307_MIRROR_MODE == 2)	// IMAGE_V_MIRROR:   ç”®
+    sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0x92);
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x25);
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x24);   
+#elif (GC0307_MIRROR_MODE == 3) // IMAGE_HV_MIRROR:
+    sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0x82);
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x24);
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x20); 
+#endif
+	
+	//========= open output
+	sccb_write_Reg8Data8(GC0307_ID, 0x43  ,0x40);
+	sccb_write_Reg8Data8(GC0307_ID, 0x44  ,0xE2);
+	
+#else 
+    //========= close output
+    sccb_write_Reg8Data8(GC0307_ID, 0x43, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x44, 0xa2); 
+    
+    //========= close some functions
+    // open them after configure their parmameters
+    sccb_write_Reg8Data8(GC0307_ID, 0x40, 0x10); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x41, 0x00);             
+    sccb_write_Reg8Data8(GC0307_ID, 0x42, 0x10);                          
+  	//sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x00); //mode1,                      
+    sccb_write_Reg8Data8(GC0307_ID, 0x48, 0xc3); //mode2,     
+    sccb_write_Reg8Data8(GC0307_ID, 0x49, 0x00); //dither_mode         
+    sccb_write_Reg8Data8(GC0307_ID, 0x4a, 0x00); //clock_gating_en
+    sccb_write_Reg8Data8(GC0307_ID, 0x4b, 0x00); //mode_reg3
+    sccb_write_Reg8Data8(GC0307_ID, 0x4E, 0x22); //sync mode
+    sccb_write_Reg8Data8(GC0307_ID, 0x4F, 0x01); //AWB, AEC, every N frame    
+    
+    //========= frame timing
+    sccb_write_Reg8Data8(GC0307_ID, 0x01, 0x6a); //HB
+    sccb_write_Reg8Data8(GC0307_ID, 0x02, 0x25); //VB
+    sccb_write_Reg8Data8(GC0307_ID, 0x1C, 0x00); //Vs_st
+    sccb_write_Reg8Data8(GC0307_ID, 0x1D, 0x00); //Vs_et
+    sccb_write_Reg8Data8(GC0307_ID, 0x10, 0x00); //high 4 bits of VB, HB
+    sccb_write_Reg8Data8(GC0307_ID, 0x11, 0x05); //row_tail,  AD_pipe_number
+    
+    sccb_write_Reg8Data8(GC0307_ID, 0x03, 0x01); //row_start
+    sccb_write_Reg8Data8(GC0307_ID, 0x04, 0x95);
+    //========= windowing                 
+    sccb_write_Reg8Data8(GC0307_ID, 0x05, 0x00); //row_start
+    sccb_write_Reg8Data8(GC0307_ID, 0x06, 0x00);
+    sccb_write_Reg8Data8(GC0307_ID, 0x07, 0x00); //col start
+    sccb_write_Reg8Data8(GC0307_ID, 0x08, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x09, 0x01); //win height
+    sccb_write_Reg8Data8(GC0307_ID, 0x0A, 0xE8);
+    sccb_write_Reg8Data8(GC0307_ID, 0x0B, 0x02); //win width, pixel array only 640
+    sccb_write_Reg8Data8(GC0307_ID, 0x0C, 0x80);
+    
+    //========= analog
+    sccb_write_Reg8Data8(GC0307_ID, 0x0D, 0x22); //rsh_width
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x0E, 0x02); //CISCTL mode2,                                        
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x12, 0x70); //7 hrst, 6_4 darsg,
+    sccb_write_Reg8Data8(GC0307_ID, 0x13, 0x00); //7 CISCTL_restart, 0 apwd
+    sccb_write_Reg8Data8(GC0307_ID, 0x14, 0x00); //NA
+    sccb_write_Reg8Data8(GC0307_ID, 0x15, 0xba); //7_4 vref
+    sccb_write_Reg8Data8(GC0307_ID, 0x16, 0x13); //5to4 _coln_r,  __1to0__da18
+    sccb_write_Reg8Data8(GC0307_ID, 0x17, 0x52); //opa_r, ref_r, sRef_r
+    //sccb_write_Reg8Data8(GC0307_ID, 0x18, 0xc0); //analog_mode, best case for left band.
+    
+    sccb_write_Reg8Data8(GC0307_ID, 0x1E, 0x0d); //tsp_width            
+    sccb_write_Reg8Data8(GC0307_ID, 0x1F, 0x32); //sh_delay
+    
+    //========= offset
+    //sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x00);  //7__test_image, __6__fixed_pga, __5__auto_DN, __4__CbCr_fix, 
+                									//__3to2__dark_sequence, __1__allow_pclk_vcync, __0__LSC_test_image
+    sccb_write_Reg8Data8(GC0307_ID, 0x19, 0x06);  //pga_o             
+    sccb_write_Reg8Data8(GC0307_ID, 0x1a, 0x06);  //pga_e             
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x31, 0x00);  //4    //pga_oFFset ,     high 8bits of 11bits
+    sccb_write_Reg8Data8(GC0307_ID, 0x3B, 0x00);  //global_oFFset, low 8bits of 11bits
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x59, 0x0f);  //offset_mode     
+    sccb_write_Reg8Data8(GC0307_ID, 0x58, 0x88);  //DARK_VALUE_RATIO_G,  DARK_VALUE_RATIO_RB
+    sccb_write_Reg8Data8(GC0307_ID, 0x57, 0x08);  //DARK_CURRENT_RATE
+    sccb_write_Reg8Data8(GC0307_ID, 0x56, 0x77);  //PGA_OFFSET_EVEN_RATIO, PGA_OFFSET_ODD_RATIO
+                                          
+    //========= blk                       
+    sccb_write_Reg8Data8(GC0307_ID, 0x35, 0xd8);  //blk_mode
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x36, 0x40);  
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x3C, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x3D, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x3E, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x3F, 0x00); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xb5, 0x70); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xb6, 0x40); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xb7, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xb8, 0x38); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xb9, 0xc3);           
+    sccb_write_Reg8Data8(GC0307_ID, 0xba, 0x0f); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x7e, 0x35); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x7f, 0x86); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x5c, 0x68); //78
+    sccb_write_Reg8Data8(GC0307_ID, 0x5d, 0x78); //88
+                                                                             
+    //========= manual_gain               
+    sccb_write_Reg8Data8(GC0307_ID, 0x61, 0x80); //manual_gain_g1    
+    sccb_write_Reg8Data8(GC0307_ID, 0x63, 0x80); //manual_gain_r
+    sccb_write_Reg8Data8(GC0307_ID, 0x65, 0x98); //manual_gai_b, 0xa0=1.25, 0x98=1.1875
+    sccb_write_Reg8Data8(GC0307_ID, 0x67, 0x80); //manual_gain_g2
+    sccb_write_Reg8Data8(GC0307_ID, 0x68, 0x18); //global_manual_gain     2.4bits
+                                          
+    //=========CC _R                      
+    sccb_write_Reg8Data8(GC0307_ID, 0x69, 0x58);  //54
+    sccb_write_Reg8Data8(GC0307_ID, 0x6A, 0xf6);  //ff
+    sccb_write_Reg8Data8(GC0307_ID, 0x6B, 0xfb);  //fe
+    sccb_write_Reg8Data8(GC0307_ID, 0x6C, 0xf4);  //ff
+    sccb_write_Reg8Data8(GC0307_ID, 0x6D, 0x5a);  //5f
+    sccb_write_Reg8Data8(GC0307_ID, 0x6E, 0xe6);  //e1
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x6f, 0x00);     
+                                          
+    //=========lsc                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x70, 0x14); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x71, 0x1c); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x72, 0x20); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x73, 0x10);     
+    sccb_write_Reg8Data8(GC0307_ID, 0x74, 0x3c); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x75, 0x52); 
+                                          
+    //=========dn                                                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x7d, 0x2f);  //dn_mode       
+    sccb_write_Reg8Data8(GC0307_ID, 0x80, 0x0c); //when auto_dn, check 7e,7f
+    sccb_write_Reg8Data8(GC0307_ID, 0x81, 0x0c);
+    sccb_write_Reg8Data8(GC0307_ID, 0x82, 0x44);
+                                                                                     
+    //dd                                                                        
+    sccb_write_Reg8Data8(GC0307_ID, 0x83, 0x18);  //DD_TH1                       
+    sccb_write_Reg8Data8(GC0307_ID, 0x84, 0x18);  //DD_TH2                       
+    sccb_write_Reg8Data8(GC0307_ID, 0x85, 0x04);  //DD_TH3                                                                                               
+    sccb_write_Reg8Data8(GC0307_ID, 0x87, 0x34);  //32 b DNDD_low_range X16,  DNDD_low_range_C_weight_center                    
+                                                                               
+    //=========intp-ee                                                                        
+    sccb_write_Reg8Data8(GC0307_ID, 0x88, 0x04);                                                         
+    sccb_write_Reg8Data8(GC0307_ID, 0x89, 0x01);                                            
+    sccb_write_Reg8Data8(GC0307_ID, 0x8a, 0x50);//60                                             
+    sccb_write_Reg8Data8(GC0307_ID, 0x8b, 0x50);//60                                             
+    sccb_write_Reg8Data8(GC0307_ID, 0x8c, 0x07);                                                                     
+                                                                                   
+    sccb_write_Reg8Data8(GC0307_ID, 0x50, 0x0c);                                      
+    sccb_write_Reg8Data8(GC0307_ID, 0x5f, 0x3c);                                                                                      
+                                                                                  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8e, 0x02);                                                                
+    sccb_write_Reg8Data8(GC0307_ID, 0x86, 0x02);                                                                    
+                                                                                 
+    sccb_write_Reg8Data8(GC0307_ID, 0x51, 0x20);                                                                  
+    sccb_write_Reg8Data8(GC0307_ID, 0x52, 0x08);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x53, 0x00); 
+                                                                                
+    //========= YCP                       
+    //contrast_center                                                                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x77, 0x80); //contrast_center                                                                   
+    sccb_write_Reg8Data8(GC0307_ID, 0x78, 0x00); //fixed_Cb                                                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x79, 0x00); //fixed_Cr                                                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x7a, 0x00); //luma_offset                                                                                                                                                             
+    sccb_write_Reg8Data8(GC0307_ID, 0x7b, 0x40); //hue_cos                                                                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x7c, 0x00); //hue_sin                                                                           
+                                                                                          
+    //saturation                                                                               
+    sccb_write_Reg8Data8(GC0307_ID, 0xa0, 0x40); //global_saturation
+    sccb_write_Reg8Data8(GC0307_ID, 0xa1, 0x40); //luma_contrast                                                                      
+    sccb_write_Reg8Data8(GC0307_ID, 0xa2, 0x34); //saturation_Cb                                                                      
+    sccb_write_Reg8Data8(GC0307_ID, 0xa3, 0x34); //saturation_Cr
+                                                                             
+    sccb_write_Reg8Data8(GC0307_ID, 0xa4, 0xc8);                                                                   
+    sccb_write_Reg8Data8(GC0307_ID, 0xa5, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xa6, 0x28);                                                                               
+    sccb_write_Reg8Data8(GC0307_ID, 0xa7, 0x02); 
+                                          
+    //skin                                                                                               
+    sccb_write_Reg8Data8(GC0307_ID, 0xa8, 0xee);                                                               
+    sccb_write_Reg8Data8(GC0307_ID, 0xa9, 0x12);                                                               
+    sccb_write_Reg8Data8(GC0307_ID, 0xaa, 0x01);                                                           
+    sccb_write_Reg8Data8(GC0307_ID, 0xab, 0x20);                                                       
+    sccb_write_Reg8Data8(GC0307_ID, 0xac, 0xf0);                                                           
+    sccb_write_Reg8Data8(GC0307_ID, 0xad, 0x10);                                                               
+                                          
+    //========= ABS                       
+    sccb_write_Reg8Data8(GC0307_ID, 0xae, 0x18); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xaf, 0x74); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xb0, 0xe0);       
+    sccb_write_Reg8Data8(GC0307_ID, 0xb1, 0x20); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xb2, 0x6c); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xb3, 0xc0); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xb4, 0x04); 
+                                          
+    //========= AWB                       
+    sccb_write_Reg8Data8(GC0307_ID, 0xbb, 0x42); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xbc, 0x60);
+    sccb_write_Reg8Data8(GC0307_ID, 0xbd, 0x50);
+    sccb_write_Reg8Data8(GC0307_ID, 0xbe, 0x50);
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xbf, 0x0c); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xc0, 0x06); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xc1, 0x60); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xc2, 0xf1);  //f1
+    sccb_write_Reg8Data8(GC0307_ID, 0xc3, 0x40);
+    sccb_write_Reg8Data8(GC0307_ID, 0xc4, 0x1c); //18//20
+    sccb_write_Reg8Data8(GC0307_ID, 0xc5, 0x56);  //33
+    sccb_write_Reg8Data8(GC0307_ID, 0xc6, 0x1d); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xca, 0x56); //70
+    sccb_write_Reg8Data8(GC0307_ID, 0xcb, 0x52); //70
+    sccb_write_Reg8Data8(GC0307_ID, 0xcc, 0x66); //78
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xcd, 0x80); //R_ratio                                      
+    sccb_write_Reg8Data8(GC0307_ID, 0xce, 0x80); //G_ratio  , cold_white white                                    
+    sccb_write_Reg8Data8(GC0307_ID, 0xcf, 0x80); //B_ratio      
+                                          
+    //=========  aecT                     
+    sccb_write_Reg8Data8(GC0307_ID, 0x20, 0x06);//0x02 
+    sccb_write_Reg8Data8(GC0307_ID, 0x21, 0xc0); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x22, 0x60);    
+    sccb_write_Reg8Data8(GC0307_ID, 0x23, 0x88); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x24, 0x96); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x25, 0x30); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x26, 0xd0); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x27, 0x00); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x28, 0x02); //AEC_exp_level_1bit11to8   
+    sccb_write_Reg8Data8(GC0307_ID, 0x29, 0x0d); //AEC_exp_level_1bit7to0      
+    sccb_write_Reg8Data8(GC0307_ID, 0x2a, 0x02); //AEC_exp_level_2bit11to8   
+    sccb_write_Reg8Data8(GC0307_ID, 0x2b, 0x0d); //AEC_exp_level_2bit7to0             
+    sccb_write_Reg8Data8(GC0307_ID, 0x2c, 0x02); //AEC_exp_level_3bit11to8   659 - 8FPS,  8ca - 6FPS  //     
+    sccb_write_Reg8Data8(GC0307_ID, 0x2d, 0x0d); //AEC_exp_level_3bit7to0             
+    sccb_write_Reg8Data8(GC0307_ID, 0x2e, 0x05); //AEC_exp_level_4bit11to8   4FPS 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2f, 0xdc); //AEC_exp_level_4bit7to0     
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x30, 0x20);                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x31, 0x00);                        
+    sccb_write_Reg8Data8(GC0307_ID, 0x32, 0x1c); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x33, 0x90);               
+    sccb_write_Reg8Data8(GC0307_ID, 0x34, 0x10);    
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xd0, 0x34); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xd1, 0x50); //AEC_target_Y                           
+    sccb_write_Reg8Data8(GC0307_ID, 0xd2, 0x61);//0xf2       
+    sccb_write_Reg8Data8(GC0307_ID, 0xd4, 0x96); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xd5, 0x01); // william 0318
+    sccb_write_Reg8Data8(GC0307_ID, 0xd6, 0x4b); //antiflicker_step                        
+    sccb_write_Reg8Data8(GC0307_ID, 0xd7, 0x03); //AEC_exp_time_min ,william 20090312               
+    sccb_write_Reg8Data8(GC0307_ID, 0xd8, 0x02); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xdd, 0x22);//0x12 
+                                                               
+    //========= measure window                                     
+    sccb_write_Reg8Data8(GC0307_ID, 0xe0, 0x03);                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xe1, 0x02);                              
+    sccb_write_Reg8Data8(GC0307_ID, 0xe2, 0x27);                                  
+    sccb_write_Reg8Data8(GC0307_ID, 0xe3, 0x1e);                  
+    sccb_write_Reg8Data8(GC0307_ID, 0xe8, 0x3b);                      
+    sccb_write_Reg8Data8(GC0307_ID, 0xe9, 0x6e);                          
+    sccb_write_Reg8Data8(GC0307_ID, 0xea, 0x2c);                      
+    sccb_write_Reg8Data8(GC0307_ID, 0xeb, 0x50);                      
+    sccb_write_Reg8Data8(GC0307_ID, 0xec, 0x73);          
+                                          
+    //========= close_frame                                                 
+    sccb_write_Reg8Data8(GC0307_ID, 0xed, 0x00); //close_frame_num1 ,can be use to reduce FPS                 
+    sccb_write_Reg8Data8(GC0307_ID, 0xee, 0x00); //close_frame_num2  
+    sccb_write_Reg8Data8(GC0307_ID, 0xef, 0x00); //close_frame_num
+                                          
+    // page1                              
+    sccb_write_Reg8Data8(GC0307_ID, 0xf0, 0x01); //select page1 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x00, 0x20);                               
+    sccb_write_Reg8Data8(GC0307_ID, 0x01, 0x20);                               
+    sccb_write_Reg8Data8(GC0307_ID, 0x02, 0x20);                                     
+    sccb_write_Reg8Data8(GC0307_ID, 0x03, 0x20);                             
+    sccb_write_Reg8Data8(GC0307_ID, 0x04, 0x78); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x05, 0x78);                      
+    sccb_write_Reg8Data8(GC0307_ID, 0x06, 0x78);                                   
+    sccb_write_Reg8Data8(GC0307_ID, 0x07, 0x78);                                      
+                                                                                                                 
+    sccb_write_Reg8Data8(GC0307_ID, 0x10, 0x04);                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x11, 0x04);                              
+    sccb_write_Reg8Data8(GC0307_ID, 0x12, 0x04);                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x13, 0x04);                               
+    sccb_write_Reg8Data8(GC0307_ID, 0x14, 0x01);                               
+    sccb_write_Reg8Data8(GC0307_ID, 0x15, 0x01);                               
+    sccb_write_Reg8Data8(GC0307_ID, 0x16, 0x01);                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x17, 0x01);                          
+                                                                                     
+    sccb_write_Reg8Data8(GC0307_ID, 0x20, 0x00);                       
+    sccb_write_Reg8Data8(GC0307_ID, 0x21, 0x00);                       
+    sccb_write_Reg8Data8(GC0307_ID, 0x22, 0x00);                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x23, 0x00);                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x24, 0x00);                       
+    sccb_write_Reg8Data8(GC0307_ID, 0x25, 0x00);                           
+    sccb_write_Reg8Data8(GC0307_ID, 0x26, 0x00);                       
+    sccb_write_Reg8Data8(GC0307_ID, 0x27, 0x00);                            
+    
+    sccb_write_Reg8Data8(GC0307_ID, 0x40  ,0x11); 
+    
+    //=============================lscP 
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x06);      
+    sccb_write_Reg8Data8(GC0307_ID, 0x46, 0x06);              
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x05); 
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x48, 0x04);     
+    sccb_write_Reg8Data8(GC0307_ID, 0x49, 0x03);          
+    sccb_write_Reg8Data8(GC0307_ID, 0x4a, 0x03); 
+                                                                             
+    sccb_write_Reg8Data8(GC0307_ID, 0x62, 0xd8); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x63, 0x24); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x64, 0x24);
+    sccb_write_Reg8Data8(GC0307_ID, 0x65, 0x24); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x66, 0xd8); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x67, 0x24);
+                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x5a, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x5b, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x5c, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x5d, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x5e, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x5f, 0x00); 
+    
+    //============================= ccP 
+    sccb_write_Reg8Data8(GC0307_ID, 0x69, 0x03); //cc_mode
+                                          
+    //CC_G                                
+    sccb_write_Reg8Data8(GC0307_ID, 0x70, 0x5d); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x71, 0xed); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x72, 0xff); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x73, 0xe5); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x74, 0x5f); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x75, 0xe6); 
+                                          
+        //CC_B                            
+    sccb_write_Reg8Data8(GC0307_ID, 0x76, 0x41); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x77, 0xef); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x78, 0xff); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x79, 0xff); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x7a, 0x5f); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x7b, 0xfa);      
+    
+    //============================= AGP
+    sccb_write_Reg8Data8(GC0307_ID, 0x7e, 0x00);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x7f, 0x00);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x80, 0xc8);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x81, 0x06);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x82, 0x08);  
+
+#if 0    
+    sccb_write_Reg8Data8(GC0307_ID, 0x83, 0x23);  // è¿™æ˜¯0x00å¯¹å??„Gamma
+    sccb_write_Reg8Data8(GC0307_ID, 0x84, 0x38);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x85, 0x4F);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x86, 0x61);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x87, 0x72);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x88, 0x80);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x89, 0x8D);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8a, 0xA2);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8b, 0xB2);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8c, 0xC0);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8d, 0xCA);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8e, 0xD3);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8f, 0xDB);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x90, 0xE2);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x91, 0xED);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x92, 0xF6);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x93, 0xFD);
+#else                                          
+    sccb_write_Reg8Data8(GC0307_ID, 0x83, 0x13);  // ?¸å?äº?x20å¯¹å??„Gamma
+    sccb_write_Reg8Data8(GC0307_ID, 0x84, 0x23);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x85, 0x35);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x86, 0x44);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x87, 0x53);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x88, 0x60);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x89, 0x6D);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8a, 0x84);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8b, 0x98);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8c, 0xaa);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8d, 0xb8);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8e, 0xc6);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x8f, 0xd1);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x90, 0xdb);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x91, 0xea);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x92, 0xf5);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x93, 0xFb);
+#endif 
+                                         
+    //about gamma1 is hex r oct           
+    sccb_write_Reg8Data8(GC0307_ID, 0x94, 0x04);  //è¿™æ˜¯0x40å¯¹å??„Gamma
+    sccb_write_Reg8Data8(GC0307_ID, 0x95, 0x0E);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x96, 0x1B);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x97, 0x28);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x98, 0x35);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x99, 0x41);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x9a, 0x4E);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x9b, 0x67);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x9c, 0x7E);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x9d, 0x94);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x9e, 0xA7);  
+    sccb_write_Reg8Data8(GC0307_ID, 0x9f, 0xBA);  
+    sccb_write_Reg8Data8(GC0307_ID, 0xa0, 0xC8);  
+    sccb_write_Reg8Data8(GC0307_ID, 0xa1, 0xD4);  
+    sccb_write_Reg8Data8(GC0307_ID, 0xa2, 0xE7);  
+    sccb_write_Reg8Data8(GC0307_ID, 0xa3, 0xF4);  
+    sccb_write_Reg8Data8(GC0307_ID, 0xa4, 0xFA); 
+    
+    //========= open functions    
+    sccb_write_Reg8Data8(GC0307_ID, 0xf0, 0x00); //set back to page0    
+    sccb_write_Reg8Data8(GC0307_ID, 0x40, 0x7e); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x41, 0x27); //keep AEC close here
+    
+    //sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0xb2);
+    //sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x27);
+    //sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x2c);
+ 
+    sccb_write_Reg8Data8(GC0307_ID, 0x43, 0x40);
+    sccb_write_Reg8Data8(GC0307_ID, 0x44, 0xE2);
+  
+#if (GC0307_MIRROR_MODE == 0)	//  IMAGE_NORMAL:
+    sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0xb2);
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x27);
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x2c);   
+#elif (GC0307_MIRROR_MODE == 1)	// IMAGE_H_MIRROR: ç”®      
+    sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0xa2);
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x26);
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x28); 
+#elif (GC0307_MIRROR_MODE == 2)	// IMAGE_V_MIRROR:   ç”®
+    sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0x92);
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x25);
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x24);   
+#elif (GC0307_MIRROR_MODE == 3)	// IMAGE_HV_MIRROR:   // 180
+    sccb_write_Reg8Data8(GC0307_ID, 0x0f, 0x82);
+    sccb_write_Reg8Data8(GC0307_ID, 0x45, 0x24);
+    sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x20); 
+#endif
+    // ?ã? 60 Hz
+#if 0
+    sccb_write_Reg8Data8(GC0307_ID, 0x01, 0x32);      //  50hz
+    sccb_write_Reg8Data8(GC0307_ID, 0x02, 0x34); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x10, 0x01); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xd6, 0x87); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x28, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x29, 0x1c); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2a, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2b, 0x1c); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2c, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2d, 0x1c); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2e, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2f, 0x1c); 
+#else
+    sccb_write_Reg8Data8(GC0307_ID, 0x01, 0xce);      //  60hz
+    sccb_write_Reg8Data8(GC0307_ID, 0x02, 0x89); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x10, 0x00); 
+    sccb_write_Reg8Data8(GC0307_ID, 0xd6, 0x7d); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x28, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x29, 0x71); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2a, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2b, 0x71); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2c, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2d, 0x72); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2e, 0x02); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x2f, 0x71); 
+#endif    
+ 
+    sccb_write_Reg8Data8(GC0307_ID, 0x7e, 0x45); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x7f, 0x66); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x5c, 0x68); 
+    sccb_write_Reg8Data8(GC0307_ID, 0x5d, 0x78); 
+ 
+    sccb_write_Reg8Data8(GC0307_ID, 0x41, 0x2f);            
+    sccb_write_Reg8Data8(GC0307_ID, 0x40, 0x7e);
+    sccb_write_Reg8Data8(GC0307_ID, 0x42, 0x10);
+    //sccb_write_Reg8Data8(GC0307_ID, 0x47, 0x2c);
+    sccb_write_Reg8Data8(GC0307_ID, 0x48, 0xc3);
+    sccb_write_Reg8Data8(GC0307_ID, 0x8a, 0x50);//60
+    sccb_write_Reg8Data8(GC0307_ID, 0x8b, 0x50);
+    sccb_write_Reg8Data8(GC0307_ID, 0x8c, 0x07);
+    sccb_write_Reg8Data8(GC0307_ID, 0x50, 0x0c);
+    sccb_write_Reg8Data8(GC0307_ID, 0x77, 0x80);
+    sccb_write_Reg8Data8(GC0307_ID, 0xa1, 0x40);
+    sccb_write_Reg8Data8(GC0307_ID, 0x7a, 0x00);
+    sccb_write_Reg8Data8(GC0307_ID, 0x78, 0x00);
+    sccb_write_Reg8Data8(GC0307_ID, 0x79, 0x00);
+    sccb_write_Reg8Data8(GC0307_ID, 0x7b, 0x40);
+    sccb_write_Reg8Data8(GC0307_ID, 0x7c, 0x00);
+#endif	
+	R_CSI_TG_CTRL1 = uCtrlReg2;					//*P_Sensor_TG_Ctrl2 = uCtrlReg2;
+#if CSI_IRQ_MODE == CSI_IRQ_PPU_IRQ	
+	R_CSI_TG_CTRL0 = uCtrlReg1;					//*P_Sensor_TG_Ctrl1 = uCtrlReg1;
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO8_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (1 << 20) | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO16_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (2 << 20) | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO32_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (3 << 20) | (1 << 16);
+#endif
+}
+#endif
+
+#ifdef	__GC0308_DRV_C_
+//====================================================================================================
+//	Description:	OV7670 Initialization
+//	Syntax:			void OV7670_Init (
+//						INT16S nWidthH,			// Active H Width
+//						INT16S nWidthV,			// Active V Width
+//						INT16U uFlag				// Flag Type
+//					);
+//	Return:			None
+//====================================================================================================
+void GC0308_Init (
+	INT16S nWidthH,			// Active H Width
+	INT16S nWidthV,			// Active V Width
+	INT16U uFlag				// Flag Type
+) {
+	INT16U uCtrlReg1, uCtrlReg2;
+	INT16S nReso;
+	
+	// Enable CSI clock to let sensor initialize at first
+#if CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV2
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL48M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL &= ~0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_27MHZ
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL &= ~0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV4
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL48M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL |= 0x4000; 
+#elif CSI_CLOCK == CSI_CLOCK_13_5MHZ
+	uCtrlReg2 = CLKOEN | CSI_RGB565 |CLK_SEL27M | CSI_HIGHPRI | CSI_NOSTOP;
+	R_SYSTEM_CTRL |= 0x4000; 
+#endif	
+
+	uCtrlReg1 = CSIEN | YUV_YUYV | CAP;								// Default CSI Control Register 1
+	if (uFlag & FT_CSI_RGB1555)	{									// RGB1555
+		uCtrlReg2 |= CSI_RGB1555;
+	}
+	
+	if (uFlag & FT_CSI_CCIR656) {									// CCIR656?
+		uCtrlReg1 |= CCIR656 | VADD_FALL | VRST_FALL | HRST_FALL;	// CCIR656
+		uCtrlReg2 |= D_TYPE1;										// CCIR656
+	} else {
+		uCtrlReg1 |= VADD_RISE | VRST_FALL | HRST_RISE | HREF;		// NOT CCIR656
+		uCtrlReg2 |= D_TYPE0;										// NOT CCIR656
+	}
+	
+	if (uFlag & FT_CSI_YUVIN) {										// YUVIN?
+		uCtrlReg1 |= YUVIN;
+	}
+	
+	if (uFlag & FT_CSI_YUVOUT) {									// YUVOUT?
+		uCtrlReg1 |= YUVOUT;
+	}
+
+	// Whether compression or not?
+	nReso = ((nWidthH == 320) && (nWidthV == 240)) ? 1 : 0;
+	if (nReso == 1)								// VGA
+	{
+#ifdef	__TV_QVGA__
+		R_CSI_TG_HRATIO = 0x0102;					// Scale to 1/2
+		R_CSI_TG_VRATIO = 0x0102;					// Scale to 1/2
+		R_CSI_TG_HWIDTH = nWidthH;					// Horizontal frame width
+		R_CSI_TG_VHEIGHT = nWidthV*2;				// Vertical frame width
+#endif	// __TV_QVGA__
+	}
+	else
+	{
+		R_CSI_TG_HRATIO = 0;
+		R_CSI_TG_VRATIO = 0;
+	}
+
+	R_CSI_TG_VL0START = 0x0000;						// Sensor field 0 vertical latch start register.
+	R_CSI_TG_VL1START = 0x0000;						//*P_Sensor_TG_V_L1Start = 0x0000;
+	R_CSI_TG_HSTART = 0x0000;						// Sensor horizontal start register.
+
+	R_CSI_TG_CTRL0 = 0;								//reset control0
+	R_CSI_TG_CTRL1 = CSI_NOSTOP|CLKOEN;				//enable CSI CLKO
+	drv_msec_wait(100); 							//wait 100ms for CLKO stable
+
+	// CMOS Sensor Initialization Start...
+	sccb_init();
+	sccb_delay (200);
+	
+	//640x480 init registers code.                                         
+	sccb_write_Reg8Data8(GC0308_ID, 0xfe, 0x80);  	
+	
+	sccb_write_Reg8Data8(GC0308_ID, 0xfe, 0x00);  // set page0
+	
+	sccb_write_Reg8Data8(GC0308_ID, 0xd2, 0x10);  // close AEC
+	sccb_write_Reg8Data8(GC0308_ID, 0x22, 0x55);  // close AWB
+	
+	sccb_write_Reg8Data8(GC0308_ID, 0x5a, 0x56);
+	sccb_write_Reg8Data8(GC0308_ID, 0x5b, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x5c, 0x4a);			
+	
+	sccb_write_Reg8Data8(GC0308_ID, 0x22, 0x57); // Open AWB
+	
+#if 1
+	sccb_write_Reg8Data8(GC0308_ID, 0x01, 0xce);
+	sccb_write_Reg8Data8(GC0308_ID, 0x02, 0x70);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0f, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe2, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe3, 0x96);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe4, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe5, 0x58);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe6, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe7, 0x58);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe8, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe9, 0x58);
+	sccb_write_Reg8Data8(GC0308_ID, 0xea, 0x0c);
+	sccb_write_Reg8Data8(GC0308_ID, 0xeb, 0xbe);
+	sccb_write_Reg8Data8(GC0308_ID, 0xec, 0x20);
+#else
+	sccb_write_Reg8Data8(GC0308_ID, 0x01, 0x6a);
+	sccb_write_Reg8Data8(GC0308_ID, 0x02, 0x70);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0f, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe2, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe3, 0x96);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe4, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe5, 0x58);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe6, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe7, 0x58);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe8, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe9, 0x58);
+	sccb_write_Reg8Data8(GC0308_ID, 0xea, 0x04);
+	sccb_write_Reg8Data8(GC0308_ID, 0xeb, 0xb0);
+	sccb_write_Reg8Data8(GC0308_ID, 0xec, 0x20);
+#endif
+	
+	sccb_write_Reg8Data8(GC0308_ID, 0x05, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x06, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x07, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x08, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x09, 0x01);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0a, 0xe8);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0b, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0c, 0x88);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0d, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0e, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0x10, 0x22);
+	sccb_write_Reg8Data8(GC0308_ID, 0x11, 0xfd);
+	sccb_write_Reg8Data8(GC0308_ID, 0x12, 0x2a);
+	sccb_write_Reg8Data8(GC0308_ID, 0x13, 0x00);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x14, 0x12);// change direction  10:normal , 11:H SWITCH,12: V SWITCH, 13:H&V SWITCH
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x15, 0x0a);
+	sccb_write_Reg8Data8(GC0308_ID, 0x16, 0x05);
+	sccb_write_Reg8Data8(GC0308_ID, 0x17, 0x01);
+	sccb_write_Reg8Data8(GC0308_ID, 0x18, 0x44);
+	sccb_write_Reg8Data8(GC0308_ID, 0x19, 0x44);
+	sccb_write_Reg8Data8(GC0308_ID, 0x1a, 0x1e);
+	sccb_write_Reg8Data8(GC0308_ID, 0x1b, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x1c, 0xc1);
+	sccb_write_Reg8Data8(GC0308_ID, 0x1d, 0x08);
+	sccb_write_Reg8Data8(GC0308_ID, 0x1e, 0x60);
+	sccb_write_Reg8Data8(GC0308_ID, 0x1f, 0x16); //pad drv ,00 03 13 1f 3f james remarked
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x20, 0xff);
+	sccb_write_Reg8Data8(GC0308_ID, 0x21, 0xf8);
+	sccb_write_Reg8Data8(GC0308_ID, 0x22, 0x57);
+	sccb_write_Reg8Data8(GC0308_ID, 0x24, 0xa2); 	// YUV
+	//sccb_write_Reg8Data8(GC0308_ID, 0x24, 0xa6);  // RGB
+	sccb_write_Reg8Data8(GC0308_ID, 0x25, 0x0f);
+
+	//output sync_mode       
+	sccb_write_Reg8Data8(GC0308_ID, 0x26, 0x02);//vsync  maybe need changed, value is 0x02
+	sccb_write_Reg8Data8(GC0308_ID, 0x2f, 0x01);
+	sccb_write_Reg8Data8(GC0308_ID, 0x30, 0xf7);
+	sccb_write_Reg8Data8(GC0308_ID, 0x31, 0x50);
+	sccb_write_Reg8Data8(GC0308_ID, 0x32, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x39, 0x04);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3a, 0x18);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3b, 0x20);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3c, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3d, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3e, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3f, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x50, 0x10);
+	sccb_write_Reg8Data8(GC0308_ID, 0x53, 0x82);
+	sccb_write_Reg8Data8(GC0308_ID, 0x54, 0x80);
+	sccb_write_Reg8Data8(GC0308_ID, 0x55, 0x80);
+	sccb_write_Reg8Data8(GC0308_ID, 0x56, 0x82);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x57, 0x80);  // R
+	sccb_write_Reg8Data8(GC0308_ID, 0x58, 0x80);  // G
+	sccb_write_Reg8Data8(GC0308_ID, 0x59, 0x80);  // B
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x8b, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x8c, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x8d, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x8e, 0x2e);
+	sccb_write_Reg8Data8(GC0308_ID, 0x8f, 0x2e);
+	sccb_write_Reg8Data8(GC0308_ID, 0x90, 0x2e);
+	sccb_write_Reg8Data8(GC0308_ID, 0x91, 0x3c);
+	sccb_write_Reg8Data8(GC0308_ID, 0x92, 0x50);
+	sccb_write_Reg8Data8(GC0308_ID, 0x5d, 0x12);
+	sccb_write_Reg8Data8(GC0308_ID, 0x5e, 0x1a);
+	sccb_write_Reg8Data8(GC0308_ID, 0x5f, 0x24);
+	sccb_write_Reg8Data8(GC0308_ID, 0x60, 0x07);
+	sccb_write_Reg8Data8(GC0308_ID, 0x61, 0x15);
+	sccb_write_Reg8Data8(GC0308_ID, 0x62, 0x08);
+	sccb_write_Reg8Data8(GC0308_ID, 0x64, 0x03);
+	sccb_write_Reg8Data8(GC0308_ID, 0x66, 0xe8);
+	sccb_write_Reg8Data8(GC0308_ID, 0x67, 0x86);
+	sccb_write_Reg8Data8(GC0308_ID, 0x68, 0xa2);
+	sccb_write_Reg8Data8(GC0308_ID, 0x69, 0x18);
+	sccb_write_Reg8Data8(GC0308_ID, 0x6a, 0x0f);
+	sccb_write_Reg8Data8(GC0308_ID, 0x6b, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x6c, 0x5f);
+	sccb_write_Reg8Data8(GC0308_ID, 0x6d, 0x8f);
+	sccb_write_Reg8Data8(GC0308_ID, 0x6e, 0x55);
+	sccb_write_Reg8Data8(GC0308_ID, 0x6f, 0x38);
+	sccb_write_Reg8Data8(GC0308_ID, 0x70, 0x15);
+	sccb_write_Reg8Data8(GC0308_ID, 0x71, 0x33);
+	sccb_write_Reg8Data8(GC0308_ID, 0x72, 0xdc);
+	sccb_write_Reg8Data8(GC0308_ID, 0x73, 0x80);
+	sccb_write_Reg8Data8(GC0308_ID, 0x74, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0x75, 0x3f);
+	sccb_write_Reg8Data8(GC0308_ID, 0x76, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0x77, 0x36);
+	sccb_write_Reg8Data8(GC0308_ID, 0x78, 0x88);
+	sccb_write_Reg8Data8(GC0308_ID, 0x79, 0x81);
+	sccb_write_Reg8Data8(GC0308_ID, 0x7a, 0x81);
+	sccb_write_Reg8Data8(GC0308_ID, 0x7b, 0x22);
+	sccb_write_Reg8Data8(GC0308_ID, 0x7c, 0xff);
+	sccb_write_Reg8Data8(GC0308_ID, 0x93, 0x48);
+	sccb_write_Reg8Data8(GC0308_ID, 0x94, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0x95, 0x05);
+	sccb_write_Reg8Data8(GC0308_ID, 0x96, 0xe8);
+	sccb_write_Reg8Data8(GC0308_ID, 0x97, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x98, 0xf0);
+	sccb_write_Reg8Data8(GC0308_ID, 0xb1, 0x38);
+	sccb_write_Reg8Data8(GC0308_ID, 0xb2, 0x38);
+	sccb_write_Reg8Data8(GC0308_ID, 0xbd, 0x38);
+	sccb_write_Reg8Data8(GC0308_ID, 0xbe, 0x36);
+	sccb_write_Reg8Data8(GC0308_ID, 0xd0, 0xc9);
+	sccb_write_Reg8Data8(GC0308_ID, 0xd1, 0x10);
+	//sccb_write_Reg8Data8(GC0308_ID, 0xd2, 0x90);
+	//sccb_write_Reg8Data8(GC0308_ID, 0xd3, 0x80);
+	sccb_write_Reg8Data8(GC0308_ID, 0xd3, 0xA0);		 // ?úö
+	sccb_write_Reg8Data8(GC0308_ID, 0xd5, 0xf2);
+	sccb_write_Reg8Data8(GC0308_ID, 0xd6, 0x16);
+	sccb_write_Reg8Data8(GC0308_ID, 0xdb, 0x92);
+	sccb_write_Reg8Data8(GC0308_ID, 0xdc, 0xa5);
+	sccb_write_Reg8Data8(GC0308_ID, 0xdf, 0x23);
+	sccb_write_Reg8Data8(GC0308_ID, 0xd9, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0xda, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0xe0, 0x09);
+	sccb_write_Reg8Data8(GC0308_ID, 0xec, 0x20);
+	sccb_write_Reg8Data8(GC0308_ID, 0xed, 0x04);
+	sccb_write_Reg8Data8(GC0308_ID, 0xee, 0xa0);
+	sccb_write_Reg8Data8(GC0308_ID, 0xef, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x80, 0x03);
+	sccb_write_Reg8Data8(GC0308_ID, 0x80, 0x03);
+	
+#if 1	//smallest gamma curve
+	sccb_write_Reg8Data8(GC0308_ID, 0x9F, 0x0B); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA0, 0x16); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA1, 0x29); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA2, 0x3C); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA3, 0x4F); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA4, 0x5F); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA5, 0x6F); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA6, 0x8A); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA7, 0x9F); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA8, 0xB4); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA9, 0xC6); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAA, 0xD3); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAB, 0xDD);  
+	sccb_write_Reg8Data8(GC0308_ID, 0xAC, 0xE5);  
+	sccb_write_Reg8Data8(GC0308_ID, 0xAD, 0xF1); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAE, 0xFA); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAF, 0xFF); 	
+#elif 0		
+	sccb_write_Reg8Data8(GC0308_ID, 0x9F, 0x0E); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA0, 0x1C); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA1, 0x34); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA2, 0x48); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA3, 0x5A); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA4, 0x6B); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA5, 0x7B); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA6, 0x95); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA7, 0xAB); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA8, 0xBF);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA9, 0xCE); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAA, 0xD9); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAB, 0xE4);  
+	sccb_write_Reg8Data8(GC0308_ID, 0xAC, 0xEC); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAD, 0xF7); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAE, 0xFD); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAF, 0xFF); 
+#elif 0	
+	sccb_write_Reg8Data8(GC0308_ID, 0x9F, 0x10);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA0, 0x20);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA1, 0x38);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA2, 0x4E);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA3, 0x63);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA4, 0x76);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA5, 0x87);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA6, 0xA2);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA7, 0xB8);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA8, 0xCA);
+	sccb_write_Reg8Data8(GC0308_ID, 0xA9, 0xD8);
+	sccb_write_Reg8Data8(GC0308_ID, 0xAA, 0xE3);
+	sccb_write_Reg8Data8(GC0308_ID, 0xAB, 0xEB);
+	sccb_write_Reg8Data8(GC0308_ID, 0xAC, 0xF0);
+	sccb_write_Reg8Data8(GC0308_ID, 0xAD, 0xF8);
+	sccb_write_Reg8Data8(GC0308_ID, 0xAE, 0xFD);
+	sccb_write_Reg8Data8(GC0308_ID, 0xAF, 0xFF);
+#elif 0		
+	sccb_write_Reg8Data8(GC0308_ID, 0x9F, 0x14); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA0, 0x28); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA1, 0x44); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA2, 0x5D); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA3, 0x72); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA4, 0x86); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA5, 0x95); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA6, 0xB1); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA7, 0xC6); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA8, 0xD5); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA9, 0xE1); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAA, 0xEA); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAB, 0xF1); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAC, 0xF5); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAD, 0xFB); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAE, 0xFE); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAF, 0xFF);
+#else	// largest gamma curve
+	sccb_write_Reg8Data8(GC0308_ID, 0x9F, 0x15); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA0, 0x2A); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA1, 0x4A); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA2, 0x67); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA3, 0x79); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA4, 0x8C); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA5, 0x9A); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA6, 0xB3); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA7, 0xC5); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA8, 0xD5); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xA9, 0xDF); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAA, 0xE8); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAB, 0xEE); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAC, 0xF3); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAD, 0xFA); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAE, 0xFD); 
+	sccb_write_Reg8Data8(GC0308_ID, 0xAF, 0xFF);
+#endif	
+	
+	sccb_write_Reg8Data8(GC0308_ID, 0xc0, 0x00);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc1, 0x10);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc2, 0x1C);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc3, 0x30);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc4, 0x43);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc5, 0x54);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc6, 0x65);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc7, 0x75);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc8, 0x93);
+	sccb_write_Reg8Data8(GC0308_ID, 0xc9, 0xB0);
+	sccb_write_Reg8Data8(GC0308_ID, 0xca, 0xCB);
+	sccb_write_Reg8Data8(GC0308_ID, 0xcb, 0xE6);
+	sccb_write_Reg8Data8(GC0308_ID, 0xcc, 0xFF);
+	sccb_write_Reg8Data8(GC0308_ID, 0xf0, 0x02);
+	sccb_write_Reg8Data8(GC0308_ID, 0xf1, 0x01);
+	sccb_write_Reg8Data8(GC0308_ID, 0xf2, 0x01);
+	sccb_write_Reg8Data8(GC0308_ID, 0xf3, 0x30);
+	sccb_write_Reg8Data8(GC0308_ID, 0xf9, 0x9f);
+	sccb_write_Reg8Data8(GC0308_ID, 0xfa, 0x78);
+
+	//---------------------------------------------------------------
+	sccb_write_Reg8Data8(GC0308_ID, 0xfe, 0x01);  //set page 1
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x00, 0xf5);
+	sccb_write_Reg8Data8(GC0308_ID, 0x02, 0x1a);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0a, 0xa0);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0b, 0x60);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0c, 0x08);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0e, 0x4c);
+	sccb_write_Reg8Data8(GC0308_ID, 0x0f, 0x39);
+	
+	sccb_write_Reg8Data8(GC0308_ID, 0x11, 0x3f);
+	//sccb_write_Reg8Data8(GC0308_ID, 0x11 ,0x37);  // bit3 = 0
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x12, 0x72);
+	sccb_write_Reg8Data8(GC0308_ID, 0x13, 0x13);
+	sccb_write_Reg8Data8(GC0308_ID, 0x14, 0x42);
+	sccb_write_Reg8Data8(GC0308_ID, 0x15, 0x43);
+	sccb_write_Reg8Data8(GC0308_ID, 0x16, 0xc2);
+	sccb_write_Reg8Data8(GC0308_ID, 0x17, 0xa8);
+	sccb_write_Reg8Data8(GC0308_ID, 0x18, 0x18);
+	sccb_write_Reg8Data8(GC0308_ID, 0x19, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x1a, 0xd0);
+	sccb_write_Reg8Data8(GC0308_ID, 0x1b, 0xf5);
+	sccb_write_Reg8Data8(GC0308_ID, 0x70, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x71, 0x58);
+	sccb_write_Reg8Data8(GC0308_ID, 0x72, 0x30);
+	sccb_write_Reg8Data8(GC0308_ID, 0x73, 0x48);
+	sccb_write_Reg8Data8(GC0308_ID, 0x74, 0x20);
+	sccb_write_Reg8Data8(GC0308_ID, 0x75, 0x60);
+	sccb_write_Reg8Data8(GC0308_ID, 0x77, 0x20);
+	sccb_write_Reg8Data8(GC0308_ID, 0x78, 0x32);
+	sccb_write_Reg8Data8(GC0308_ID, 0x30, 0x03);
+	sccb_write_Reg8Data8(GC0308_ID, 0x31, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0x32, 0xe0);
+	sccb_write_Reg8Data8(GC0308_ID, 0x33, 0xe0);
+	sccb_write_Reg8Data8(GC0308_ID, 0x34, 0xe0);
+	sccb_write_Reg8Data8(GC0308_ID, 0x35, 0xb0);
+	sccb_write_Reg8Data8(GC0308_ID, 0x36, 0xc0);
+	sccb_write_Reg8Data8(GC0308_ID, 0x37, 0xc0);
+	sccb_write_Reg8Data8(GC0308_ID, 0x38, 0x04);
+	sccb_write_Reg8Data8(GC0308_ID, 0x39, 0x09);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3a, 0x12);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3b, 0x1C);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3c, 0x28);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3d, 0x31);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3e, 0x44);
+	sccb_write_Reg8Data8(GC0308_ID, 0x3f, 0x57);
+	sccb_write_Reg8Data8(GC0308_ID, 0x40, 0x6C);
+	sccb_write_Reg8Data8(GC0308_ID, 0x41, 0x81);
+	sccb_write_Reg8Data8(GC0308_ID, 0x42, 0x94);
+	sccb_write_Reg8Data8(GC0308_ID, 0x43, 0xA7);
+	sccb_write_Reg8Data8(GC0308_ID, 0x44, 0xB8);
+	sccb_write_Reg8Data8(GC0308_ID, 0x45, 0xD6);
+	sccb_write_Reg8Data8(GC0308_ID, 0x46, 0xEE);
+	sccb_write_Reg8Data8(GC0308_ID, 0x47, 0x0d);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0xfe, 0x00);  
+
+	sccb_write_Reg8Data8(GC0308_ID, 0xd2, 0x90); // Open AEC at last.  
+
+	/////////////////////////////////////////////////////////
+	//-----------Update the registers -------------//
+	///////////////////////////////////////////////////////////
+
+	sccb_write_Reg8Data8(GC0308_ID, 0xfe, 0x00);//set Page0
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x10, 0x26);                               
+	sccb_write_Reg8Data8(GC0308_ID, 0x11, 0x0d);// fd,modified by mormo 2010/07/06                               
+	sccb_write_Reg8Data8(GC0308_ID, 0x1a, 0x2a);// 1e,modified by mormo 2010/07/06                                  
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x1c, 0x49); // c1,modified by mormo 2010/07/06                                 
+	sccb_write_Reg8Data8(GC0308_ID, 0x1d, 0x9a); // 08,modified by mormo 2010/07/06                                 
+	sccb_write_Reg8Data8(GC0308_ID, 0x1e, 0x61); // 60,modified by mormo 2010/07/06                                 
+	//sccb_write_Reg8Data8(GC0308_ID, 0x1f, 0x16); // io driver current 
+	
+	sccb_write_Reg8Data8(GC0308_ID, 0x3a, 0x20);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x50, 0x14);// 10,modified by mormo 2010/07/06                               
+	sccb_write_Reg8Data8(GC0308_ID, 0x53, 0x80);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x56, 0x80);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x8b, 0x20); //LSC                                 
+	sccb_write_Reg8Data8(GC0308_ID, 0x8c, 0x20);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x8d, 0x20);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x8e, 0x14);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x8f, 0x10);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x90, 0x14);                                
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x94, 0x02);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x95, 0x07);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x96, 0xe0);                                
+
+	sccb_write_Reg8Data8(GC0308_ID, 0xb1, 0x40); // YCPT                                 
+	sccb_write_Reg8Data8(GC0308_ID, 0xb2, 0x40);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0xb3, 0x40);
+	sccb_write_Reg8Data8(GC0308_ID, 0xb6, 0xe0);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0xd0, 0xcb); // AECT  c9,modifed by mormo 2010/07/06                                
+	sccb_write_Reg8Data8(GC0308_ID, 0xd3, 0x48); // 80,modified by mormor 2010/07/06                           
+
+	sccb_write_Reg8Data8(GC0308_ID, 0xf2, 0x02);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0xf7, 0x12);
+	sccb_write_Reg8Data8(GC0308_ID, 0xf8, 0x0a);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0xfe, 0x01);//set  Page1
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x02, 0x20);
+	sccb_write_Reg8Data8(GC0308_ID, 0x04, 0x10);
+	sccb_write_Reg8Data8(GC0308_ID, 0x05, 0x08);
+	sccb_write_Reg8Data8(GC0308_ID, 0x06, 0x20);
+	sccb_write_Reg8Data8(GC0308_ID, 0x08, 0x0a);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x0e, 0x44);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x0f, 0x32);
+	sccb_write_Reg8Data8(GC0308_ID, 0x10, 0x41);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x11, 0x37);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x12, 0x22);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x13, 0x19);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x14, 0x44);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x15, 0x44);
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x19, 0x50);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x1a, 0xd8); 
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x32, 0x10); 
+
+	sccb_write_Reg8Data8(GC0308_ID, 0x35, 0x00);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x36, 0x80);                                
+	sccb_write_Reg8Data8(GC0308_ID, 0x37, 0x00); 
+	//-----------Update the registers end---------//
+
+	sccb_write_Reg8Data8(GC0308_ID, 0xfe, 0x00);// set back for page1
+
+	R_CSI_TG_CTRL1 = uCtrlReg2;					//*P_Sensor_TG_Ctrl2 = uCtrlReg2;
+#if CSI_IRQ_MODE == CSI_IRQ_PPU_IRQ	
+	R_CSI_TG_CTRL0 = uCtrlReg1;					//*P_Sensor_TG_Ctrl1 = uCtrlReg1;
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO8_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (1 << 20) | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO16_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (2 << 20) | (1 << 16);
+#elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO32_IRQ
+	R_CSI_TG_CTRL0 = uCtrlReg1 | (3 << 20) | (1 << 16);
+#endif
+}
+#endif
+
 #ifdef	__OV3640_MIPI_DRV_C__
 #if (defined _DRV_L1_MIPI) && (_DRV_L1_MIPI == 1)  
-
+//====================================================================================================
+//	Description:	OV3640 + mipi Initialization
+//	Syntax:			void OV3640_MIPI_Init (
+//						INT16S nWidthH,			// Active H Width
+//						INT16S nWidthV,			// Active V Width
+//						INT16U uFlag				// Flag Type
+//					);
+//	Return:			None
+//====================================================================================================
 //max resolution: 2048*1536
 #define COLOR_BAR_EN	0
 #define OV3640_YUYV		0x00
@@ -6438,15 +8405,6 @@ mipi_config_t ov3640_mipi_param = {
 	MIPI_CHECK_HS_SEQ,	//check_hs_seq 
 };
 
-//====================================================================================================
-//	Description:	OV3640 + mipi Initialization
-//	Syntax:			void OV3640_MIPI_Init (
-//						INT16S nWidthH,			// Active H Width
-//						INT16S nWidthV,			// Active V Width
-//						INT16U uFlag				// Flag Type
-//					);
-//	Return:			None
-//====================================================================================================
 void 
 OV3640_MIPI_Init(
 	INT16S width, 
@@ -6913,12 +8871,21 @@ void CSI_Init (
 #ifdef	__OV2643_DRV_C__
 	OV2643_Init (nWidthH, nWidthV, uFlag);
 #endif
+#ifdef	__OV2659_DRV_C__
+	OV2659_Init (nWidthH, nWidthV, uFlag);
+#endif
 #ifdef	__OID_SENSOR_DRV_C__
 	gFrameBuffA = uFrmBuf0;
 	OID_Sensor_Init (nWidthH, nWidthV);
 #endif
 #ifdef	__BF3710_DRV_C__
 	BF3710_Init (nWidthH, nWidthV, uFlag);
+#endif
+#ifdef __GC0307_DRV_C_
+	GC0307_Init (nWidthH, nWidthV, uFlag);
+#endif
+#ifdef __GC0308_DRV_C_
+	GC0308_Init (nWidthH, nWidthV, uFlag);
 #endif
 #ifdef	__OV3640_MIPI_DRV_C__
 	OV3640_MIPI_Init (nWidthH, nWidthV, uFlag);
