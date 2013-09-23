@@ -4,8 +4,8 @@
 #include "application.h"
 
 /* wake up source enable */
-#define EXTA_WAKEUP				0
-#define EXTB_WAKEUP				0
+#define EXTA_WAKEUP				1
+#define EXTB_WAKEUP				1
 #define RTC_WAKEUP				0
 
 /* bit define */

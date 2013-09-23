@@ -8,7 +8,7 @@
 //jpeg encode fifo mode only support by GPL32600, when use fifo mode sensor must set fifo mode at same time
 #define C_VIDEO_ENCODE_FRAME_MODE		0
 #define C_VIDEO_ENCODE_FIFO_MODE		1
-#if (defined MCU_VERSION) && (MCU_VERSION == GPL326XXB)
+#if (defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
 #define FACE_DETECTION_MODE                  1   //0; disable, 1;enable
 #else
 #define FACE_DETECTION_MODE                  0   //0; disable, 1;enable
@@ -38,7 +38,7 @@
 //buffer number 
 #if VIDEO_ENCODE_MODE == C_VIDEO_ENCODE_FRAME_MODE 
 	#if FACE_DETECTION_MODE == 1
-		#define AVI_ENCODE_CSI_BUFFER_NO	4	//sensor use buffer number
+		#define AVI_ENCODE_CSI_BUFFER_NO	3	//sensor use buffer number
 	#else
 		#define AVI_ENCODE_CSI_BUFFER_NO	2	//sensor use buffer number
     #endif
@@ -46,8 +46,13 @@
 	#define AVI_ENCODE_CSI_BUFFER_NO	2  	//fix to 2 when use fifo mode
 #endif
 #define AVI_ENCODE_CSI_FIFO_NO			32	//sensor fifo mode use buffer number		
-#define AVI_ENCODE_SCALER_BUFFER_NO		2	//scaler use buffer number
-#define AVI_ENCODE_DISPALY_BUFFER_NO	2	//display use buffer number
+#if FACE_DETECTION_MODE == 1
+	#define AVI_ENCODE_SCALER_BUFFER_NO		3	//scaler use buffer number
+	#define AVI_ENCODE_DISPALY_BUFFER_NO	3	//display use buffer number
+#else
+	#define AVI_ENCODE_SCALER_BUFFER_NO		2	//scaler use buffer number
+	#define AVI_ENCODE_DISPALY_BUFFER_NO	2	//display use buffer number
+#endif
 #define AVI_ENCODE_VIDEO_BUFFER_NO		2	//jpeg encode use buffer number
 #define AVI_ENCODE_PCM_BUFFER_NO		3	//audio record pcm use buffer number
 
@@ -208,11 +213,10 @@ typedef enum
 #define C_ACK_FAIL		0x80000000
 
 //scaler
-#define C_SCALER_FULL_SCREEN		0
-#define C_SCALER_FIT_RATIO		  	1
-#define C_NO_SCALER_FIT_BUFFER  	2
-#define C_SCALER_FIT_BUFFER			3
-#define C_SCALER_ZOOM_FIT_BUFFER	4
+#define C_SCALER_FULL_SCREEN				0
+#define C_SCALER_BY_RATIO		  			1
+#define C_SCALER_FULL_SCREEN_BY_RATIO  		2
+#define C_SCALER_FULL_SCREEN_BY_DIGI_ZOOM	3
 
 #ifndef DBG_MESSAGE
 	#define DBG_MESSAGE 0

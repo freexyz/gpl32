@@ -3,7 +3,7 @@
 extern INT8U unitab_GBK[];
 extern INT8U acunitab_GBK_BIG5[];
 extern INT8U acunitab_GBK_BIG5_sjis[];
-
+extern INT8U unitab_SJIS[];
 static	INT32U	pUniTabAdd;
 static	INT32U	pUniToCharTab;		//UniToCharTab在整个unitab中的偏移量
 static	INT32U	pCharToUniTab;		//CharToUniTab在整个unitab中的偏移量
@@ -32,6 +32,7 @@ INT16U fs_read_word(INT32U p)
 
 INT32U get_unitab_add(void)
 {
+#if 1
 	if(gUnicodePage == UNI_GBK)
 	return (INT32U)unitab_GBK;
 	else if(gUnicodePage == UNI_BIG5)
@@ -40,6 +41,9 @@ INT32U get_unitab_add(void)
 		return (INT32U)acunitab_GBK_BIG5_sjis;
 	else
 		return (INT32U)unitab_GBK;;
+#else		
+	return (INT32U)unitab_SJIS;
+#endif
 }
 
 static INT32U GetUni2OEMDataIndex(INT16U index)

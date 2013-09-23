@@ -226,12 +226,15 @@ Return:
 	for(i=0; i<g_video.total_number; i++) {
 		DEBUG_MSG(DBG_PRINT("VideoFrame = 0x%x\r\n", p_vid_dec_para->video_decode_addr[i]));
 	}
+	
 	for(i=0; i<g_deblock.total_number; i++) {
 		DEBUG_MSG(DBG_PRINT("DeblockFrame = 0x%x\r\n", p_vid_dec_para->deblock_addr[i]));
 	}
+	
 	for(i=0; i<g_scaler.total_number; i++) {
 		DEBUG_MSG(DBG_PRINT("ScalerFrame = 0x%x\r\n", p_vid_dec_para->scaler_output_addr[i]));
 	}
+	
 	return nRet;
 }
 
@@ -300,7 +303,8 @@ INT32S vid_dec_memory_alloc(void)
 	
 	if(vid_dec_video_memory_alloc() < 0) {
 		return -1;
-	}	
+	}
+		
 	return 0;
 }
 
@@ -352,7 +356,8 @@ INT32S vid_dec_memory_realloc(void)
 	//alloc memory
 	if(vid_dec_video_memory_alloc() < 0) {
 		return -1;
-	}	
+	}
+	
 	return 0;
 }
 
@@ -371,11 +376,11 @@ INT32U vid_dec_get_next_vid_buffer(void)
 {
 	INT32U addr;
 	
-	do{
+	do {
 		addr = p_vid_dec_para->video_decode_addr[g_video.current_index++];
 		if(g_video.current_index >= g_video.total_number)		
 			g_video.current_index = 0;
-	}while(addr == g_lock_vid_addr);
+	} while(addr == g_lock_vid_addr);
 	return addr;
 }
 
@@ -383,7 +388,7 @@ INT32U vid_dec_get_next_deblock_buffer(void)
 {
 	INT32U addr;
 	
-	do{
+	do {
 		addr = p_vid_dec_para->deblock_addr[g_deblock.current_index++];
 		if(g_deblock.current_index >= g_deblock.total_number)	
 			g_deblock.current_index = 0;
@@ -395,11 +400,11 @@ INT32U vid_dec_get_next_aud_buffer(void)
 {
 	INT32U addr;
 	
-	do{
+	do {
 		addr = p_vid_dec_para->audio_decode_addr[g_audio.current_index++];
 		if(g_audio.current_index >= g_audio.total_number)		
 			g_audio.current_index = 0;	
-	}while(addr == g_lock_vid_addr);
+	} while(addr == g_lock_vid_addr);
 	return addr;
 }
 
@@ -407,11 +412,11 @@ INT32U vid_dec_get_next_scaler_buffer(void)
 {
 	INT32U addr;
 	
-	do{	
+	do {
 		addr = p_vid_dec_para->scaler_output_addr[g_scaler.current_index++];
 		if(g_scaler.current_index >= g_scaler.total_number)	
 			g_scaler.current_index = 0;
-	}while(addr == g_lock_vid_addr);
+	} while(addr == g_lock_vid_addr);
 	return addr;
 }
 
@@ -434,10 +439,11 @@ INT32S vid_dec_get_status(void)
 //video info
 void vid_dec_set_video_flag(INT8S video_flag)
 {
-	if(video_flag)
+	if(video_flag) {
 		p_vid_dec_para->video_flag = TRUE;
-	else
+	} else {
 		p_vid_dec_para->video_flag = FALSE;
+	}
 }
 
 INT8S vid_dec_get_video_flag(void)
@@ -494,32 +500,23 @@ INT32S vid_dec_get_file_format(INT8S *pdata)
 {
 	if( (*(pdata+0) == 'A' || *(pdata+0) == 'a') &&
 		(*(pdata+1) == 'V' || *(pdata+1) == 'v') &&
-		(*(pdata+2) == 'I' || *(pdata+2) == 'i'))
-	{
+		(*(pdata+2) == 'I' || *(pdata+2) == 'i')) {
 		return FILE_TYPE_AVI;
-	}
-	else if((*(pdata+0) == 'M' || *(pdata+0) == 'm') &&
+	} else if((*(pdata+0) == 'M' || *(pdata+0) == 'm') &&
 			(*(pdata+1) == 'O' || *(pdata+1) == 'o') &&
-			(*(pdata+2) == 'V' || *(pdata+2) == 'v'))
-	{
+			(*(pdata+2) == 'V' || *(pdata+2) == 'v')) {
 		return FILE_TYPE_MOV;
-	}
-	else if((*(pdata+0) == 'M' || *(pdata+0) == 'm') &&
+	} else if((*(pdata+0) == 'M' || *(pdata+0) == 'm') &&
 			(*(pdata+1) == 'P' || *(pdata+1) == 'p') &&
-			(*(pdata+2) == '4' || *(pdata+2) == '4'))
-	{
+			(*(pdata+2) == '4' || *(pdata+2) == '4')) {
 		return FILE_TYPE_MOV;
-	}
-	else if((*(pdata+0) == '3' || *(pdata+0) == '3') &&
+	} else if((*(pdata+0) == '3' || *(pdata+0) == '3') &&
 			(*(pdata+1) == 'G' || *(pdata+1) == 'g') &&
-			(*(pdata+2) == 'P' || *(pdata+2) == 'p'))
-	{
+			(*(pdata+2) == 'P' || *(pdata+2) == 'p')) {
 		return FILE_TYPE_MOV;
-	}
-	else if((*(pdata+0) == 'M' || *(pdata+0) == 'm') &&
+	} else if((*(pdata+0) == 'M' || *(pdata+0) == 'm') &&
 			(*(pdata+1) == '4' || *(pdata+1) == '4') &&
-			(*(pdata+2) == 'A' || *(pdata+2) == 'a'))
-	{
+			(*(pdata+2) == 'A' || *(pdata+2) == 'a')) {
 		return FILE_TYPE_MOV;
 	}
 	 
@@ -535,10 +532,11 @@ void vid_dec_get_size(INT16U *width, INT16U *height)
 //deblock
 void vid_dec_set_deblock_flag(INT8S deblock_flag)
 {
-	if(deblock_flag)
+	if(deblock_flag) {
 		p_vid_dec_para->deblock_flag = TRUE;
-	else
+	} else {
 		p_vid_dec_para->deblock_flag = FALSE;	
+	}
 }
 
 INT8S vid_dec_get_deblock_flag(void)
@@ -549,10 +547,11 @@ INT8S vid_dec_get_deblock_flag(void)
 //audio info
 void vid_dec_set_audio_flag(INT8S audio_flag)
 {
-	if(audio_flag)
+	if(audio_flag) {
 		p_vid_dec_para->audio_flag = TRUE;
-	else
+	} else {
 		p_vid_dec_para->audio_flag = FALSE;
+	}
 }
 
 INT8S vid_dec_get_audio_flag(void)
@@ -565,8 +564,9 @@ INT32S vid_dec_set_aud_dec_work_mem(INT32U work_mem_size)
 {
 	p_vid_dec_para->work_mem_size = work_mem_size;
 	p_vid_dec_para->work_mem_addr = (INT8U *)gp_malloc_align(work_mem_size, 4);
-	if(!p_vid_dec_para->work_mem_addr)
+	if(!p_vid_dec_para->work_mem_addr) {
 		return -1;
+	}
 	
 	gp_memset((INT8S*)p_vid_dec_para->work_mem_addr, 0, work_mem_size);
 	return 0;
@@ -576,18 +576,19 @@ INT32S vid_dec_set_aud_dec_ring_buffer(void)
 {
 	p_vid_dec_para->ring_buffer_size = MultiMediaParser_GetAudRingLen(p_vid_dec_para->media_handle);
 	p_vid_dec_para->ring_buffer_addr = (INT8U *)MultiMediaParser_GetAudRing(p_vid_dec_para->media_handle);
-	if(!p_vid_dec_para->ring_buffer_addr)
+	if(!p_vid_dec_para->ring_buffer_addr) {
 		return -1;
+	}
 		
 	return 0;
 }
 
 void vid_dec_aud_dec_memory_free(void)
 {
-	if(p_vid_dec_para->work_mem_addr)
-	{
+	if(p_vid_dec_para->work_mem_addr) {
 		gp_free((void*)p_vid_dec_para->work_mem_addr);
 	}
+	
 	p_vid_dec_para->work_mem_size = 0;
 	p_vid_dec_para->work_mem_addr = 0;
 	p_vid_dec_para->ring_buffer_size = 0;
@@ -605,10 +606,10 @@ INT32S aud_dec_double_buffer_put(INT16U *pdata,INT32U cwlen, OS_EVENT *os_q)
 	g_aud_dec_dma_dbf.count = (INT32U) cwlen;
 	g_aud_dec_dma_dbf.notify = NULL;
 	g_aud_dec_dma_dbf.timeout = 0;
-	
 	status = dma_transfer_with_double_buf(&g_aud_dec_dma_dbf, os_q);
-	if (status != 0)
+	if (status != 0) {
 		return status;
+	}
 		
 	return STATUS_OK;
 }
@@ -624,18 +625,29 @@ INT32U aud_dec_double_buffer_set(INT16U *pdata, INT32U cwlen)
 	g_aud_dec_dma_dbf.notify = NULL;
 	g_aud_dec_dma_dbf.timeout = 0;
 	status = dma_transfer_double_buf_set(&g_aud_dec_dma_dbf);
-	if(status != 0)
+	if(status != 0) {
 		return status;
-
+	}
+	
 	return STATUS_OK;
 }
 
 INT32S aud_dec_dma_status_get(void)
 {
-	if (g_aud_dec_dma_dbf.channel == 0xff) 
+	if (g_aud_dec_dma_dbf.channel == 0xff) { 
 		return -1;
+	}
 	
 	return dma_status_get(g_aud_dec_dma_dbf.channel);	
+}
+
+INT32S aud_dec_dma_dbf_status_get(void)
+{
+	if (g_aud_dec_dma_dbf.channel == 0xff) { 
+		return -1;
+	}
+	
+	return dma_dbf_status_get(g_aud_dec_dma_dbf.channel);	
 }
 
 void aud_dec_double_buffer_free(void)
@@ -647,12 +659,13 @@ void aud_dec_double_buffer_free(void)
 //dac init
 void aud_dec_dac_start(INT8U channel_no, INT32U sample_rate)
 {
-	if(p_wave_info->wFormatTag == WAVE_FORMAT_MPEGLAYER3) //2 channel
+	if(p_wave_info->wFormatTag == WAVE_FORMAT_MPEGLAYER3) { //2 channel
 		dac_stereo_set();
-	else if(channel_no == 1)
+	} else if(channel_no == 1) {
 		dac_mono_set();
-	else
+	} else {
 		dac_stereo_set();
+	}
 		
 	dac_sample_rate_set(sample_rate);	
 }
@@ -674,66 +687,56 @@ void aud_dec_ramp_down_handle(INT8U channel_no)
 	last_ldata ^= 0x8000;
 	last_rdata ^= 0x8000;
 	
+	if ((last_ldata == 0x0) && (last_rdata == 0x0)) { 
+		return;
+	}
+	
 	//change timer to 44100
 	dac_sample_rate_set(44100);
 	while(1)
 	{
-		if (last_ldata > 0x0) 
-		{
+		if (last_ldata > 0x0) {
 			last_ldata -= DAC_RAMP_DOWN_STEP;
-		}
-		else if (last_ldata < 0x0) 
-		{
+		} else if (last_ldata < 0x0)  {
 			last_ldata += DAC_RAMP_DOWN_STEP;
 		}
 			
-		if ((last_ldata < DAC_RAMP_DOWN_STEP)&&(last_ldata > temp)) 
-		{ 
+		if ((last_ldata < DAC_RAMP_DOWN_STEP)&&(last_ldata > temp)) { 
 			last_ldata = 0;
 		}
 
-		if (channel_no == 2) 
-		{
-			if (last_rdata > 0x0) 
-			{
+		if (channel_no == 2) {
+			if (last_rdata > 0x0) {
 				last_rdata -= DAC_RAMP_DOWN_STEP;
-		    }
-			else if (last_rdata < 0x0) 
-			{
+		    } else if (last_rdata < 0x0) {
 				last_rdata += DAC_RAMP_DOWN_STEP;
 		    }
 		        
-		    if ((last_rdata < DAC_RAMP_DOWN_STEP)&&(last_rdata > temp)) 
-		    {  
+		    if ((last_rdata < DAC_RAMP_DOWN_STEP)&&(last_rdata > temp)) {  
 				last_rdata = 0;
 			}
 		}
 		    
-		for(i=0;i<DAC_RAMP_DOWN_STEP_HOLD;i++) 
-		{
-			if (channel_no == 2)
-			{
+		for(i=0;i<DAC_RAMP_DOWN_STEP_HOLD;i++) {
+			if (channel_no == 2) {
 				while(R_DAC_CHA_FIFO & 0x8000);
 				R_DAC_CHA_DATA = last_ldata;
 				while(R_DAC_CHB_FIFO & 0x8000);
 				R_DAC_CHB_DATA = last_rdata;
-			} 
-			else 
-			{
+			} else {
 				while(R_DAC_CHA_FIFO & 0x8000);
 				R_DAC_CHA_DATA = last_ldata;
 			}
 		}
 		
-		if (channel_no == 2) 
-		{
-			if ((last_ldata == 0x0) && (last_rdata == 0x0)) 
+		if (channel_no == 2) {
+			if ((last_ldata == 0x0) && (last_rdata == 0x0)) { 
 				break;
-		}
-		else
-		{
-			if (last_ldata == 0x0)
+			}
+		} else {
+			if (last_ldata == 0x0) {
 				break;
+			}
 		}
 	}
 	dac_timer_stop();
@@ -749,42 +752,34 @@ INT32S vid_dec_set_scaler(INT32U scaler_flag, INT32U video_output_format,
 	
 	enable = 0;
 	if(p_bitmap_info->biWidth != buffer_output_width || p_bitmap_info->biHeight!= buffer_output_height ||
-		image_output_width != buffer_output_width || image_output_height!= buffer_output_height)
-	{
+		image_output_width != buffer_output_width || image_output_height!= buffer_output_height) {
 		enable = 1;
 	} 
 	
 	if(p_vid_dec_para->video_format != C_MJPG_FORMAT &&
-		(video_output_format != C_SCALER_CTRL_OUT_YUYV && video_output_format != C_SCALER_CTRL_OUT_UYVY))
-	{
+		(video_output_format != C_SCALER_CTRL_OUT_YUYV && video_output_format != C_SCALER_CTRL_OUT_UYVY)) {
 		enable = 1;
 	}
 	
 #if (defined MCU_VERSION) && (MCU_VERSION >= GPL327XX)
-	if((p_vid_dec_para->video_format == C_MJPG_FORMAT) && (video_output_format != C_SCALER_CTRL_OUT_YUYV))
-	{
+	if((p_vid_dec_para->video_format == C_MJPG_FORMAT) && (video_output_format != C_SCALER_CTRL_OUT_YUYV)) {
 		enable = 1;
 	}
 #endif
 	
-	if(enable && scaler_flag)
-	{
+	if(enable && scaler_flag) {
 		p_vid_dec_para->scaler_flag = scaler_flag;
 		p_vid_dec_para->image_output_width = image_output_width;
 		p_vid_dec_para->image_output_height = image_output_height;
 		p_vid_dec_para->buffer_output_width = buffer_output_width; 
 		p_vid_dec_para->buffer_output_height = buffer_output_height;
-	}
-	else if(enable && (scaler_flag == C_NO_SCALER))
-	{
+	} else if(enable && (scaler_flag == C_NO_SCALER)) {
 		p_vid_dec_para->scaler_flag = C_SCALER_FULL_SCREEN;
 		p_vid_dec_para->image_output_width = p_bitmap_info->biWidth;
 		p_vid_dec_para->image_output_height = p_bitmap_info->biHeight;
 		p_vid_dec_para->buffer_output_width = p_bitmap_info->biWidth; 
 		p_vid_dec_para->buffer_output_height = p_bitmap_info->biHeight;
-	}
-	else
-	{
+	} else {
 		p_vid_dec_para->scaler_flag = C_NO_SCALER;
 		p_vid_dec_para->image_output_width = p_bitmap_info->biWidth;
 		p_vid_dec_para->image_output_height = p_bitmap_info->biHeight;
@@ -792,8 +787,7 @@ INT32S vid_dec_set_scaler(INT32U scaler_flag, INT32U video_output_format,
 		p_vid_dec_para->buffer_output_height = p_bitmap_info->biHeight;
 	}
 		
-	if(p_vid_dec_para->video_format == C_MJPG_FORMAT)
-	{
+	if(p_vid_dec_para->video_format == C_MJPG_FORMAT) {
 		switch(video_output_format)
 		{
 		case C_SCALER_CTRL_OUT_RGB1555:
@@ -814,9 +808,8 @@ INT32S vid_dec_set_scaler(INT32U scaler_flag, INT32U video_output_format,
 			DEBUG_MSG(DBG_PRINT("OutputFormatNoSupport!!!\r\n"));
 			RETURN(STATUS_FAIL);
 		}
-	}	
-	else //mpeg4
-	{
+	} else {
+		//mpeg4
 		switch(video_output_format)
 		{
 		case C_SCALER_CTRL_OUT_RGB1555:
@@ -856,44 +849,32 @@ Return:
 
 void vid_dec_set_user_define_buffer(INT8U user_flag, INT32U addr0, INT32U addr1)
 {
-	if(user_flag)	//user use define buffer
-	{
+	if(user_flag) {	
+		//user use define buffer
 		p_vid_dec_para->user_define_flag = TRUE;
-		if(p_vid_dec_para->video_format == C_MJPG_FORMAT)
-		{
+		if(p_vid_dec_para->video_format == C_MJPG_FORMAT) {
 			p_vid_dec_para->video_decode_addr[0] = addr0;
 			p_vid_dec_para->video_decode_addr[1] = addr1;
 			p_vid_dec_para->scaler_output_addr[0] = 0;
 			p_vid_dec_para->scaler_output_addr[1] = 0;
 			p_vid_dec_para->deblock_addr[0] = 0;
 			p_vid_dec_para->deblock_addr[1] = 0;
-		}
-		else
-		{
-			if(p_vid_dec_para->deblock_flag && p_vid_dec_para->scaler_flag)
-			{
+		} else {
+			if(p_vid_dec_para->deblock_flag && p_vid_dec_para->scaler_flag) {
 				p_vid_dec_para->scaler_output_addr[0] = addr0;
 				p_vid_dec_para->scaler_output_addr[1] = addr1;
-			}
-			else if(p_vid_dec_para->deblock_flag)
-			{
+			} else if(p_vid_dec_para->deblock_flag) {
 				p_vid_dec_para->deblock_addr[0] = addr0;
 				p_vid_dec_para->deblock_addr[1] = addr1;
-			}
-			else if(p_vid_dec_para->scaler_flag)
-			{
+			} else if(p_vid_dec_para->scaler_flag) {
 				p_vid_dec_para->scaler_output_addr[0] = addr0;
 				p_vid_dec_para->scaler_output_addr[1] = addr1;
-			}
-			else
-			{
+			} else {
 				p_vid_dec_para->video_decode_addr[0] = addr0;
 				p_vid_dec_para->video_decode_addr[1] = addr1;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		p_vid_dec_para->user_define_flag = FALSE;
 		p_vid_dec_para->video_decode_addr[0] = 0;
 		p_vid_dec_para->video_decode_addr[1] = 0;
@@ -911,11 +892,13 @@ INT32S scaler_size_start(scaler_info *pScaler)
 	INT32U temp_x;	
 	INT32S scaler_status;
 		
-	if(pScaler->output_x > pScaler->output_buffer_x)
+	if(pScaler->output_x > pScaler->output_buffer_x) {
 		pScaler->output_x = pScaler->output_buffer_x;
+	}
 	
-	if(pScaler->output_y > pScaler->output_buffer_y)
+	if(pScaler->output_y > pScaler->output_buffer_y) {
 		pScaler->output_y = pScaler->output_buffer_y;
+	}
 
   	// Initiate Scaler
   	scaler_init();
@@ -934,10 +917,11 @@ INT32S scaler_size_start(scaler_info *pScaler)
 		scaler_output_pixels_set(1<<16, 1<<16, pScaler->output_buffer_x, pScaler->output_buffer_y);
 	} else {
       	// Fit to output buffer width or height and scaler
-      	if (pScaler->output_y * pScaler->input_x > pScaler->output_x * pScaler->input_y) 
+      	if (pScaler->output_y * pScaler->input_x > pScaler->output_x * pScaler->input_y) {
       		temp_x = (pScaler->input_x<<16) / pScaler->output_x;
-      	else 
+      	} else { 
       		temp_x = (pScaler->input_y<<16) / pScaler->output_y;
+      	}
       		
      	scaler_output_pixels_set(temp_x, temp_x, pScaler->output_buffer_x, pScaler->output_buffer_y);
 	}
@@ -951,8 +935,9 @@ INT32S scaler_size_start(scaler_info *pScaler)
 	scaler_out_of_boundary_color_set(pScaler->boundary_color);
 	
 	scaler_status = scaler_wait_idle();
-	if (scaler_status == C_SCALER_STATUS_STOP) 
+	if (scaler_status == C_SCALER_STATUS_STOP) {
 		scaler_start();
+	}
 	
 	return scaler_status;
 }
@@ -963,28 +948,17 @@ INT32S scaler_size_wait_done(void)
 	
 	scaler_status = scaler_wait_idle();
 	
-	if(scaler_status & C_SCALER_STATUS_DONE)
-	{
+	if(scaler_status & C_SCALER_STATUS_DONE) {
 		scaler_stop();
-	}
-	else if (scaler_status & C_SCALER_STATUS_TIMEOUT)
-	{
+	} else if (scaler_status & C_SCALER_STATUS_TIMEOUT) {
 		DEBUG_MSG(DBG_PRINT("Scaler Timeout failed to finish its job\r\n"));
-	}
-	else if(scaler_status & C_SCALER_STATUS_INIT_ERR) 
-	{	
+	} else if(scaler_status & C_SCALER_STATUS_INIT_ERR) {	
 		DEBUG_MSG(DBG_PRINT("Scaler INIT ERR failed to finish its job\r\n"));	
-	} 
-	else if (scaler_status & C_SCALER_STATUS_INPUT_EMPTY) 
-	{
+	} else if (scaler_status & C_SCALER_STATUS_INPUT_EMPTY) {
 		scaler_restart();
-	}
-	else if(scaler_status & C_SCALER_STATUS_STOP)
-	{
+	} else if(scaler_status & C_SCALER_STATUS_STOP) {
 		DEBUG_MSG(DBG_PRINT("ScalerStop.\r\n"));	
-	}
-	else
-	{
+	} else {
   		DEBUG_MSG(DBG_PRINT("Un-handled Scaler status!\r\n"));	
   	}	
 	
@@ -1007,18 +981,19 @@ INT32S mjpeg_seek_to_jpeg_header(INT32U raw_data_addr)
 	wdata <<= 8;
 	wdata |= *pdata++;
 	
-	for(i=0; i<100; i++)
-	{
-		if(wdata == 0xFFD8)
+	for(i=0; i<100; i++) {
+		if(wdata == 0xFFD8) {
 			break;
+		}
 			
 		wdata <<= 8;
 		wdata |= *pdata++;	
 		cnt++;
 	} 
 	
-	if(i == 100)
+	if(i == 100) {
 		return -1;
+	}
 	
 	return cnt;
 }
@@ -1028,15 +1003,17 @@ INT32S mjpeg_decode_get_size(INT32U raw_data_addr, INT32U size, INT16U *width, I
 	INT32S nRet;
 	
 	nRet = mjpeg_seek_to_jpeg_header(raw_data_addr);
-	if(nRet < 0) 
+	if(nRet < 0) {
 		RETURN(STATUS_FAIL);
+	}
 	
 	size -= nRet;
 	raw_data_addr += nRet;
 	jpeg_decode_init();
 	nRet = jpeg_decode_parse_header((INT8U *) raw_data_addr, size);
-	if(nRet != JPEG_PARSE_OK) 
+	if(nRet != JPEG_PARSE_OK) {
 		RETURN(STATUS_FAIL);
+	}
 
 	*width = jpeg_decode_image_width_get();
 	*height = jpeg_decode_image_height_get();
@@ -1159,10 +1136,18 @@ INT32S mjpeg_memory_alloc(mjpeg_info *pMjpeg)
 
 void mjpeg_memory_free(void)
 {
-	if(g_jpeg_y_addr)	gp_free((void*)g_jpeg_y_addr);
-	if(g_jpeg_cb_addr)	gp_free((void*)g_jpeg_cb_addr);
-	if(g_jpeg_cr_addr)	gp_free((void*)g_jpeg_cr_addr);
-
+	if(g_jpeg_y_addr) {
+		gp_free((void*)g_jpeg_y_addr);
+	}
+	
+	if(g_jpeg_cb_addr) {
+		gp_free((void*)g_jpeg_cb_addr);
+	}
+	
+	if(g_jpeg_cr_addr) {
+		gp_free((void*)g_jpeg_cr_addr);
+	}
+	
 	g_jpeg_y_addr = 0;
 	g_jpeg_cb_addr = 0;
 	g_jpeg_cr_addr = 0;
@@ -1186,16 +1171,18 @@ void mjpeg_decode_set_scaler(mjpeg_info *pMjpeg)
 	color_matrix.SCM_A33 = 0x0180;
 	scaler_color_matrix_config(&color_matrix);
 #endif
-	scaler_input_pixels_set(pMjpeg->jpeg_valid_w, pMjpeg->jpeg_valid_h);
-	scaler_input_visible_pixels_set(pMjpeg->jpeg_valid_w, pMjpeg->jpeg_valid_h);
-	
+
 	if (!pMjpeg->jpeg_output_w) {
 	    pMjpeg->jpeg_output_w = pMjpeg->jpeg_output_buffer_w;
 	}
+	
 	if (!pMjpeg->jpeg_output_h) {
 	    pMjpeg->jpeg_output_h = pMjpeg->jpeg_output_buffer_h;
 	}
-    
+
+	scaler_input_pixels_set(pMjpeg->jpeg_valid_w, pMjpeg->jpeg_valid_h);
+	scaler_input_visible_pixels_set(pMjpeg->jpeg_valid_w, pMjpeg->jpeg_valid_h);  
+	
     if (pMjpeg->scaler_mode == C_SCALER_FULL_SCREEN) {
     	// Fit to output buffer width and height
       	scaler_output_pixels_set((pMjpeg->jpeg_valid_w<<16)/pMjpeg->jpeg_output_w, 
@@ -1209,11 +1196,12 @@ void mjpeg_decode_set_scaler(mjpeg_info *pMjpeg)
     	scaler_output_pixels_set(1<<16, 1<<16, pMjpeg->jpeg_output_buffer_w, pMjpeg->jpeg_output_buffer_h);
     } else {	
     	// Fit to output buffer width or height and scaler
-      	if (pMjpeg->jpeg_output_h*pMjpeg->jpeg_valid_w > pMjpeg->jpeg_output_w*pMjpeg->jpeg_valid_h) 
+      	if (pMjpeg->jpeg_output_h*pMjpeg->jpeg_valid_w > pMjpeg->jpeg_output_w*pMjpeg->jpeg_valid_h) { 
       		factor = (pMjpeg->jpeg_valid_w<<16)/pMjpeg->jpeg_output_w; 
-      	else 
+      	} else {
       		factor = (pMjpeg->jpeg_valid_h<<16)/pMjpeg->jpeg_output_h;
-
+		}
+		
       	scaler_output_pixels_set(factor, factor, pMjpeg->jpeg_output_buffer_w, pMjpeg->jpeg_output_buffer_h);
     }
 
@@ -1463,8 +1451,7 @@ INT32S mjpeg_scaler_fifo_once(mjpeg_info *pMjpeg)
 	scaler_out_of_boundary_mode_set(1);	
 	scaler_out_of_boundary_color_set(pMjpeg->boundary_color);
 	
-	while(1)
-	{
+	while(1) {
 		scaler_status = scaler_wait_idle();
 	  	if (scaler_status == C_SCALER_STATUS_STOP) {
 			if (scaler_start()) {
@@ -1624,37 +1611,26 @@ INT32S mjpeg_decode_and_scaler(mjpeg_info *pMjpeg)
 	}
 #endif  
   
-  	while(1) 
-  	{
+  	while(1) {
   		jpeg_status = jpeg_decode_status_query(1);
   		
-		if(jpeg_status & C_JPG_STATUS_DECODE_DONE) 
-		{	// Wait until scaler finish its job
+		if(jpeg_status & C_JPG_STATUS_DECODE_DONE) {	
+			// Wait until scaler finish its job
 		#if (defined MCU_VERSION) && (MCU_VERSION >= GPL327XX)
 			if(pMjpeg->scaler_fifo != C_SCALER_CTRL_FIFO_DISABLE) {
 		#endif
-		  	while (1) 
-		  	{
+		  	while (1) {
 		  		scaler_status = scaler_wait_idle();
-		  		if(scaler_status == C_SCALER_STATUS_STOP)
-		  		{
+		  		if(scaler_status == C_SCALER_STATUS_STOP) {
 					scaler_start();
-				}
-				else if(scaler_status & C_SCALER_STATUS_DONE) 
-				{
+				} else if(scaler_status & C_SCALER_STATUS_DONE) {
 					break;
-				}
-				else if(scaler_status & (C_SCALER_STATUS_TIMEOUT|C_SCALER_STATUS_INIT_ERR)) 
-				{
+				} else if(scaler_status & (C_SCALER_STATUS_TIMEOUT|C_SCALER_STATUS_INIT_ERR)) {
 					DEBUG_MSG(DBG_PRINT("Scaler failed to finish its job\r\n"));
 					break;
-				} 
-				else if(scaler_status & C_SCALER_STATUS_INPUT_EMPTY) 
-				{
+				} else if(scaler_status & C_SCALER_STATUS_INPUT_EMPTY) {
 		  			scaler_restart();
-		  		}
-		  		else 
-		  		{
+		  		} else {
 			  		DEBUG_MSG(DBG_PRINT("Un-handled Scaler status!\r\n"));
 			  		break;
 			  	}
@@ -1667,45 +1643,35 @@ INT32S mjpeg_decode_and_scaler(mjpeg_info *pMjpeg)
 			break;
 		}
 
-  		if(jpeg_status & C_JPG_STATUS_INPUT_EMPTY) 
-  		{
+  		if(jpeg_status & C_JPG_STATUS_INPUT_EMPTY) {
 			p_vlc += fly_len;
 			nRet = ((INT32U)p_vlc) + C_READ_SIZE;
 			nRet &= ~0x0F;
 			fly_len = nRet - ((INT32U)p_vlc);
 			
 			// Now restart JPEG decoding on the fly
-		  	if(jpeg_decode_on_the_fly_start(p_vlc, fly_len) < 0) 
+		  	if(jpeg_decode_on_the_fly_start(p_vlc, fly_len) < 0) {
 		  		RETURN(STATUS_FAIL);
+		  	}
 		}
 
-		if(jpeg_status & C_JPG_STATUS_OUTPUT_FULL) 
-		{	// Start scaler to handle the full output FIFO now
+		if(jpeg_status & C_JPG_STATUS_OUTPUT_FULL) {	
+			// Start scaler to handle the full output FIFO now
 		#if (defined MCU_VERSION) && (MCU_VERSION >= GPL327XX)
 			if(pMjpeg->scaler_fifo != C_SCALER_CTRL_FIFO_DISABLE) {
 		#endif
-		  	if(!scaler_done) 
-		  	{
+		  	if(!scaler_done) {
 			  	scaler_status = scaler_wait_idle();
-			  	if(scaler_status == C_SCALER_STATUS_STOP)
-			  	{
+			  	if(scaler_status == C_SCALER_STATUS_STOP) {
 					scaler_start();
-			  	}
-			  	else if(scaler_status & C_SCALER_STATUS_DONE)
-			  	{
+			  	} else if(scaler_status & C_SCALER_STATUS_DONE) {
 			  		scaler_done = 1;
-			  	}
-			  	else if(scaler_status & (C_SCALER_STATUS_TIMEOUT|C_SCALER_STATUS_INIT_ERR)) 
-			  	{
+			  	} else if(scaler_status & (C_SCALER_STATUS_TIMEOUT|C_SCALER_STATUS_INIT_ERR)) {
 					DEBUG_MSG(DBG_PRINT("Scaler failed to finish its job\r\n"));
 					break;
-				} 
-				else if(scaler_status & C_SCALER_STATUS_INPUT_EMPTY) 
-				{
+				} else if(scaler_status & C_SCALER_STATUS_INPUT_EMPTY) {
 			  		scaler_restart();
-			  	}
-			  	else 
-			  	{
+			  	} else {
 			  		DEBUG_MSG(DBG_PRINT("Un-handled Scaler status!\r\n"));
 			  		break;
 			  	}
@@ -1724,28 +1690,27 @@ INT32S mjpeg_decode_and_scaler(mjpeg_info *pMjpeg)
 	  		}
 		}		
 
-		if(jpeg_status & C_JPG_STATUS_STOP) 
-		{
+		if(jpeg_status & C_JPG_STATUS_STOP) {
 			DEBUG_MSG(DBG_PRINT("JPEG is not started!\r\n"));
 			break;
 		}
-		if(jpeg_status & C_JPG_STATUS_TIMEOUT)
-		{
+		
+		if(jpeg_status & C_JPG_STATUS_TIMEOUT) {
 			DEBUG_MSG(DBG_PRINT("JPEG execution timeout!\r\n"));
 			break;
 		}
-		if(jpeg_status & C_JPG_STATUS_INIT_ERR) 
-		{
+		
+		if(jpeg_status & C_JPG_STATUS_INIT_ERR) {
 			DEBUG_MSG(DBG_PRINT("JPEG init error!\r\n"));
 			break;
 		}
-		if(jpeg_status & C_JPG_STATUS_RST_VLC_DONE) 
-		{
+		
+		if(jpeg_status & C_JPG_STATUS_RST_VLC_DONE) {
 			DEBUG_MSG(DBG_PRINT("JPEG Restart marker number is incorrect!\r\n"));
 			break;
 		}
-		if(jpeg_status & C_JPG_STATUS_RST_MARKER_ERR) 
-		{
+		
+		if(jpeg_status & C_JPG_STATUS_RST_MARKER_ERR) {
 			DEBUG_MSG(DBG_PRINT("JPEG Restart marker sequence error!\r\n"));
 			break;
 		}
@@ -1829,6 +1794,7 @@ INT32S mjpeg_decode_without_scaler(mjpeg_info *pMjpeg)
 		if(nRet & C_JPG_STATUS_SCALER_DONE) {
 			break;
 		}
+		
 		if(nRet & (C_JPG_STATUS_STOP|C_JPG_STATUS_TIMEOUT|C_JPG_STATUS_INIT_ERR)) {
 			RETURN(STATUS_FAIL);
 		}
@@ -1870,6 +1836,7 @@ INT32S mjpeg_decode_without_scaler(mjpeg_info *pMjpeg)
 		if(nRet & C_JPG_STATUS_DECODE_DONE) {
 			break;
 		}
+		
 		if(nRet & (C_JPG_STATUS_STOP|C_JPG_STATUS_TIMEOUT|C_JPG_STATUS_INIT_ERR)) { 
 			RETURN(STATUS_FAIL);
 		}
@@ -1912,6 +1879,7 @@ INT32S mjpeg_decode_without_scaler(mjpeg_info *pMjpeg)
 		if(nRet & C_JPG_STATUS_DECODE_DONE) {
 			break;
 		}
+		
 		if(nRet & (C_JPG_STATUS_STOP|C_JPG_STATUS_TIMEOUT|C_JPG_STATUS_INIT_ERR)) { 
 			RETURN(STATUS_FAIL);
 		}
@@ -1926,14 +1894,11 @@ Return:
 
 INT32S mjpeg_decode_stop_all(INT32U flag)
 {
-	if(flag)
-	{
+	if(flag) {
 		jpeg_decode_stop();
 		scaler_stop();
 		mjpeg_memory_free();
-	}
-	else
-	{
+	} else {
 		mjpeg_decode_stop();
 	}
 	
@@ -2009,8 +1974,7 @@ static INT32U bs_get_bits(INT8U bits);
 static void bs_skip(INT8U bits)
 {	
 	g_bs_pos += bits;
-	if(g_bs_pos >= 32)
-	{
+	if(g_bs_pos >= 32) {
 		g_bs_buffer[0] = g_bs_buffer[1];
 		g_bs_buffer[1] = (INT32U)(*g_bs_ptr++ << 24);
 		g_bs_buffer[1] |= (INT32U)(*g_bs_ptr++ << 16);

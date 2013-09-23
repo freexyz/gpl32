@@ -106,6 +106,10 @@ INT8U mcu_version_get(void)
         return 0x12;  					    
 	} else if (value == 0xE55EC001) {	// GPL327xx Version A
         return 0x20;  					
+	} else if (value == 0x31A01000) {	// GPL327xx Version B
+        return 0x21;  					
+	} else if (value == 0xDC68429A) {	// GPL326xxB Version A
+        return 0x31;  					
 	}
 
 	return 255;
@@ -164,24 +168,21 @@ void system_clks_disable1(INT32U CLK_MASK)
  R_SYSTEM_CLK_EN1 &=~CLK_MASK ;
 }
 
-#if MCU_VERSION >= GPL326XX
-void system_bus_arbiter_init(void)
-{
-  R_MEM_M2_BUS_PRIORITY =0;
-  R_MEM_M3_BUS_PRIORITY =0;
-  R_MEM_M4_BUS_PRIORITY =0;
-  R_MEM_M5_BUS_PRIORITY =0;
-  R_MEM_M6_BUS_PRIORITY =0;
-  R_MEM_M7_BUS_PRIORITY =5; /* spu */
-  R_MEM_M8_BUS_PRIORITY =0;
-  R_MEM_M9_BUS_PRIORITY =0;
-  R_MEM_M10_BUS_PRIORITY =0;
-  R_MEM_M11_BUS_PRIORITY =1;
-}
-#else  // GPL325XX
 
 void system_bus_arbiter_init(void)
 {
+#if MCU_VERSION >= GPL326XX
+  R_MEM_M2_BUS_PRIORITY =0;	/* usb20 */
+  R_MEM_M3_BUS_PRIORITY =0;	/* ppu */
+  R_MEM_M4_BUS_PRIORITY =0;	/* dma */
+  R_MEM_M5_BUS_PRIORITY =0; /* jpeg */
+  R_MEM_M6_BUS_PRIORITY =0;	/* scale */
+  R_MEM_M7_BUS_PRIORITY =5; /* spu */
+  R_MEM_M8_BUS_PRIORITY =0;	/* nfc */
+  R_MEM_M9_BUS_PRIORITY =0;	/* cpu */
+  R_MEM_M10_BUS_PRIORITY =0;/* mp3 */
+  R_MEM_M11_BUS_PRIORITY =1;/* mp4 */
+#else  // GPL325XX
   R_MEM_M2_BUS_PRIORITY =0;
   R_MEM_M3_BUS_PRIORITY =0;
   R_MEM_M4_BUS_PRIORITY =0;
@@ -192,10 +193,8 @@ void system_bus_arbiter_init(void)
   R_MEM_M9_BUS_PRIORITY =0;
   R_MEM_M10_BUS_PRIORITY =0;
   R_MEM_M11_BUS_PRIORITY =0;
-}
-
 #endif
-
+}
 
 void system_sdram_driving(void)
 {
@@ -716,6 +715,7 @@ void sys_sdram_input_clock_dly_enable(INT8U ebable_disable)
     
     void system_power_on_ctrl(void)
     {
+    #if MCU_VERSION < GPL326XX
     	/* wakeup by RTC_DAY int */
     	#if _DRV_L1_RTC == 1
     	if (R_RTC_INT_STATUS & RTC_DAY_IEN) {
@@ -726,7 +726,9 @@ void sys_sdram_input_clock_dly_enable(INT8U ebable_disable)
     		}
     	}
     	#endif
+    #endif
     
+    #if _PROJ_TYPE == _PROJ_TURNKEY
     	R_TIMERB_CTRL = 0x8061;
       #if SUPPORT_HARDWARE_IR == CUSTOM_ON
         if (R_IR_RX_CTRL & 0x20) {
@@ -764,9 +766,8 @@ void sys_sdram_input_clock_dly_enable(INT8U ebable_disable)
     
     	R_MEM_DRV = 0xFFFF;
       #endif
+    #endif
     	R_SYSTEM_CTRL &= ~0x20; /* strong 6M mode */
-    //	sys_ir_delay(1879); /* 10 ms in 48MHz*/
-    
     	*P_USBD_CONFIG &= ~0x800;	//Switch to full speed
     	*P_USBD_CONFIG1 &= ~0x100; /* enable usb phy */
     }

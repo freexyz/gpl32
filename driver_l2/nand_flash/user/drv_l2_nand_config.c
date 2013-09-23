@@ -170,17 +170,14 @@ INT32S Nand_OS_Init(void)
 	#if (defined _PROJ_BOOTLOADER)&&(_PROJ_TYPE ==_PROJ_BOOTLOADER)
 	//for nandboot loader Null 
 	#else
-	if (OSRunning==TRUE)
+	if(NULL == gNand_sem)
 	{
-		if(NULL == gNand_sem)
-		{
-	    	gNand_sem = OSSemCreate(1);	
-		}
-
+		gNand_sem = OSSemCreate(1);	
 	}
 	#endif	
     return (0);
 }
+
 INT32S Nand_OS_Exit(void)
 {
 	return 0;
@@ -853,13 +850,9 @@ INT32S Nand_OS_Init(void)
 	#if (defined _PROJ_BOOTLOADER)&&(_PROJ_TYPE ==_PROJ_BOOTLOADER)
 	//for nandboot loader Null 
 	#else
-	if (OSRunning==TRUE)
+	if(NULL == gNand_sem)
 	{
-		if(NULL == gNand_sem)
-		{
-	    	gNand_sem = OSSemCreate(1);	
-		}
-
+		gNand_sem = OSSemCreate(1);	
 	}
 	#endif	
     return (0);

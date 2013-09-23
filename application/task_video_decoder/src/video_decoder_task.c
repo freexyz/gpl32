@@ -116,7 +116,7 @@ static void video_decode_task_end(INT32U deblock_iram_addr)
 
 void video_decode_task_entry(void *parm)
 {
-	INT8U  success_flag, init_flag, nth_flag;
+	INT8U  success_flag, init_flag, nth_flag, end_flag, skip_flag;
 	INT8U  err, time_inc_len, quant;
 	INT16U *pwdata, width, height, jpeg_yuv_mode;
 	INT32S coding_type, status, error_id;
@@ -138,8 +138,9 @@ void video_decode_task_entry(void *parm)
 	while(1)
 	{
 		msg_id = (INT32U) OSQPend(vid_dec_q, 0, &err);
-		if((err != OS_NO_ERR)||	!msg_id)
+		if((err != OS_NO_ERR)||	!msg_id) {
 			continue;
+		}
 			
 		switch(msg_id)
 		{
@@ -147,16 +148,24 @@ void video_decode_task_entry(void *parm)
 			success_flag = display_addr = 0;
 			//check video data ready
 			if(!raw_data_addr || size <= 0) {
-				if(MultiMediaParser_IsEOV(p_vid_dec_para->media_handle)) {
+				//check end or error
+				if(vid_dec_get_status() & C_VIDEO_DECODE_ERR) {
+					end_flag = 1;	
+				} else if(MultiMediaParser_IsEOV(p_vid_dec_para->media_handle)) {
+					end_flag = 1;
+				} else {
+					end_flag = 0;
+				}
+				
+				if(end_flag) {
 					DEBUG_MSG(DBG_PRINT("VidDecEnd.\r\n"));
 					video_decode_task_end(deblock_iram_addr);
-					vid_dec_clear_status(C_VIDEO_DECODE_PLAYING);
-					vid_dec_end_callback();
-					p_vid_dec_para->pend_cnt = p_vid_dec_para->post_cnt;
+					vid_dec_end_callback(C_VIDEO_DECODE_PLAYING);
 					OSQFlush(vid_dec_q);
 					continue;
+				} else {
+					goto __VidDecOneFrameEnd;
 				}
-				goto EndOf_MSG_VID_DEC_ONE_FRAME;
 			}
 			
 			//check sync
@@ -164,24 +173,38 @@ void video_decode_task_entry(void *parm)
 			temp = (INT64S)(p_vid_dec_para->tv - p_vid_dec_para->Tv);
 			OS_EXIT_CRITICAL();
 			if(temp > p_vid_dec_para->time_range) {
+			#if DROP_MENTHOD == PARSER_DROP
 				if(p_vid_dec_para->fail_cnt < 2) {
 					p_vid_dec_para->fail_cnt++;
 					MultiMediaParser_SetFrameDropLevel(p_vid_dec_para->media_handle, p_vid_dec_para->fail_cnt);
 					DEBUG_MSG(DBG_PRINT("FailCnt = %d\r\n", p_vid_dec_para->fail_cnt));
-				}							
+				}
+			#elif DROP_MENTHOD == DECODE_DROP
+				p_vid_dec_para->fail_cnt = 1;
+				DEBUG_MSG(DBG_PRINT("FailCnt = 1\r\n"));
+			#endif
 			} else {
-				if(p_vid_dec_para->fail_cnt > 0)
-				{
+			#if DROP_MENTHOD == PARSER_DROP
+				if(p_vid_dec_para->fail_cnt > 0) {
 					p_vid_dec_para->fail_cnt--;
 					MultiMediaParser_SetFrameDropLevel(p_vid_dec_para->media_handle, p_vid_dec_para->fail_cnt);	
 					DEBUG_MSG(DBG_PRINT("FailCnt = %d\r\n", p_vid_dec_para->fail_cnt));
 				}
+			#elif DROP_MENTHOD == DECODE_DROP
+				p_vid_dec_para->fail_cnt = 0;
+			#endif
 			}
+			
 			switch(p_vid_dec_para->video_format) 
 			{
 			case C_MJPG_FORMAT:
+			#if DROP_MENTHOD == DECODE_DROP
+				if(p_vid_dec_para->fail_cnt) {
+					goto __VidDecOneFrameEnd;
+				}
+			#endif
 				//mjpeg decode one frame
-				coding_type = C_UNKNOW_VOP;
+				coding_type = C_I_VOP;
 				display_addr = decode_addr = vid_dec_get_next_vid_buffer();
 				mjpeg.scaler_mode = p_vid_dec_para->scaler_flag;
 				mjpeg.raw_data_addr = raw_data_addr;
@@ -204,9 +227,10 @@ void video_decode_task_entry(void *parm)
 				
 				if(status < 0) {
 					DEBUG_MSG(DBG_PRINT("JpegDecFail = %d\r\n", status));
-					success_flag = 1;
-					goto EndOf_MSG_VID_DEC_ONE_FRAME;
+					display_addr = 0;
 				}
+				
+				goto __VidDecOneFrameEnd;
 				break;
 			
 			#if MPEG4_DECODE_ENABLE == 1	
@@ -223,14 +247,12 @@ void video_decode_task_entry(void *parm)
 					mpeg4_decode_config(mpeg4_type, p_vid_dec_para->mpeg4_decode_out_format, width, height, time_inc_len - 1);
 				} else if(coding_type & ERROR_00) {
 					video_decode_task_end(deblock_iram_addr);
-					vid_dec_clear_status(C_VIDEO_DECODE_PLAYING);
-					vid_dec_end_callback();
+					vid_dec_end_callback(C_VIDEO_DECODE_PLAYING);
 					p_vid_dec_para->pend_cnt = p_vid_dec_para->post_cnt;
 					OSQFlush(vid_dec_q);
 					continue;
 				} else {
-					success_flag = 1;
-					goto EndOf_MSG_VID_DEC_ONE_FRAME;
+					goto __VidDecOneFrameEnd;
 				}
 				break;
 				
@@ -246,8 +268,7 @@ void video_decode_task_entry(void *parm)
 					init_flag = 1;
 					mpeg4_decode_config(mpeg4_type, p_vid_dec_para->mpeg4_decode_out_format, width, height, 0);
 				} else {
-					success_flag = 1;
-					goto EndOf_MSG_VID_DEC_ONE_FRAME;
+					goto __VidDecOneFrameEnd;
 				}
 				break;
 			#endif
@@ -265,8 +286,7 @@ void video_decode_task_entry(void *parm)
 					init_flag = 1;
 					mpeg4_decode_config(mpeg4_type, p_vid_dec_para->mpeg4_decode_out_format, width, height, coding_type);
 				} else {
-					success_flag = 1;
-					goto EndOf_MSG_VID_DEC_ONE_FRAME;
+					goto __VidDecOneFrameEnd;
 				}
 				break;
 			#endif
@@ -276,12 +296,21 @@ void video_decode_task_entry(void *parm)
 			switch(coding_type)
 			{
 			case C_I_VOP:
+			#if DROP_MENTHOD == DECODE_DROP
+				skip_flag = 0;
+			#endif
+			
 			case C_P_VOP:
+			#if DROP_MENTHOD == DECODE_DROP	
+				if(skip_flag || (p_vid_dec_para->fail_cnt && (coding_type == C_P_VOP))) {
+					skip_flag = 1;
+					break;
+				}
+			#endif
 				//decode mpeg4 I/P frame 
 				refer_addr = decode_addr;
 				old_scaler_out_addr = scaler_out_addr;
-				if(p_vid_dec_para->deblock_flag)
-				{	
+				if(p_vid_dec_para->deblock_flag) {	
 					deblock_addr = vid_dec_get_next_deblock_buffer();
 					drvl1_mp4_deblock_set(quant, 1);
 					drvl1_mp4_deblock_start(deblock_addr);
@@ -295,8 +324,8 @@ void video_decode_task_entry(void *parm)
 					DEBUG_MSG(DBG_PRINT("Mpeg4DecFail = 0x%x\r\n", status));
 					mpeg4_decode_init();
 					mpeg4_decode_config(mpeg4_type, p_vid_dec_para->mpeg4_decode_out_format, width, height, time_inc_len - 1);
-					success_flag = 1;
-					goto EndOf_MSG_VID_DEC_ONE_FRAME;
+					display_addr = 0;
+					goto __VidDecOneFrameEnd;
 				} else {
 					mpeg4_decode_stop();
 				}
@@ -339,8 +368,7 @@ void video_decode_task_entry(void *parm)
 				
 			case C_N_VOP:
 				//skip mpeg4 N frame 
-				success_flag = 1;
-				goto EndOf_MSG_VID_DEC_ONE_FRAME;
+				goto __VidDecOneFrameEnd;
 				break;
 				
 			case C_UNKNOW_VOP:
@@ -349,13 +377,13 @@ void video_decode_task_entry(void *parm)
 			
 			default:
 				//skip B frame or others
-				DEBUG_MSG(DBG_PRINT("CodingType = %d\r\n", coding_type));
-				success_flag = 1;
-				goto EndOf_MSG_VID_DEC_ONE_FRAME;
+				goto __VidDecOneFrameEnd;
 				break;		
 			}
 			#endif
 			
+		__VidDecOneFrameEnd:			
+			DEBUG_MSG(DBG_PRINT("%d", coding_type));
 			success_flag = 1;
 			if(display_addr && !nth_flag) {
 			#if _PROJ_TYPE == _PROJ_TURNKEY	
@@ -365,7 +393,6 @@ void video_decode_task_entry(void *parm)
 			#endif	
 			}
 			
-EndOf_MSG_VID_DEC_ONE_FRAME:
 			if(success_flag) {
 				//add video decode time
 				if(p_vid_dec_para->scaler_flag && (p_vid_dec_para->video_format != C_MJPG_FORMAT)) {
@@ -411,9 +438,11 @@ EndOf_MSG_VID_DEC_ONE_FRAME:
 			scaler_in_addr = old_scaler_out_addr = scaler_out_addr = 0; 
 			deblock_addr = deblock_iram_addr = 0;
 		case MSG_VID_DEC_RESTART:
-			time_inc_len = quant = init_flag = 0;
+			DEBUG_MSG(DBG_PRINT("MSG_VID_DEC_RESTART\r\n"));
+			time_inc_len = quant = init_flag = skip_flag = 0;
 			delta_Tv = old_delta_Tv = 0;
 			p_vid_dec_para->fail_cnt = 0;
+			p_vid_dec_para->pend_cnt = p_vid_dec_para->post_cnt = 0;
 			
 			//fre-latch video raw data
 			while(1) {	
@@ -431,7 +460,15 @@ EndOf_MSG_VID_DEC_ONE_FRAME:
 						break;
 					}	
 				}
-				OSTimeDly(1);
+				
+				//check end or error 
+				if(vid_dec_get_status() & C_VIDEO_DECODE_ERR) {
+					goto __VidDecStartFail;	
+				} else if(MultiMediaParser_IsEOV(p_vid_dec_para->media_handle)) {
+					goto __VidDecStartFail;
+				} else {
+					OSTimeDly(1);
+				}
 			}
 			
 			//caculate video frame delta time
@@ -481,12 +518,12 @@ EndOf_MSG_VID_DEC_ONE_FRAME:
 				
 				if(((coding_type == C_I_VOP)||(coding_type == C_P_VOP)) && time_inc_len) {
 					init_flag = 1;
-					DBG_PRINT("TIL=%d\r\n", time_inc_len);
+					DEBUG_MSG(DBG_PRINT("TIL=%d\r\n", time_inc_len));
 					mpeg4_decode_config(mpeg4_type, p_vid_dec_para->mpeg4_decode_out_format, width, height, time_inc_len - 1);
 				} else if(coding_type & ERROR_00) {
-					goto VID_DEC_START_FAIL;
+					goto __VidDecStartFail;
 				} else if(nth_flag && !time_inc_len) {
-					goto VID_DEC_START_FAIL;
+					goto __VidDecStartFail;
 				}
 				break;
 			
@@ -524,7 +561,7 @@ EndOf_MSG_VID_DEC_ONE_FRAME:
 				pwdata = (INT16U*)&p_bitmap_info->biHeight;
 				*pwdata = height;
 				if(vid_dec_memory_realloc() < 0) {
-					goto VID_DEC_START_FAIL;
+					goto __VidDecStartFail;
 				}
 			}
 			
@@ -545,7 +582,8 @@ EndOf_MSG_VID_DEC_ONE_FRAME:
 			}
 			OSMboxPost(vid_dec_ack_m, (void*)C_ACK_SUCCESS);
 			break;
-VID_DEC_START_FAIL:
+			
+		__VidDecStartFail:
 			DEBUG_MSG(DBG_PRINT("VideoDecodeStartFail!!!\r\n"));
 			nth_flag = 0;
 			OSQFlush(vid_dec_q);
@@ -553,7 +591,8 @@ VID_DEC_START_FAIL:
 			break;
 			
 		case MSG_VID_DEC_STOP:
-			if(nth_flag) nth_flag = 0;
+			DEBUG_MSG(DBG_PRINT("MSG_VID_DEC_STOP\r\n"));
+			nth_flag = 0;
 			video_decode_task_end(deblock_iram_addr);
 			OSQFlush(vid_dec_q);
 			OSMboxPost(vid_dec_ack_m, (void*)C_ACK_SUCCESS);
@@ -561,25 +600,27 @@ VID_DEC_START_FAIL:
 			
 		case MSG_VID_DEC_NTH:
 			if(OSQPost(vid_dec_q, (void*)MSG_VID_DEC_START) != OS_NO_ERR) {
-				goto MSG_VID_DEC_NTH_Fail;
+				goto __VidDecNthFail;
 			}
 			
 			if(OSQPost(vid_dec_q, (void*)MSG_VID_DEC_ONE_FRAME) != OS_NO_ERR) {
-				goto MSG_VID_DEC_NTH_Fail;
+				goto __VidDecNthFail;
 			}
 						
 			if(OSQPost(vid_dec_q, (void*)MSG_VID_DEC_STOP) != OS_NO_ERR) {
-				goto MSG_VID_DEC_NTH_Fail;
+				goto __VidDecNthFail;
 			}
 			nth_flag = 1;
-			continue;
-MSG_VID_DEC_NTH_Fail:
+			break;
+			
+		__VidDecNthFail:
 			nth_flag = 0;
 			OSQFlush(vid_dec_q);
 			OSMboxPost(vid_dec_ack_m, (void*)C_ACK_FAIL);	
 			break;
 			
 		case MSG_VID_DEC_EXIT:
+			DEBUG_MSG(DBG_PRINT("MSG_VID_DEC_EXIT\r\n"));
 			OSMboxPost(vid_dec_ack_m, (void*)C_ACK_SUCCESS);
 			OSTaskDel(OS_PRIO_SELF);
 			break;	

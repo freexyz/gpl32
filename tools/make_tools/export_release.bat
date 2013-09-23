@@ -94,8 +94,11 @@ xcopy "..\..\gplib\pwkey_process" 							"%1\gplib\pwkey_process" /s /i /y
 xcopy "..\..\gplib\spu\inc" 										"%1\gplib\spu\inc" /s /i /y
 xcopy "..\..\gplib\src" 												"%1\gplib\src" /s /i /y
 xcopy "..\..\gplib\storages" 										"%1\gplib\storages" /s /i /y
-xcopy "..\..\gplib\FaceDetect" 										"%1\gplib\FaceDetect" /s /i /y
-xcopy "..\..\gplib\comair_tx\inc" 										"%1\gplib\comair_tx\inc" /s /i /y
+xcopy "..\..\gplib\FaceDetect" 									"%1\gplib\FaceDetect" /s /i /y
+xcopy "..\..\gplib\comair_tx\inc" 							"%1\gplib\comair_tx\inc" /s /i /y
+xcopy "..\..\gplib\comair_rx\inc" 							"%1\gplib\comair_rx\inc" /s /i /y
+xcopy "..\..\gplib\1d_barcode\inc" 							"%1\gplib\1d_barcode\inc" /s /i /y
+xcopy "..\..\gplib\qrcode" 											"%1\gplib\qrcode" /s /i /y
 
 echo Copy gpstdlib
 xcopy "..\..\gpstdlib" 													"%1\gpstdlib" /s /i /y
@@ -112,6 +115,8 @@ del "%1\project\gpl32_platform_demo\gpl32_platform_demo.mcp"
 del "%1\project\gpl326xx_platform_demo\gpl326xx_platform_demo.mcp"
 del "%1\project\gpl327xx_platform_demo\gpl327xx_platform_demo.mcp"
 del "%1\project\gpl326xxb_platform_demo\gpl326xxb_platform_demo.mcp"
+del "%1\project\gp327xxxa_platform_demo\gp327xxxa_platform_demo.mcp"
+del "%1\project\gp326xxxa_platform_demo\gp326xxxa_platform_demo.mcp"
 
 echo Copy tools
 xcopy "..\..\tools"															"%1\tools" /s /i /y

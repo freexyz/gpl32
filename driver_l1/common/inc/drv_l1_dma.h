@@ -88,12 +88,11 @@
 #define C_DMA_IO_ADC				0x08
 #define C_DMA_IO_SPI0_TX			0x09
 #define C_DMA_IO_SPI0_RX			0x0A
-#define C_DMA_IO_SPI1_TX			0x0B
 #if (defined MCU_VERSION) && (MCU_VERSION >= GPL326XXB)	&& (MCU_VERSION < GPL327XX)
 	#define C_DMA_IO_SDC1				0x0B
 #endif
-#define C_DMA_IO_SPI1_RX			0x0C
-#define C_DMA_IO_13					0x0D
+#define C_DMA_IO_SPI1_TX			0x0C
+#define C_DMA_IO_SPI1_RX			0x0D
 #define C_DMA_IO_SPU_LEFT			0x0E
 #define C_DMA_IO_SPU_RIGHT			0x0F
 #define C_DMA_IO_MAX				0x0F

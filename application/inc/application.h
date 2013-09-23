@@ -9,6 +9,8 @@
 #include "turnkey_sys_msg.h"
 #include "turnkey_drv_msg.h"
 
+/* for UART debug message on/off */
+#define UART_MSG		1
 
 /* Golbal define*/
 #if 0  /*remove by jandy, 2008/10/15*/

@@ -50,7 +50,7 @@ extern void mic_agc_enable_set(BOOLEAN status);
 extern INT32S mic_auto_data_dma_get(INT16U *data, INT32U len, INT8S *notify);
 extern INT32S mic_auto_data_get(INT16U *data, INT32U len, INT8S *notify);
 
-#if (defined MCU_VERSION) && (MCU_VERSION == GPL326XXB)
+#if (defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
 //add for DAGC
 extern void mic_set_pga_gain(INT16U booster_gain, INT16U pga_gain);
 extern INT16U mic_get_pga_gain(void);

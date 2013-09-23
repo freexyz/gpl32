@@ -99,11 +99,11 @@
   #define C_WP_D_PIN       	IO_H7
   #define C_STORAGE_CD_PIN 	IO_H6
   #define C_USBDEVICE_PIN   IO_F5  
-#elif BOARD_TYPE == BOARD_DEMO_GPL327XX
+#elif (BOARD_TYPE == BOARD_DEMO_GPL327XX) || (BOARD_TYPE == BOARD_DEMO_GP327XXXA)
   #define C_WP_D_PIN       	IO_F7
   #define C_STORAGE_CD_PIN 	IO_F6
   #define C_USBDEVICE_PIN   IO_C3 
-#elif BOARD_TYPE == BOARD_DEMO_GPL326XXB
+#elif (BOARD_TYPE == BOARD_DEMO_GPL326XXB) || (BOARD_TYPE == BOARD_DEMO_GP326XXXA)
   #define C_WP_D_PIN       	IO_F8
   #define C_STORAGE_CD_PIN 	IO_A12
   #define C_USBDEVICE_PIN   IO_F5 
@@ -277,7 +277,7 @@ struct Usb_Storage_Access *UsbReadWrite[MAX_DISK_NUM] = {
 #endif
 
 /* N:\> */
-#if NAND_APP_EN == 1
+#if (defined NAND_APP_EN) && (NAND_APP_EN == 1)
 	&USBD_NF_APP_ACCESS,
 #elif (MAX_DISK_NUM>9)
     NULL,

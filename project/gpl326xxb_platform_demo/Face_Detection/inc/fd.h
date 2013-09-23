@@ -32,28 +32,23 @@ extern   "C" {
 
 extern INT32U		Face_Detect_Demo_En;
 extern INT32U		drawFace_flag;
-extern INT32U		train_counter;
-extern INT32U		face_verify_flag;
-extern INT32U		sensor_frame;
-extern INT32U		verify_pass;
-extern INT32U		verify_fail;
-extern INT32U		face_count;
 extern INT32U		*fiMem;
 extern INT32U		*ownerULBP;
-extern unsigned long	fdmode;
 
+extern void		image_color_set(gpImage *img, IMAGE_COLOR_FORMAT type);
+extern int		faceRoiDetect(gpImage *gray, gpRect *detRect, int *Count);
+extern void		DrawRect(gpImage *Image, gpRect *Rect, const unsigned char _color[4]);
+extern void		drawFace(gpImage *Image, int N, gpRect *Face, int *Count);
 extern void		pic_face(INT32U frame_buffer);
 
-extern int		adjustSecurity_set(int set_value);
-extern int		adjustSecurity_init(int level);
-
-extern void		ftrain_start(INT32U frame);
-extern INT32U		ftrain_end(void);
-extern void		ftrain_init(unsigned char prio);
+extern int		securitylvl_get(void);
+extern int		securitylvl_set(int set_value);
+extern int		securitylvl_init(int level);
 
 extern INT32U		face_detect_return(void);
 extern void		face_frame_set(INT32U frame);
-extern void		fident_init(unsigned char prio);
+
+extern void		fd(unsigned char prio);
 
 
 #ifdef   __cplusplus

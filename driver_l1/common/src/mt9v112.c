@@ -31,9 +31,9 @@
 /*
  * for debug
  */
-#define DEBUG_MT9V112			1
+#define DEBUG_MT9V112		1
 #if DEBUG_MT9V112
-    #define _D(x)			(x)
+    #define _D(x)		(x)
 #else
     #define _D(x)
 #endif
@@ -81,7 +81,7 @@ void mt9v112_init(short nWidthH, short nWidthV,	unsigned short uFlag)
 	INT16U	uCtrlReg1, uCtrlReg2, tmp;
 	INT8U	inreso = 1;		//1:VGA, 0:QVGA
 
-	_D(DBG_PRINT(" MT9V112 - mount\r\n"));
+	_D(DBG_PRINT("\033[1;36mMT9V112 - mount\r\n\033[0m"));
 
 	// Enable CSI clock to let sensor initialize at first
 #if CSI_CLOCK == CSI_CLOCK_SYS_CLK_DIV2
@@ -150,7 +150,7 @@ void mt9v112_init(short nWidthH, short nWidthV,	unsigned short uFlag)
 	drv_msec_wait(100);
 
 	_D(sccb_rd_r8d16(MT9V112_ID, 0x00, &tmp));
-	_D(DBG_PRINT("  R0:0=0x%04x\r\n", (INT16U) tmp));
+	_D(DBG_PRINT(" R0:0=0x%04x\r\n", (INT16U) tmp));
 
 	// Timing Settings 27MHz
 	sccb_wr_r8d16(MT9V112_ID, 0xF0, 0x0000);
@@ -301,12 +301,12 @@ void mt9v112_init(short nWidthH, short nWidthV,	unsigned short uFlag)
 #elif CSI_IRQ_MODE == CSI_IRQ_TG_FIFO32_IRQ
 	R_CSI_TG_CTRL0 = uCtrlReg1 | (3 << 20) | (1 << 16);
 #endif
-	_D(DBG_PRINT("  nWidthH=%04d, nWidthV=%04d, uFlag=0x%04x\r\n", nWidthH, nWidthV, uFlag));
-	_D(DBG_PRINT("  R_CSI_TG_HRATIO  = 0x%04x, R_CSI_TG_HWIDTH  = 0x%04x\r\n", (INT16U) R_CSI_TG_HRATIO, (INT16U) R_CSI_TG_HWIDTH));
-	_D(DBG_PRINT("  R_CSI_TG_VRATIO  = 0x%04x, R_CSI_TG_VHEIGHT = 0x%04x\r\n", (INT16U) R_CSI_TG_VRATIO, (INT16U) R_CSI_TG_VHEIGHT));
-	_D(DBG_PRINT("  R_CSI_TG_CTRL0   = 0x%04x\r\n", (INT16U) uCtrlReg1));
-	_D(DBG_PRINT("  R_CSI_TG_CTRL1   = 0x%04x\r\n", (INT16U) uCtrlReg2));
-	_D(DBG_PRINT(" MT9V112 - done\r\n"));
+	_D(DBG_PRINT(" nWidthH=%04d, nWidthV=%04d, uFlag=0x%04x\r\n", nWidthH, nWidthV, uFlag));
+	_D(DBG_PRINT(" R_CSI_TG_HRATIO  = 0x%04x, R_CSI_TG_HWIDTH  = %04d\r\n", (INT16U) R_CSI_TG_HRATIO, (INT16U) R_CSI_TG_HWIDTH));
+	_D(DBG_PRINT(" R_CSI_TG_VRATIO  = 0x%04x, R_CSI_TG_VHEIGHT = %04d\r\n", (INT16U) R_CSI_TG_VRATIO, (INT16U) R_CSI_TG_VHEIGHT));
+	_D(DBG_PRINT(" R_CSI_TG_CTRL0   = 0x%04x\r\n", (INT16U) uCtrlReg1));
+	_D(DBG_PRINT(" R_CSI_TG_CTRL1   = 0x%04x\r\n", (INT16U) uCtrlReg2));
+	_D(DBG_PRINT("\033[1;36mMT9V112 - done\r\n\033[0m"));
 }
 
 /*

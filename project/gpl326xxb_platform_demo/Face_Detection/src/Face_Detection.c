@@ -5,28 +5,7 @@
 #include "FaceIdentifyAP.h"
 #include "video_codec_callback.h"
 
-// NAND or SPI version.
-#define ZTKF_SPI
-
-// Face recognition status is output through IOs.
-#define ZTKF_IO_STATUS
-
-// Status IO assignment.
-#ifdef ZTKF_SPI
-#define ZTKIO_MODE          IO_A12
-#define ZTKIO_FACEDETECTED  IO_A13
-#define ZTKIO_FUNCCOMPLETE  IO_A14
-#define ZTKIO_DATABASEFULL  IO_A15
-#else // ZTKF_SPI
-#define ZTKIO_MODE          IO_C1
-#define ZTKIO_FACEDETECTED  IO_C2
-#define ZTKIO_FUNCCOMPLETE  IO_C3
-#define ZTKIO_DATABASEFULL  IO_C4
-#endif // ZTKF_SPI
-
-
 #define FACE_IDENTIFY_EN    1
-
 #define WORKING_WIDTH		320
 #define WORKING_WIDTH_STEP	((WORKING_WIDTH+7)>>3<<3)
 #define MAX_CONDIDATE		512
@@ -50,8 +29,10 @@ OS_EVENT *face_detect_end_q;
 #define C_FACE_QUEUE_MAX			5
 void *face_frame_q_stack[C_FACE_QUEUE_MAX];
 void *face_detect_end_q_stack[C_FACE_QUEUE_MAX];
+void image_color_set(gpImage *img,IMAGE_COLOR_FORMAT type);
 
 #define MAX_RESULT	N_FACE_0//64
+#define SZ_ULBP 1888
 
 gpImage imgIn;
 gpRect Face[MAX_RESULT];
@@ -62,83 +43,6 @@ INT32U *fiMem;
 INT32U *ownerULBP;
 gpRect Face_old[MAX_RESULT];	
 int Count_old[MAX_RESULT];
-
-#ifdef ZTKF_IO_STATUS
-void ZTK_Delay(int iCycle)
-{
-    int i;
-    int j;
-
-    for (i = 0; i < iCycle; i++)
-    {
-        j = i;
-    }
-}
-
-void ZTK_InitStatusIO()
-{
-	gpio_init_io(ZTKIO_MODE, GPIO_OUTPUT);
-	gpio_init_io(ZTKIO_FACEDETECTED, GPIO_OUTPUT);
-	gpio_init_io(ZTKIO_FUNCCOMPLETE, GPIO_OUTPUT);
-	gpio_init_io(ZTKIO_DATABASEFULL, GPIO_OUTPUT);
-
-	gpio_drving_init_io(ZTKIO_MODE,(IO_DRV_LEVEL) IO_DRIVING_16mA);////IO_DRIVING_16mA
-	gpio_drving_init_io(ZTKIO_FACEDETECTED,(IO_DRV_LEVEL) IO_DRIVING_16mA);////IO_DRIVING_16mA
-	gpio_drving_init_io(ZTKIO_FUNCCOMPLETE,(IO_DRV_LEVEL) IO_DRIVING_16mA);////IO_DRIVING_16mA
-	gpio_drving_init_io(ZTKIO_DATABASEFULL,(IO_DRV_LEVEL) IO_DRIVING_16mA);////IO_DRIVING_16mA
-
-    // Default status.
-	gpio_write_io(ZTKIO_MODE, 0);
-	gpio_write_io(ZTKIO_FACEDETECTED, 0);
-	gpio_write_io(ZTKIO_FUNCCOMPLETE, 0);
-	gpio_write_io(ZTKIO_DATABASEFULL, 0);
-}
-
-void ZTK_OutputEnterTrainingStatus()
-{
-	gpio_write_io(ZTKIO_MODE, 0);
-}
-
-void ZTK_OutputEnterRecognitionStatus()
-{
-	gpio_write_io(ZTKIO_MODE, 1);
-}
-
-void ZTK_OutputFaceDetectedStatus()
-{
-	gpio_write_io(ZTKIO_FACEDETECTED, 1);
-}
-
-void ZTK_OutputFaceTrainedStatus()
-{
-	gpio_write_io(ZTKIO_FUNCCOMPLETE, 1);
-}
-
-void ZTK_OutputFaceRecognizedStatus()
-{
-	gpio_write_io(ZTKIO_FUNCCOMPLETE, 1);
-}
-
-void ZTK_OutputDatabaseEmptyStatus()
-{
-	gpio_write_io(ZTKIO_DATABASEFULL, 0);
-}
-
-void ZTK_OutputDatabaseFullStatus()
-{
-	gpio_write_io(ZTKIO_DATABASEFULL, 1);
-}
-
-void ZTK_ClearFaceDetectedStatus()
-{
-	gpio_write_io(ZTKIO_FACEDETECTED, 0);
-}
-
-void ZTK_ClearFaceProcessSuccessStatus()
-{
-	gpio_write_io(ZTKIO_FUNCCOMPLETE, 0);
-}
-#endif // ZTKF_IO_STATUS
 
 gpRect GPRect_utils(int _x, int _y, int _width, int _height)
 {
@@ -575,7 +479,7 @@ void pic_face(INT32U frame_buffer)
 	imgIn_old.height = C_DISPLAY_DEV_VPIXEL;
 	imgIn_old.widthStep = C_DISPLAY_DEV_HPIXEL*2;
 	imgIn_old.ch = 2;
-	imgIn_old.format = IMG_FMT_UYVY;
+	image_color_set((gpImage *)&imgIn_old,IMAGE_COLOR_FORMAT_YUYV);
 	imgIn_old.ptr = (unsigned char*)frame_buffer;     
 	
 	#if FACE_IDENTIFY_EN == 0
@@ -640,49 +544,26 @@ int adjustSecurity_init(int level)
     return adjustSecurity_get();  
 }
 
-INT32U face_train_set(INT32U frame_buffer)
-{
-		INT32S  nRet;
-		
-		imgIn.width = C_DISPLAY_DEV_HPIXEL;
-		imgIn.height = C_DISPLAY_DEV_VPIXEL;
-		imgIn.widthStep = C_DISPLAY_DEV_HPIXEL*2;
-		imgIn.ch = 2;
-		imgIn.format = IMG_FMT_UYVY;
-		imgIn.ptr = (unsigned char*)frame_buffer;			
-		nRet = faceRoiDetect(&imgIn,&Face[0],Count); 
+void image_color_set(gpImage *img,IMAGE_COLOR_FORMAT type)
+{    
+		switch(type)
+		{
+			case IMAGE_COLOR_FORMAT_YUYV:
+			     img->format = IMG_FMT_UYVY;
+			     break;
+			     
+			case IMAGE_COLOR_FORMAT_UYVY:
+			     img->format = IMG_FMT_YUYV;
+			     break;             
+     
+			case IMAGE_COLOR_FORMAT_Y_ONLY:
+		         img->format = IMG_FMT_GRAY;
+			     break;     
 
-		if(nRet)
-		{  
-#ifdef ZTKF_IO_STATUS
-            ZTK_OutputFaceDetectedStatus();
-#endif // ZTKF_IO_STATUS
-        
-			FaceIdentify_Train(&imgIn,&Face[0], ownerULBP, sensor_frame, fiMem);
-			DBG_PRINT("Face Train Value : %d OK \r\n",sensor_frame);
-			sensor_frame++;
-            
-#ifdef ZTKF_IO_STATUS
-            ZTK_OutputFaceTrainedStatus();
-            ZTK_Delay(100000);
-
-            if (sensor_frame < 20)
-            {
-                ZTK_ClearFaceProcessSuccessStatus();
-            }
-            else
-            {
-                ZTK_OutputDatabaseFullStatus();
-            }
-            
-            ZTK_ClearFaceDetectedStatus();
-#endif // ZTKF_IO_STATUS
-
+			default :
+			     img->format = IMG_FMT_UYVY;
+			     break;
 		}
-		else
-		    DBG_PRINT("/**********Face Train : No Face Founded**********/ : %d \r\n",nRet);   
-                   
-        return sensor_frame;
 }
 
 INT32U face_verify_set(INT32U frame_buffer)
@@ -696,20 +577,25 @@ INT32U face_verify_set(INT32U frame_buffer)
 		imgIn.height = C_DISPLAY_DEV_VPIXEL;
 		imgIn.widthStep = C_DISPLAY_DEV_HPIXEL*2;
 		imgIn.ch = 2;
-		imgIn.format = IMG_FMT_UYVY;
-		imgIn.ptr = (unsigned char*)frame_buffer;
-
+		image_color_set((gpImage *)&imgIn,IMAGE_COLOR_FORMAT_YUYV);
+		imgIn.ptr = (unsigned char*)frame_buffer;							
 		nRet = faceRoiDetect(&imgIn,Face,Count);
-
 		if(nRet)
 		{
 			#if FACE_IDENTIFY_EN == 1		   
-				if(face_verify_flag)
+				if(train_counter)
 				{
-#ifdef ZTKF_IO_STATUS
-                    ZTK_OutputFaceDetectedStatus();
-#endif // ZTKF_IO_STATUS
-
+					FaceIdentify_Train(&imgIn,&Face[0], ownerULBP, sensor_frame, fiMem);
+			        DBG_PRINT("Face Train Value : %d OK \r\n",sensor_frame);
+			        sensor_frame++;
+			        if(sensor_frame >= 20)
+			        {
+			            train_counter=0;
+				   		DBG_PRINT("/**********Face Train Finish**********/ \r\n");   
+			        }
+				}
+			    else if(face_verify_flag)
+				{
 					nRet=FaceIdentify_Verify((gpImage *)&imgIn, (gpRect *)&Face[0],(void *)ownerULBP, (const int)adjustSecurity_get(), (void *)fiMem);
 					if(nRet)
 					{
@@ -718,10 +604,6 @@ INT32U face_verify_set(INT32U frame_buffer)
 						    face_verify_flag=0;
 						    DBG_PRINT("/**********Face Identify : OK**********/\r\n");
 						    DBG_PRINT("/**********Face Identify Demo End**********/\r\n"); 
-#ifdef ZTKF_IO_STATUS
-                            ZTK_OutputFaceRecognizedStatus();
-                            ZTK_Delay(100000);
-#endif // ZTKF_IO_STATUS
 					    }					     		            
 					}
 					else
@@ -729,10 +611,6 @@ INT32U face_verify_set(INT32U frame_buffer)
 						verify_counter=0;
 						DBG_PRINT("/**********Face Identify : Fail**********/\r\n");
 					}
-            
-#ifdef ZTKF_IO_STATUS
-                    ZTK_ClearFaceDetectedStatus();
-#endif // ZTKF_IO_STATUS
 				}
 			#else
 				drawFace_flag=1;	
@@ -747,7 +625,7 @@ INT32U face_verify_set(INT32U frame_buffer)
 				  Face_old[i].width=Face[i].width;
 				  Face_old[i].height=Face[i].height;			          
 				}
-			#endif
+			#endif		   	
 		}
 		else
 		{
@@ -813,19 +691,25 @@ void Face_Detect_demo(void)
 	OSTaskCreate(Face_task_entry, (void *) 0, &FaceTaskStack[FaceTaskStackSize - 1], 30); 
 
 	// Initialize display device
-//	tv_init();	
-//	tv_start (TVSTD_NTSC_J_NONINTL, TV_QVGA, TV_INTERLACE);	
-	
-	tft_init();
-	tft_start(TPO_TD025THD1);
-	
+	#if C_DISPLAY_DEVICE >= C_TV_QVGA
+		tv_init();	
+		#if C_DISPLAY_DEVICE == C_TV_QVGA
+			tv_start (TVSTD_NTSC_J_NONINTL, TV_QVGA, TV_NON_INTERLACE);	
+		#elif C_DISPLAY_DEVICE == C_TV_VGA
+			tv_start (TVSTD_NTSC_J, TV_HVGA, TV_INTERLACE);
+		#elif C_DISPLAY_DEVICE == C_TV_D1
+			tv_start (TVSTD_NTSC_J, TV_D1, TV_NON_INTERLACE);
+		#else
+			while(1);
+		#endif
+	#else
+		tft_init();
+		tft_start(C_DISPLAY_DEVICE);
+	#endif
+
 	user_defined_video_codec_entrance();
 	video_encode_entrance();     // Initialize and allocate the resources needed by Video decoder
-
-#ifdef ZTKF_IO_STATUS
-    ZTK_InitStatusIO();
-#endif // ZTKF_IO_STATUS
-
+	
 	arg.bScaler = 1;	// must be 1
 	arg.TargetWidth = C_DISPLAY_DEV_HPIXEL; 	//encode width
 	arg.TargetHeight = C_DISPLAY_DEV_VPIXEL;	//encode height
@@ -844,7 +728,7 @@ void Face_Detect_demo(void)
     #if FACE_IDENTIFY_EN == 1
 		memSize = FaceIdentify_MemCalc();
 		fiMem = (INT32U *)gp_malloc_align((memSize),8);    
-	    ownerULBP = (INT32U *)gp_malloc_align((1888*20),8);
+	    ownerULBP = (INT32U *)gp_malloc_align((SZ_ULBP*20),8);
 	    adjustSecurity_init(3);
 	    adc_key_scan_init();                    //init key scan
     #endif 
@@ -855,8 +739,6 @@ void Face_Detect_demo(void)
 	    	adc_key_scan();
 			if(ADKEY_IO1)
 			{
-                face_verify_flag = 0;
-
 				if(!face_verify_flag)
 				{
 				   sensor_frame=0;
@@ -867,38 +749,26 @@ void Face_Detect_demo(void)
 				   }
 				   else
 				   {
-					   gp_memset((INT8S *)ownerULBP,0,(1888*20));
+					   gp_memset((INT8S *)ownerULBP,0,(SZ_ULBP*20));
 					   train_counter=1;
 					   DBG_PRINT("/**********Face Train Start**********/ \r\n");
-#ifdef ZTKF_IO_STATUS
-                        ZTK_ClearFaceProcessSuccessStatus();
-                        ZTK_ClearFaceDetectedStatus();
-                        ZTK_OutputDatabaseEmptyStatus();
-                        ZTK_OutputEnterTrainingStatus();                       
-#endif // ZTKF_IO_STATUS
 				   }
 				}               
 			}
 
 			if(ADKEY_IO2)
 			{
-//				if(face_verify_flag)
-//				{
-//				    face_verify_flag=0;
-//				    DBG_PRINT("/**********Face Identify Demo End**********/\r\n");               
-//				}
-//				else
+				if(face_verify_flag)
+				{
+				    face_verify_flag=0;
+				    DBG_PRINT("/**********Face Identify Demo End**********/\r\n");               
+				}
+				else
 				{
 				    face_verify_flag=1;
 				    verify_counter=0;
 				    DBG_PRINT("/**********Face Identify Demo Start**********/\r\n");               
 				}
-                
-#ifdef ZTKF_IO_STATUS
-                ZTK_ClearFaceProcessSuccessStatus();
-                ZTK_ClearFaceDetectedStatus();
-                ZTK_OutputEnterRecognitionStatus();                       
-#endif // ZTKF_IO_STATUS
 			}
 			
 			if(ADKEY_IO3)

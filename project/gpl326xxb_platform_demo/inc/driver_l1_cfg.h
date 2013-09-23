@@ -68,7 +68,7 @@
 	#define _DRV_L1_MIPI				1
 	
     // UART interface config
-    #define UART0_BAUD_RATE             9600//115200
+    #define UART0_BAUD_RATE             115200
 
     /* free customer define */
     #define DPF_1024x768            0
@@ -146,7 +146,7 @@
 	//#define	__HSB0357_DRV_C__
 	//#define	__OV6680_DRV_C__
 	//#define	__OV7680_DRV_C__
-	#define	__OV7670_DRV_C__
+	//#define	__OV7670_DRV_C__
 	//#define	__OV9655_DRV_C__
 	//#define	__OV9660_DRV_C__
 	//#define	__OV2655_DRV_C__ 
@@ -154,10 +154,11 @@
 	//#define	__OV5642_DRV_C__ 
 	//#define	__OV7675_DRV_C__ 
 	//#define	__OV2643_DRV_C__ 
+	//#define	__OV2659_DRV_C__ 
 	//#define	__OID_SENSOR_DRV_C__ 
 	//#define	__BF3710_DRV_C__ 
-	//#define	__OV3640_MIPI_DRV_C__
-	//#define	__MT9V112_DRV_C__
+	//#define	__OV3640_MIPI_DRV_C__	
+	#define	__MT9V112_DRV_C__
 	//#define	__GC0308_DRV_C__
 
    	#if (defined MCU_VERSION) && (MCU_VERSION < GPL326XX)
@@ -300,6 +301,23 @@
     #define NF_NON_SHARE   1
     #define NAND_POS_SET_VALUE  ((NAND_CS_POS|NAND_CTRL_POS|NAND_DATA5_0_POS|NAND_DATA7_6_POS)&NAND_POSFUN_MASK)
 
+    // For GPL326XXB use only. To assign NAND DATA/CTRL IO pins
+    // (0) NAND_DATA_IOI_CTRL_IOF: DATA[7:0]=>IOI[7:0] , ALE/CLE/WEB/REB=>IOF[7:6], IOI[9:8]
+    // (1) NAND_DATA_IOB_CTRL_IOC: DATA[7:0]=>IOB[15:8], ALE/CLE/WEB/REB=>IOC[9:6]
+    // (2) NAND_DATA_IOA_CTRL_IOC: DATA[7:0]=>IOA[15:8], ALE/CLE/WEB/REB=>IOC[9:6]
+    // (3) NAND_DATA_IOB_CTRL_IOG: DATA[7:0]=>IOB[15:8], ALE/CLE/WEB/REB=>IOG[11:10], IOG[5:6]    
+    // (4) NAND_DATA_IOA_CTRL_IOG: DATA[7:0]=>IOA[15:8], ALE/CLE/WEB/REB=>IOG[11:10], IOG[5:6]
+    // (5) NAND_DATA_IOI_CTRL_IOG: DATA[7:0]=>IOI[7:0] , ALE/CLE/WEB/REB=>IOG[11:10], IOG[5:6] 
+    // (6) NAND_DATA_AUTO_CTRL_AUTO : Auto pad scan option 
+    #define NAND_DATA_IOI_CTRL_IOF           0
+    #define NAND_DATA_IOB_CTRL_IOC           1
+    #define NAND_DATA_IOA_CTRL_IOC           2
+    #define NAND_DATA_IOB_CTRL_IOG           3
+    #define NAND_DATA_IOA_CTRL_IOG           4
+    #define NAND_DATA_IOI_CTRL_IOG           5
+    #define NAND_DATA_AUTO_CTRL_AUTO         0xff
+    #define NAND_DATA_CTRL_POS               NAND_DATA_IOI_CTRL_IOG 
+
     // XD
     #define XD_ALE_IOC12__CLE_IOC13__REB_IOC14__WEB_IOC15    0x00000000
     #define XD_ALE_IOC6__CLE_IOC7__REB_IOC8__WEB_IOC9        0x00000008
@@ -333,6 +351,7 @@
     //SPI1
     #define SPI1_RX_IOE3__CLK_IOE1__TX_IOE2 ~(1<<12) /* GPL325XX */
     #define SPI1_RX_IOC4__CLK_IOC5__TX_IOC7  (1<<12) /* GPL325XX */
+    #define SPI1_RX_IOI3__CLK_IOI1__TX_IOI2  (1<<1)  /* GPL326XXB */
     #define SPI1_RX_NONE__CLK_NONE__TX_NONE	 0x80000000
 
     //SPI0

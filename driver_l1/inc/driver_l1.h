@@ -252,45 +252,59 @@ extern void cache_write_back_enable(void);
 extern void cache_write_back_disable(void);
 
 // Vector Interrupt Controller
-#define VIC_ALM_SCH_HMS     1
-#define VIC_TMB_ABC         2
-#define VIC_3               3
-#define VIC_4               4
-#define VIC_SPI1            5
-#define VIC_EXT_AB          6
-#define VIC_KEY_CHANGE      7
-#define VIC_KEY_SCAN        8
-#define VIC_TIMER3          9
-#define VIC_TIMER2          10
-#define VIC_11              11
-#define VIC_DFR             12
-#define VIC_SPI0            13
-#define VIC_UART            14
-#define VIC_CF              15
-#define VIC_MS              16
-#define VIC_TIMER1          17
-#define VIC_18              18
-#define VIC_SD              19
-#define VIC_NFC             20
-#define VIC_USB             21
-#define VIC_SCALER          22
-#define VIC_JPEG            23
-#define VIC_DMA             24
-#define VIC_TIMER0          25
-#define VIC_26              26
-#define VIC_PPU             27
-#define VIC_ADCF            28
-#define VIC_ADC             29
-#define VIC_AUDB            30
-#define VIC_AUDA            31
-#define VIC_UNEXPECT        32
-#define VIC_MAX_IRQ         33  // Don't forget to modify this when new interrupt source is added
+#define VIC_ALM_SCH_HMS		1
+#define VIC_TMB_ABC			2
+#define VIC_FD				3//VIC_3				3
+#define VIC_4				4
+#define VIC_DFR				5//VIC_SPI1			5
+#define VIC_EXT_AB			6
+#define VIC_KEY_CHANGE		7
+#define VIC_KEY_SCAN		8
+#define VIC_TIMER3		    9
+#define VIC_TIMER2			10
+#define VIC_11				11
+#define VIC_SPI1			12//VIC_DFR				12
+#define VIC_SPI0		    13
+#define VIC_UART			14
+#define VIC_CF				15
+#define VIC_MS				16
+#define VIC_TIMER1			17
+#define VIC_18				18
+#define VIC_SD				19
+#define VIC_NFC	    		20
+#define VIC_USB 			21
+#define VIC_SCALER			22
+#define VIC_JPEG			23
+#define VIC_DMA				24
+#define VIC_TIMER0			25
+#define VIC_26				26
+#define VIC_PPU				27
+#define VIC_ADCF			28
+#define VIC_ADC				29
+#define VIC_AUDB			30
+#define VIC_AUDA			31
+#define VIC_UNEXPECT		32
+#define VIC_MAX_IRQ			33				// Don't forget to modify this when new interrupt source is added
 
-#define VIC_SPU_PW          1
-#define VIC_SPU_BEAT        2
-#define VIC_SPU_ENV         3
-#define VIC_SPU_FIQ         4
-#define VIC_MAX_FIQ         5   // Don't forget to modify this when new fast interrupt source is added
+#if(defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
+	#define VIC_SPU_PW			1
+	#define VIC_SPU_BEAT		2
+	#define VIC_SPU_ENV			3
+	#define VIC_SPU_FIQ			4
+	#define VIC_FIQ_EXT_A		5//6
+	#define VIC_FIQ_EXT_B		6//5
+	#define VIC_FIQ_TIMER_0		7//4
+	#define VIC_FIQ_TIMER_1		8//3
+	#define VIC_FIQ_TIMER_2		9//2
+	#define VIC_FIQ_TIMER_3		10//1
+	#define VIC_MAX_FIQ			11				// Don't forget to modify this when new fast interrupt source is added	
+#else
+	#define VIC_SPU_PW			1
+	#define VIC_SPU_BEAT		2
+	#define VIC_SPU_ENV			3
+	#define VIC_SPU_FIQ			4
+	#define VIC_MAX_FIQ			5				// Don't forget to modify this when new fast interrupt source is added
+#endif
 
 extern void vic_init(void);
 extern INT32U vic_global_mask_set(void);
@@ -1017,6 +1031,15 @@ typedef enum
 	RTC_SEC_INT_INDEX,
 	RTC_HSEC_INT_INDEX,
 	RTC_DAY_INT_INDEX,
+#if MCU_VERSION >= GPL326XX	
+	IDP_RTC_ALM_INT_INDEX,
+	IDP_RTC_SCH_INT_INDEX,
+	IDP_RTC_HR_INT_INDEX,
+	IDP_RTC_MIN_INT_INDEX,
+	IDP_RTC_SEC_INT_INDEX,
+	IDP_RTC_HSEC_INT_INDEX,
+	IDP_RTC_DAY_INT_INDEX,
+#endif
 	RTC_INT_MAX
 } RTC_INT_INDEX;
 
@@ -1032,6 +1055,15 @@ typedef enum
 	RTC_SCH_2048HZ
 } RTC_SCH_PERIOD;
 
+//internal rtc
+#define RTC_RTCEN     (1 << 15)  /* RTC enable */
+
+#define RTC_SCHSEL    (7 <<  0)  /* schedule time period selection */
+
+#define RTC_SEC_BUSY  (1 << 15)  /* RTC second busy flag */
+#define RTC_MIN_BUSY  (1 << 14)  /* RTC min busy flag */
+#define RTC_HR_BUSY   (1 << 13)  /* RTC hour busy flag */
+
 #define RTC_ALMEN     (1 << 10)  /* alarm function enable */
 #define RTC_HMSEN     (1 <<  9)  /* H/M/S function enable */
 #define RTC_SCHEN     (1 <<  8)  /* scheduler function enbale */
@@ -1044,34 +1076,7 @@ typedef enum
 #define RTC_SEC_IEN       (1 <<  1)  /* alarm interrupt enbale */
 #define RTC_HALF_SEC_IEN  (1 <<  0)  /* alarm interrupt enbale */
 
-#define RTC_EN     0xFFFFFFFF
-#define RTC_DIS    0
-
-#define RTC_EN_MASK     0xFF
-
-extern void rtc_init(void);
-extern INT32S rtc_callback_set(INT8U int_idx, void (*user_isr)(void));
-extern INT32S rtc_callback_clear(INT8U int_idx);
-extern void rtc_alarm_set(t_rtc *rtc_time);
-extern void rtc_time_get(t_rtc *rtc_time);
-extern void rtc_time_set(t_rtc *rtc_time);
-extern void rtc_schedule_set(INT8U freq);
-extern void rtc_alarm_get(t_rtc *rtc_time);
-extern INT32U rtc_irq_flag_get(void);
-extern BOOLEAN rtc_day_int_get(void);
-
-#if MCU_VERSION < GPL326XX
-extern void rtc_function_set(INT32U mask, INT32U value);
-extern void rtc_int_set(INT32U mask, INT32U value);
-#else
-extern void rtc_function_set(INT8U mask, INT8U value);
-extern void rtc_int_set(INT8U mask, INT8U value);
-extern void rtc_schedule_enable(INT8U freq);
-extern void rtc_schedule_disable(void);
-extern void rtc_day_get(t_rtc *rtc_time);
-extern void rtc_day_set(t_rtc *rtc_time);
-#endif
-
+//independ power rtc
 #define GPX_RTC_ALMOEN    (1 << 0)  /* alarm output singnal enable */
 #define GPX_RTC_EN        (1 << 3)  /* RTC function enable */
 #define GPX_RTC_VAEN      (1 << 4)  /* Voltage comparator enbale */
@@ -1083,6 +1088,48 @@ extern void rtc_day_set(t_rtc *rtc_time);
 #define GPX_RTC_MIN_IEN       (1 <<  2)  /* min interrupt enbale */
 #define GPX_RTC_SEC_IEN       (1 <<  1)  /* alarm interrupt enbale */
 #define GPX_RTC_HALF_SEC_IEN  (1 <<  0)  /* alarm interrupt enbale */
+
+#define RTC_EN				0xFFFFFFFF
+#define RTC_DIS				0
+#define RTC_EN_MASK			0xFF
+#define RTC_BUSY			-1
+
+#if MCU_VERSION < GPL326XX
+extern void rtc_init(void);
+extern void rtc_time_set(t_rtc *rtc_time);
+extern void rtc_time_get(t_rtc *rtc_time);
+extern void rtc_alarm_set(t_rtc *rtc_time);
+extern void rtc_alarm_get(t_rtc *rtc_time);
+extern void rtc_function_set(INT32U mask, INT32U value);
+extern void rtc_int_set(INT32U mask, INT32U value);
+extern void rtc_schedule_set(INT8U freq);
+extern INT32U rtc_irq_flag_get(void);
+extern BOOLEAN rtc_day_int_get(void);
+#else
+extern void rtc_init(void);
+extern void rtc_time_set(t_rtc *rtc_time);
+extern void rtc_time_get(t_rtc *rtc_time);
+extern void rtc_day_set(t_rtc *rtc_time);
+extern void rtc_day_get(t_rtc *rtc_time);
+extern void rtc_alarm_set(t_rtc *rtc_time);
+extern void rtc_alarm_get(t_rtc *rtc_time);
+extern void idp_rtc_alm_pin_set(INT32U level);
+extern void idp_rtc_alm_pin_wakeup_set(INT32U enable);
+extern void rtc_function_set(INT8U mask, INT8U value);
+extern void rtc_reset_trigger_level_set(INT8U value);
+extern void rtc_int_set(INT32U mask, INT32U value);
+extern void rtc_int_clear(INT32U value);
+extern void idp_rtc_int_set(INT8U mask, INT8U value);
+extern void idp_rtc_int_clear(INT8U value);
+extern INT8U gpx_rtc_read(INT8U addr);
+extern void gpx_rtc_write(INT8U addr,INT8U data);
+extern void rtc_schedule_enable(INT8U freq);
+extern void rtc_schedule_disable(void);
+extern void rtc_ext_to_int_set(void);
+#endif
+
+extern INT32S rtc_callback_clear(INT8U int_idx);
+extern INT32S rtc_callback_set(INT8U int_idx, void (*user_isr)(void));
 
 //MATRE KEYSCAN
 extern void matre_keyscaninit(void);
@@ -1156,7 +1203,7 @@ extern INT32S mic_timer_stop(INT8U timer_id);
 extern void mic_vref_enable_set(BOOLEAN status);
 extern void mic_agc_enable_set(BOOLEAN status);
 
-#if (defined MCU_VERSION) && (MCU_VERSION == GPL326XXB)
+#if (defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
 //add for DAGC
 extern void mic_set_pga_gain(INT16U booster_gain, INT16U pga_gain);
 extern INT16U mic_get_pga_gain(void);
@@ -1450,6 +1497,10 @@ extern INT32U jpeg_compress_vlc_cnt_get(void);						// This API returns the tota
 #define C_SCALER_CTRL_FIFO_128LINE		C_SCALER_CTRL_IN_FIFO_128LINE
 #define C_SCALER_CTRL_FIFO_256LINE		C_SCALER_CTRL_IN_FIFO_256LINE
 
+// scaler semaphore lock
+extern void scaler_lock(void);
+extern void scaler_unlock(void);
+
 // Scaler init API
 extern void scaler_init(void);
 
@@ -1461,6 +1512,7 @@ extern INT32S scaler_input_visible_pixels_set(INT32U input_x, INT32U input_y);		
 extern INT32S scaler_input_addr_set(INT32U y_addr, INT32U u_addr, INT32U v_addr);	// Must be 4-byte alignment
 extern INT32S scaler_input_format_set(INT32U format);								// C_SCALER_CTRL_IN_RGB1555/C_SCALER_CTRL_IN_RGB565/C_SCALER_CTRL_IN_RGBG/C_SCALER_CTRL_IN_GRGB/C_SCALER_CTRL_IN_YUYV/C_SCALER_CTRL_IN_UYVY/C_SCALER_CTRL_IN_YUV422/C_SCALER_CTRL_IN_YUV420/C_SCALER_CTRL_IN_YUV411/C_SCALER_CTRL_IN_YUV444/C_SCALER_CTRL_IN_Y_ONLY/C_SCALER_CTRL_IN_YUV422V/C_SCALER_CTRL_IN_YUV411V
 extern INT32S scaler_input_offset_set(INT32U offset_x, INT32U offset_y);			// Set scaler start x and y position offset
+extern INT32S scaler_output_offset_set(INT32U x_out_offset);
 
 extern INT32S scaler_output_pixels_set(INT32U factor_x, INT32U factor_y, INT32U output_x, INT32U output_y);		// factor_x:(input_x<<16)/output_x (1~0x00FFFFFF), factor_y:(input_y<<16)/output_y, output_x: must be multiple of 16 when output format is YUV422/YUV420/YUV444, multiple of 32 when output format is YUV411, multiple of 8 for others(Maximum 2040 for YUYV8X32 and YUYV8X64, Maximum 4088 for YUYV32X32 and YUYV32X64, Maximum 8000 pixels for others), output_y: 1~8000 pixels
 extern INT32S scaler_output_addr_set(INT32U y_addr, INT32U u_addr, INT32U v_addr);	// Must be 4-byte alignment

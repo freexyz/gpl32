@@ -3,6 +3,7 @@
 
 #include "application.h"
 #include "avi_encoder_scaler_jpeg.h"
+#include "define.h"
 
 typedef struct AviEncAudPara_s
 {
@@ -114,30 +115,41 @@ typedef struct AviEncPara_s
 	VidEncFrame_t video[AVI_ENCODE_VIDEO_BUFFER_NO]; 
 }AviEncPara_t;
 
-typedef struct ScalerPara_s
+typedef struct ScalerFormat_s
 {
-	INT32U scaler_mode;
-	FP32   scaler_factor;
+	/* img input para */
+	INT32U input_format;			/* input format*/
+	INT16U input_width;				/* 1~0x1FFF, input image x size */
+	INT16U input_height;			/* 1~0x1FFF, input image y size */
+	INT16U input_visible_width;		/* 0~0x1FFF, 0 is disable, clip x size*/
+	INT16U input_visible_height;	/* 0~0x1FFF, 0 is disable, clip y size */
+	INT16U input_x_offset;			/* 0~0x1FFF, x start offset in effective area */
+	INT16U input_y_offset;			/* 0~0x1FFF, y start offset in effective area */
 	
-	INT32U input_format;
-	INT32U input_x;
-	INT32U input_y;
-	INT32U input_visible_x;
-	INT32U input_visible_y;
-	INT32U input_addr_y;
-	INT32U input_addr_u;
-	INT32U input_addr_v;
+	INT32U input_addr_y;			/* input y addr, must be 4-align */
+	INT32U input_addr_u;			/* input u addr, must be 4-align */
+	INT32U input_addr_v;			/* input v addr, must be 4-align */
 	
-	INT32U output_format; 
-	INT32U output_x; 
-	INT32U output_y;
-	INT32U output_buffer_x;
-	INT32U output_buffer_y;
-	INT32U output_addr_y;
-	INT32U output_addr_u;
-	INT32U output_addr_v;
-	INT32U boundary_color;
-}ScalerPara_t;
+	INT32U output_format; 			/* output format*/
+	INT16U output_width; 			/* 1~0x1FFF, must be 8-align, but YUV444/YUV422/YUV420 is 16-align, YUV411 is 32-align */
+	INT16U output_height;			/* 1~0x1FFF */
+	INT16U output_buf_width;		/* 1~0x1FFF, must be 8-align, but YUV444/YUV422/YUV420 is 16-align, YUV411 is 32-align */
+	INT16U output_buf_height;		/* 1~0x1FFF */
+	
+	INT16U output_x_offset;			/* 0~0x1FFF, must be 8-align, skip x size after every line output */
+	INT16U reserved0;
+	
+	INT32U output_addr_y;			/* output y addr, must be 4-align */
+	INT32U output_addr_u;			/* output u addr, must be 4-align */
+	INT32U output_addr_v;			/* output v addr, must be 4-align */
+	
+	/* scale para */
+	INT32U fifo_mode;				/* FIFO in or FIFO out mode */
+	INT8U  scale_mode;				/* C_SCALER_FULL_SCREEN / C_SCALER_FIT_RATIO.... */
+	INT8U  digizoom_m;				/* digital zoom, ratio =  m/n */
+	INT8U  digizoom_n;
+	INT8U  reserved1;
+}ScalerFormat_t;
 
 typedef struct JpegPara_s
 {
@@ -166,7 +178,6 @@ extern OS_EVENT *vid_enc_task_q;
 extern OS_EVENT *vid_enc_frame_q;
 extern OS_EVENT *video_frame_q;
 extern OS_EVENT *avi_aud_q;
-extern OS_EVENT *scaler_hw_sem;
 #if C_UVC == CUSTOM_ON
 extern OS_EVENT *usbwebcam_frame_q;
 #endif
@@ -280,6 +291,7 @@ extern void avi_encode_set_sensor_format(INT32U format);
 extern void avi_encode_set_display_format(INT32U format);
 //other
 extern void avi_encode_set_display_scaler(void);
+extern INT32S jpeg_header_generate(INT8U q, INT16U w, INT16U h);
 extern INT32S avi_encode_set_jpeg_quality(INT8U quality_value);
 extern INT32S avi_encode_set_mp4_resolution(INT16U encode_width, INT16U encode_height);
 extern BOOLEAN avi_encode_is_pause(void);
@@ -289,7 +301,10 @@ extern void avi_encode_switch_csi_frame_buffer(void);
 extern void vid_enc_csi_fifo_end(void);
 extern void vid_enc_csi_frame_end(void);
 
-extern INT32S scaler_zoom_once(ScalerPara_t *pScale);
+extern INT32S scaler_clip(INT8U wait_done, gpImage *src, gpImage *dst, gpRect *clip);
+extern INT32S scaler_once(INT8U wait_done, gpImage *src, gpImage *dst);
+extern INT32S scaler_wait_done(void);
+extern INT32S scaler_trigger(INT8U wait_done, ScalerFormat_t *pScale, INT32U boundary_color);
 						
 extern INT32U jpeg_encode_once(JpegPara_t *pJpegEnc);
 // jpeg fifo encode

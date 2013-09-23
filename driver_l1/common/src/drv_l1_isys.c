@@ -84,7 +84,8 @@ INT32S sys_pll_set(INT32U PLL_CLK,INT8U sdram_out_dly,INT8U sdram_in_dly,SD_SIZE
     while (R_SYSTEM_POWEP_STATE == 0) {;;} //waiting stable
 
     if (PLL_CLK > 6) {
-        sys_ctrl_reg_val |=0x0400; // dominant add, 11/18/2008
+        /*2013Aug16*/
+        //sys_ctrl_reg_val |=0x0400; // dominant add, 11/18/2008
         sys_ctrl_reg_val &= ~(0x8008); // dominant add, 11/18/2008
 		
 		sys_clk_set(PLL_CLK*1000000);

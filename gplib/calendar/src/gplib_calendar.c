@@ -154,13 +154,14 @@ static void day_count_callback(void)
 INT32S calendar_init(void)
 {
 #if SUPPORT_GPY02XX == GPY02XX_NONE
-	rtc_callback_set(RTC_DAY_INT_INDEX,day_count_callback);
  #if MCU_VERSION >= GPL326XX
- 	rtc_int_set(GPX_RTC_DAY_IEN, RTC_EN_MASK&GPX_RTC_DAY_IEN);
+ 	rtc_callback_set(IDP_RTC_DAY_INT_INDEX, day_count_callback);
+ 	/* enable day interrupt */
+ 	idp_rtc_int_set(GPX_RTC_DAY_IEN, RTC_EN_MASK&GPX_RTC_DAY_IEN);
  #else
+ 	rtc_callback_set(RTC_DAY_INT_INDEX, day_count_callback);
 	/* enable day interrupt */
 	rtc_int_set(RTC_DAY_IEN, RTC_EN&RTC_DAY_IEN);
-
 	/* enable HMS function */
 	rtc_function_set(RTC_HMSEN, RTC_EN&RTC_HMSEN);
  #endif
@@ -259,6 +260,13 @@ INT32S cal_time_get(TIME_T  *tm)
     }
 
     cal_rtc_time_get(&r_time);
+   
+#if MCU_VERSION >= GPL326XX    
+    if(day_count == 0xFFFFFFFF) {
+    	LAST_JULIAN_DATE = cal_last_jd_get();
+		day_count = cal_day_get();
+    }
+#endif
     
     j = day_count;
 

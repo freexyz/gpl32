@@ -215,9 +215,10 @@ typedef enum
 #define IO_DRIVING_16mA        3
 
 //SPI1
-    #define SPI1_RX_NONE__CLK_NONE__TX_NONE	0x00000000
 #define SPI1_RX_IOE3__CLK_IOE1__TX_IOE2 ~(1<<12) /* GPL325XX */
 #define SPI1_RX_IOC4__CLK_IOC5__TX_IOC7  (1<<12) /* GPL325XX */
+#define SPI1_RX_IOI3__CLK_IOI1__TX_IOI2  (1<<1)  /* GPL326XXB */
+#define SPI1_RX_NONE__CLK_NONE__TX_NONE	 0x80000000
 
 //SPI0
 #define SPI0_RX_IOC3__CLK_IOC1__TX_IOC2	 (0<<8)

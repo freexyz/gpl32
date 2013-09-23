@@ -1,56 +1,32 @@
-/*
- ******************************************************************************
- * main.c
- *
- * Copyright (c) 2013-2015 by ZealTek Electronic Co., Ltd.
- *
- * This software is copyrighted by and is the property of ZealTek
- * Electronic Co., Ltd. All rights are reserved by ZealTek Electronic
- * Co., Ltd. This software may only be used in accordance with the
- * corresponding license agreement. Any unauthorized use, duplication,
- * distribution, or disclosure of this software is expressly forbidden.
- *
- * This Copyright notice MUST not be removed or modified without prior
- * written consent of ZealTek Electronic Co., Ltd.
- *
- * ZealTek Electronic Co., Ltd. reserves the right to modify this
- * software without notice.
- *
- * History:
- *	2013.06.03	T.C. Chiu <tc.chiu@zealtek.com.tw>
- *
- ******************************************************************************
- */
 #include "application.h"
-
-#define UART_MSG			1
 
 #define MainTaskStackSize 1024
 
 //define the demo code
-#define AUDIO_DECODE			0
-#define AUDIO_ENCODE			0
-#define IMAGE_CODEC			0
-#define VIDEO_DECODE			0
-#define	VIDEO_ENCODE			0
-#define MULTIMEDIA_DEMO			0
-#define	SACM_DECODE			0
-#define	SACM_ENCODE			0
-#define	USB_DEMO			0
-#define	USB_WEB_CAM_DEMO		0
-#define IMAGE_ENCODE_BLOCK_RW		0
-#define IMAGE_ENCODE_BLOCK_READ		0
-#define GP326XXX_PPU_DEMO		0
-#define DYNAMICALLY_CLOCK_DEMO		0
-#define ID3_TAG_DEMO			0
-#define GPID_DEMO			0
-#define USBH_ISO_DEMO			0
-#define FACE_DETECT_DEMO		1
-#define	COMAIR_RX_DEMO			0
+#define AUDIO_DECODE		      0
+#define AUDIO_ENCODE		      0
+#define IMAGE_CODEC				  0
+#define VIDEO_DECODE		      0
+#define	VIDEO_ENCODE		      0
+#define MULTIMEDIA_DEMO		      0
+#define	SACM_DECODE			      0
+#define	SACM_ENCODE			      0
+#define	USB_DEVICE_WEBCAME_DEMO	  0
+#define IMAGE_ENCODE_BLOCK_RW	  0
+#define IMAGE_ENCODE_BLOCK_READ	  0
+#define GP326XXX_PPU_DEMO		  0
+#define DYNAMICALLY_CLOCK_DEMO    0
+#define ID3_TAG_DEMO              0
+#define GPID_DEMO                 0
+#define USBH_ISO_DEMO             0
+#define FACE_DETECT_DEMO          1
+#define COMAIR_TX_DEMO			  0	
+#define	COMAIR_RX_DEMO            0
+#define QRCODE_BARCODE_DEMO		  0
 
-#define PRINT_OUTPUT_NONE		0x00 
-#define PRINT_OUTPUT_UART		0x01
-#define PRINT_OUTPUT_USB		0x02
+#define PRINT_OUTPUT_NONE	0x00 
+#define PRINT_OUTPUT_UART	0x01
+#define PRINT_OUTPUT_USB	0x02
 
 extern void Audio_Decode_Demo(void);
 extern void Audio_Encode_Demo(void);
@@ -60,8 +36,7 @@ extern void Video_Encode_Demo(void);
 extern void Platform_Demo_Code(void);
 extern void Sacm_Decode_Demo(void);
 extern void Sacm_Encode_Demo(void);
-extern void Usb_Device_Demo(void);
-extern void Usb_WebCam_Demo(void);
+extern void Usb_Dvice_WebCam_Demo(void);
 extern void encode_block_rw_demo(void);
 extern void encode_block_demo(void);
 extern void GPL32XXXX_PPU_Hblank_Demo(void);
@@ -71,15 +46,19 @@ extern void id3_tag_demo(void);
 extern void gpid_demo(void);
 extern void USBH_ISO_Demo(void);
 extern void set_print_output_type(INT32U type);
-extern void fd_demo(void);
+extern void Face_Detect_demo(void);
+extern void COMAIR_SendCmd_Demo(void);
 extern void Comair_RX_Demo(void);
-extern void PowerDown_Mode(INT8U mode);
+extern void BarCode_QRCode_Demo(void);
+extern void fd(unsigned char prio);
+
 
 INT32U free_memory_start, free_memory_end;
 INT32U MainTaskStack[MainTaskStackSize];
 
 void Main_task_entry(void *para)
 {
+	
 #if AUDIO_DECODE	
 	Audio_Decode_Demo();
 #endif
@@ -104,11 +83,8 @@ void Main_task_entry(void *para)
 #if SACM_ENCODE
 	Sacm_Encode_Demo();
 #endif
-#if USB_DEMO
-	Usb_Device_Demo();
-#endif
-#if USB_WEB_CAM_DEMO
-	Usb_WebCam_Demo();
+#if USB_DEVICE_WEBCAME_DEMO
+	Usb_Dvice_WebCam_Demo();
 #endif
 #if USBH_ISO_DEMO
 	USBH_ISO_Demo();
@@ -132,14 +108,17 @@ void Main_task_entry(void *para)
 	gpid_demo();
 #endif
 #if FACE_DETECT_DEMO
-	DBG_PRINT("free memory start = 0x%08x\r\n", free_memory_start);
-	DBG_PRINT("free memory end   = 0x%08x\r\n", free_memory_end);
-
-//	PowerDown_Mode(0);
-	fd_demo();
+//	Face_Detect_demo();
+	fd(30);
+#endif
+#if COMAIR_TX_DEMO
+	COMAIR_SendCmd_Demo();
 #endif
 #if	COMAIR_RX_DEMO
 	Comair_RX_Demo();
+#endif
+#if QRCODE_BARCODE_DEMO
+	BarCode_QRCode_Demo();
 #endif
 	while(1);
 }
@@ -181,7 +160,7 @@ void Main(void *free_memory)
 	platform_entrance(free_memory);
 	
 	// Create a user-defined task
-	OSTaskCreate(Main_task_entry, (void *) 0, &MainTaskStack[MainTaskStackSize - 1], 42); 
+	OSTaskCreate(Main_task_entry, (void *) 0, &MainTaskStack[MainTaskStackSize - 1], 32); 
 	
 	// Start running
 	OSStart();

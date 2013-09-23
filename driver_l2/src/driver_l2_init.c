@@ -3,6 +3,10 @@
 
 void drv_l2_init(void)
 {
+  #if (defined _DRV_L2_NAND) && (_DRV_L2_NAND == DRV_L2_ON)
+  INT32S ret=0;
+  #endif
+  
 	SD_OS_Init();
   #if (defined _DRV_L2_SYS_TIMER_EN) &&  (_DRV_L2_SYS_TIMER_EN == 1)
 	sys_init_timer();
@@ -21,9 +25,10 @@ void drv_l2_init(void)
   #endif
 
   #if (defined _DRV_L2_NAND) && (_DRV_L2_NAND == DRV_L2_ON)
-	NandInfoAutoGet();
+	ret=NandInfoAutoGet();
 	//DrvNand_lowlevelformat();
-	DrvNand_initial();
+	if(ret==0)
+	  DrvNand_initial();
   #endif
   
 }

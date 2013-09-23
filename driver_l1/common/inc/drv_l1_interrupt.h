@@ -4,18 +4,19 @@
 #include "driver_l1.h"
 #include "drv_l1_sfr.h"
 
+// Vector Interrupt Controller
 #define VIC_ALM_SCH_HMS		1
 #define VIC_TMB_ABC			2
-#define VIC_3				3
+#define VIC_FD				3//VIC_3				3
 #define VIC_4				4
-#define VIC_SPI1			5
+#define VIC_DFR				5//VIC_SPI1			5
 #define VIC_EXT_AB			6
 #define VIC_KEY_CHANGE		7
 #define VIC_KEY_SCAN		8
 #define VIC_TIMER3		    9
 #define VIC_TIMER2			10
 #define VIC_11				11
-#define VIC_DFR				12
+#define VIC_SPI1			12//VIC_DFR				12
 #define VIC_SPI0		    13
 #define VIC_UART			14
 #define VIC_CF				15
@@ -38,17 +39,33 @@
 #define VIC_UNEXPECT		32
 #define VIC_MAX_IRQ			33				// Don't forget to modify this when new interrupt source is added
 
-#define VIC_SPU_PW			1
-#define VIC_SPU_BEAT		2
-#define VIC_SPU_ENV			3
-#define VIC_SPU_FIQ			4
-#define VIC_MAX_FIQ			5				// Don't forget to modify this when new fast interrupt source is added
+#if(defined MCU_VERSION) && ((MCU_VERSION == GPL326XXB) || (MCU_VERSION == GP326XXXA))
+	#define VIC_SPU_PW			1
+	#define VIC_SPU_BEAT		2
+	#define VIC_SPU_ENV			3
+	#define VIC_SPU_FIQ			4
+	#define VIC_FIQ_EXT_A		5//6
+	#define VIC_FIQ_EXT_B		6//5
+	#define VIC_FIQ_TIMER_0		7//4
+	#define VIC_FIQ_TIMER_1		8//3
+	#define VIC_FIQ_TIMER_2		9//2
+	#define VIC_FIQ_TIMER_3		10//1
+	#define VIC_MAX_FIQ			11				// Don't forget to modify this when new fast interrupt source is added	
+#else
+	#define VIC_SPU_PW			1
+	#define VIC_SPU_BEAT		2
+	#define VIC_SPU_ENV			3
+	#define VIC_SPU_FIQ			4
+	#define VIC_MAX_FIQ			5				// Don't forget to modify this when new fast interrupt source is added
+#endif
 
 // Interrupt IRQ mask register
 #define C_VIC_IRQ_MASK_SET_ALL		0xFFFFFFFF
 
 // Interrupt FIQ mask register
 #define C_VIC_FIQ_MASK_SET_ALL		0x0000000F
+#define C_VIC_FIQ_MASK2_SET_ALL		0x00000FFF
+
 
 // Interrupt Global mask register
 #define C_VIC_GLOBAL_MASK_CLEAR		0x00000000
