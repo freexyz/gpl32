@@ -123,9 +123,9 @@
     #define C_TV_VGA                    0xE251	// 640x480
     #define C_TV_D1                     0xE252  // 720x480
 
-    #define C_DISPLAY_DEVICE            C_TV_VGA          		// Select one of the display device from above list
-    #define C_DISPLAY_DEV_HPIXEL        640                     // Set display device horizontal pixel number
-    #define C_DISPLAY_DEV_VPIXEL        480                     // Set display device vertical pixel number
+    #define C_DISPLAY_DEVICE            TPO_TD025THD1//C_TV_VGA          		// Select one of the display device from above list
+    #define C_DISPLAY_DEV_HPIXEL        320//640                     // Set display device horizontal pixel number
+    #define C_DISPLAY_DEV_VPIXEL        240//480                     // Set display device vertical pixel number
 
     // TFT Back Light Configuration
     #define LCD_BACKLIGHT_LED           0

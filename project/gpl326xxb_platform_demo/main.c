@@ -8,7 +8,7 @@
 #define IMAGE_CODEC				  0
 #define VIDEO_DECODE		      0
 #define	VIDEO_ENCODE		      0
-#define MULTIMEDIA_DEMO		      1
+#define MULTIMEDIA_DEMO		      0
 #define	SACM_DECODE			      0
 #define	SACM_ENCODE			      0
 #define	USB_DEVICE_WEBCAME_DEMO	  0
@@ -19,7 +19,7 @@
 #define ID3_TAG_DEMO              0
 #define GPID_DEMO                 0
 #define USBH_ISO_DEMO             0
-#define FACE_DETECT_DEMO          0
+#define FACE_DETECT_DEMO          1
 #define COMAIR_TX_DEMO			  0	
 #define	COMAIR_RX_DEMO            0
 #define QRCODE_BARCODE_DEMO		  0
