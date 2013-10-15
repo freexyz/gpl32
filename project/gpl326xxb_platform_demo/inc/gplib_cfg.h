@@ -38,7 +38,7 @@
     #define GPLIB_BMP_EN                    1
 
     // PPU control module
-    #define GPLIB_PPU_EN                    1
+    #define GPLIB_PPU_EN                    0
 
     // SPU control module
     #define GPLIB_SPU_EN					1

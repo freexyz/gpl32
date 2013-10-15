@@ -10,6 +10,9 @@
 #include "application.h"
 #include "text.h"
 
+#ifndef __TEXT_DEMO_H__
+#define __TEXT_DEMO_H__
+
 typedef struct {
 	INT16U	nTxAddr_mode;                            //  1.  Character width¡G8, 16, 32, 64, 128, 256
 	INT16U	nChar_width;                             //  2.  Character width¡G8, 16, 32, 64, 128, 256
@@ -134,3 +137,5 @@ typedef struct {
 //	Return: 		None
 //----------------------------------------------------------------------------------------------------
 extern void load_text_data(PPU_REGISTER_SETS *p_register_set,INT32U text_index,nTX_image_info *text_info);
+
+#endif	/* __TEXT_DEMO_H__ */

@@ -25,9 +25,8 @@
 #include "drv_l2_spi_flash.h"
 
 #include "fd.h"
+#include "fdmm.h"
 #include "frdbm.h"
-#include "frio.h"
-#include "key.h"
 #include "serial.h"
 
 
@@ -139,23 +138,25 @@ static void task_serial(void *para)
 		c = getc();
 
 		switch (c & CMD_MASK) {
-		case CMD_TRACK:		/* tracking mode */
-			fd_chg_mode(MODE_STANDBY);
+		/* tracking mode */
+		case CMD_TRACK:
+			fdmm_track();
 			break;
 
-		case CMD_TRAIN: 	/* training mode */
+		/* training mode */
+		case CMD_TRAIN:
 			_MSG(c = 0xFF);
-			frdb_set_c_train((c & ~CMD_MASK) >> 3);
-			fd_chg_mode(MODE_TRAIN);
+			fdmm_train((c & ~CMD_MASK) >> 3);
 			break;
 
-		case CMD_IDENT:		/* identify mode */
+		/* recognition mode */
+		case CMD_IDENT:
 			_MSG(c = 0xFF);
-			frdb_set_c_ident((c & ~CMD_MASK) >> 3);
-			fd_chg_mode(MODE_IDENT);
+			fdmm_recog((c & ~CMD_MASK) >> 3);
 			break;
 
-		case CMD_ERASE:		/* erase */
+		/* erase */
+		case CMD_ERASE:
 			_MSG(DBG_PRINT("(frdb erase) Start\r\n"));
 			_MSG(c = 0xFF);
 			s = (unsigned char) (c & ~CMD_MASK);
@@ -165,21 +166,26 @@ static void task_serial(void *para)
 				}
 				s >>= 1;
 			}
-			fd_chg_mode(MODE_STANDBY);
+			fdmm_track();
 			_MSG(DBG_PRINT("(frdb erase) Done\r\n"));
 			break;
 
-		case CMD_STATE:		/* request database status */
+		/* request database status */
+		case CMD_STATE:
 			serial_send(STA_STATE, frdb_state());
 			break;
 
-		case 0:			/* security inc. */
-			adjustSecurity_set(1);
-			break;
-		case 2:			/* security dec. */
-			adjustSecurity_set(0);
+		/* security inc. */
+		case 0:
+			securitylvl_set(1);
 			break;
 
+		/* security dec. */
+		case 2:
+			securitylvl_set(0);
+			break;
+
+		/* unknow command */
 		default:
 			_MSG(DBG_PRINT("unknown command (0x%02x)\r\n", (unsigned char) c));
 			break;

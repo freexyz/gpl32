@@ -7,8 +7,8 @@
 *
 * Copyright Generalplus Corp. ALL RIGHTS RESERVED.
 */
-#ifndef __SPRITE_H__
-#define __SPRITE_H__
+#ifndef __SPRITE_DEMO_H__
+#define __SPRITE_DEMO_H__
 
 #include "application.h"
 

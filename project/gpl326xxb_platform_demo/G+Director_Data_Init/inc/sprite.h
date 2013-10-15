@@ -2,6 +2,9 @@
 #include "gplib_cfg.h"
 #include "driver_l1_cfg.h"
 
+#ifndef __SPRITE_H__
+#define __SPRITE_H__
+
 typedef struct {
 	INT16S	nCharNum;                           //  0.  Character Number Set
 	INT16S	nPosX;                              //  1.  Sprite 2D X Position or Sprite Virtual 3D X0 Position
@@ -485,3 +488,5 @@ typedef struct {
 //------------------------------------------------------------------------------------------------------
 #define					SPInterpolation_DISABLE		(0 << 3)	  // Set Sprite interpolation effect disable
 #define					SPInterpolation_ENABLE		(1 << 3)      // Set Sprite interpolation effect enable
+
+#endif	/* __SPRITE_H__ */

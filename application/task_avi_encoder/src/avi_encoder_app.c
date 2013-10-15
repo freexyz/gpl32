@@ -1070,7 +1070,7 @@ void avi_encode_switch_csi_frame_buffer(void)
     	*P_CSI_TG_FBSADDR = frame;
 	    OSQPost(scaler_task_q, (void *)ready_frame);
     } else {
-		DEBUG_MSG(DBG_PRINT("L"));	
+		DEBUG_MSG(DBG_PRINT("\033[1;31mL\033[0m"));	
 	}    	
 }
 // csi fifo mode switch buffer

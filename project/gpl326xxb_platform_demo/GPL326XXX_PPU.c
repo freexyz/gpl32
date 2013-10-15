@@ -42,8 +42,9 @@ void GPL326XXX_PPU_Demo(void)
 	}
     
     //Initiate display device
-	tv_init();
-    
+//	tv_init();
+	tft_init();
+
     /* initial ppu register parameter set structure */
     ppu_register_set = (PPU_REGISTER_SETS *) &ppu_register_structure;
     
@@ -60,7 +61,7 @@ void GPL326XXX_PPU_Demo(void)
     //PPU setting
 	gplib_ppu_fb_format_set(ppu_register_set, 1, 1);			            // Set PPU output frame buffer format to YUYV
     gplib_ppu_vga_mode_set(ppu_register_set, 0);							// Disable VGA mode
-    gplib_ppu_resolution_set(ppu_register_set, C_TFT_RESOLUTION_640X480);	// Set display resolution to 640x480
+    gplib_ppu_resolution_set(ppu_register_set, C_TFT_RESOLUTION_320X240/*C_TFT_RESOLUTION_640X480*/);	// Set display resolution to 640x480
     gplib_ppu_bottom_up_mode_set(ppu_register_set, 1);                      // bottom to top                
     gplib_ppu_long_burst_set(ppu_register_set, 1);
     
@@ -84,7 +85,9 @@ void GPL326XXX_PPU_Demo(void)
 	if (!buffer_ptr) {
 		DBG_PRINT("Photo display task failed to allocate character number array memory\r\n");
 	}
-	tv_start(TVSTD_NTSC_J, TV_HVGA, TV_INTERLACE);
+//	tv_start(TVSTD_NTSC_J, TV_HVGA, TV_INTERLACE);
+	tft_start(C_DISPLAY_DEVICE);
+
     #if(Photo_Disable == 1)
       image_info.image_number=1;
 	  image_info.position_x=0;
@@ -233,7 +236,7 @@ void GPL326XXX_PPU_Demo(void)
 	
 	// Start PPU and wait until PPU operation is done
 	gplib_ppu_go_and_wait_done(ppu_register_set);
-	
+
     //variable init
 	Angle=0;
 	blend_level=0;
@@ -875,5 +878,3 @@ void user_define_isr(INT32U PPU_MODE)
     gplib_ppu_hblnk_irq_wait();         
 #endif        
 }
-
-

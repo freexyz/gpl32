@@ -19,7 +19,7 @@
 #define ID3_TAG_DEMO              0
 #define GPID_DEMO                 0
 #define USBH_ISO_DEMO             0
-#define FACE_DETECT_DEMO          1
+#define FACE_DETECT_DEMO          0
 #define COMAIR_TX_DEMO			  0	
 #define	COMAIR_RX_DEMO            0
 #define QRCODE_BARCODE_DEMO		  0
@@ -50,8 +50,10 @@ extern void Face_Detect_demo(void);
 extern void COMAIR_SendCmd_Demo(void);
 extern void Comair_RX_Demo(void);
 extern void BarCode_QRCode_Demo(void);
-extern void fd(unsigned char prio);
 
+extern void fd(unsigned char prio);
+extern void gpl32_ppu_demo(void);
+extern void sspi_test(void);
 
 INT32U free_memory_start, free_memory_end;
 INT32U MainTaskStack[MainTaskStackSize];
@@ -96,7 +98,7 @@ void Main_task_entry(void *para)
 	encode_block_demo();
 #endif
 #if GP326XXX_PPU_DEMO
-    GPL326XXX_PPU_Demo();
+	GPL326XXX_PPU_Demo();
 #endif
 #if DYNAMICALLY_CLOCK_DEMO
 	gpl32_dynamic_mclk_demo();
@@ -108,8 +110,7 @@ void Main_task_entry(void *para)
 	gpid_demo();
 #endif
 #if FACE_DETECT_DEMO
-//	Face_Detect_demo();
-	fd(30);
+	Face_Detect_demo();
 #endif
 #if COMAIR_TX_DEMO
 	COMAIR_SendCmd_Demo();
@@ -120,6 +121,10 @@ void Main_task_entry(void *para)
 #if QRCODE_BARCODE_DEMO
 	BarCode_QRCode_Demo();
 #endif
+
+//	sspi_test();
+//	gpl32_ppu_demo();
+	fd(30);
 	while(1);
 }
 

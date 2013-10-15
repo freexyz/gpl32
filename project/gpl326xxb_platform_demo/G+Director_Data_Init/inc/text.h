@@ -1,6 +1,9 @@
 #include "project.h"
 #include "gplib_cfg.h"
 
+#ifndef __TEXT_H__
+#define __TEXT_H__
+
 typedef struct {
 	INT16U	nTx_mode;                                //  0.  Text mode¡G0: Character mode; 1: Bitmap mode
 	INT16U	nAddr_mode;                              //  1.  Addressing mode¡G0: Relative; 1: Direct
@@ -200,3 +203,5 @@ typedef struct {
 #define	TXBLEND_LEVEL61			            61
 #define	TXBLEND_LEVEL62			            62
 #define	TXBLEND_LEVEL63			            63
+
+#endif	/* __TEXT_H__ */

@@ -44,6 +44,32 @@ INT32U *ownerULBP;
 gpRect Face_old[MAX_RESULT];	
 int Count_old[MAX_RESULT];
 
+static INT32S scaler_image_start_once(gpImage *src, gpImage *dst)
+{	
+	extern INT32S scaler_once(INT8U wait_done, gpImage *src, gpImage *dst);
+	return scaler_once(1, src, dst);
+}
+
+static INT32S scaler_image_start(gpImage *src, gpImage *dst)
+{	
+	extern INT32S scaler_once(INT8U wait_done, gpImage *src, gpImage *dst);
+	return scaler_once(0, src, dst);
+}
+
+static INT32S scaler_image_clip(gpImage *srcImg, gpImage *dstImg, gpRect *clip)
+{
+	extern INT32S scaler_clip(INT8U wait_done, gpImage *src, gpImage *dst, gpRect *clip);
+	
+	return scaler_clip(0, srcImg, dstImg, clip);
+}
+
+static INT32S scaler_image_wait_done(void)
+{
+	extern INT32S scaler_wait_done(void);
+	return scaler_wait_done();
+}
+
+
 gpRect GPRect_utils(int _x, int _y, int _width, int _height)
 {
 	gpRect rect;
@@ -116,7 +142,7 @@ int faceRoiDetect(gpImage* gray, gpRect* detRect,int *Count)
 	/* setting cascade type (face) */
 	FaceDetect_set_detect_obj(WorkMem, CASCADE_FACE);
 
-	FaceDetect_set_ScalerFn(WorkMem, Scaler_Start, Scaler_wait_end, Scaler_clip); 
+	FaceDetect_set_ScalerFn(WorkMem, scaler_image_start, scaler_image_wait_done, scaler_image_clip); 
 	ret = FaceDetect_SetScale(WorkMem, int_scale_face, min_face_wnd, max_wnd);
 
 	faceN = FaceDetect(WorkMem, gray, &Rect, MAX_RESULT, faceResult, faceCount);
@@ -185,7 +211,7 @@ int faceRoiDetect(gpImage* gray, gpRect* detRect,int *Count)
 	// setting cascade type (right eye) //
 	FaceDetect_set_detect_obj(WorkMem, CASCADE_REYE);
 
-	FaceDetect_set_ScalerFn(WorkMem, Scaler_Start, Scaler_wait_end, Scaler_clip); 
+	FaceDetect_set_ScalerFn(WorkMem, scaler_image_start, scaler_image_wait_done, scaler_image_clip); 
 	ret = FaceDetect_SetScale(WorkMem, int_scale_eye, min_eye_wnd, max_wnd);
 
 	rFace = GPRect_utils(faceResult[best_face].x + (faceResult[best_face].width>>1), faceResult[best_face].y, (faceResult[best_face].width>>1), faceResult[best_face].height);
@@ -194,7 +220,7 @@ int faceRoiDetect(gpImage* gray, gpRect* detRect,int *Count)
 	// setting cascade type (left eye) //
 	FaceDetect_set_detect_obj(WorkMem, CASCADE_LEYE);
 
-	FaceDetect_set_ScalerFn(WorkMem, Scaler_Start, Scaler_wait_end, Scaler_clip); 
+	FaceDetect_set_ScalerFn(WorkMem, scaler_image_start, scaler_image_wait_done, scaler_image_clip); 
 	ret = FaceDetect_SetScale(WorkMem, int_scale_eye, min_eye_wnd, max_wnd);
 
 	lFace = GPRect_utils(faceResult[best_face].x, faceResult[best_face].y, (faceResult[best_face].width>>1), faceResult[best_face].height);

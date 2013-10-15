@@ -1,6 +1,9 @@
 #include "text.h"
 #include "TEXT_Platform_verification_2_HDR.h"
 
+//=== This is for code configuration DON'T REMOVE or MODIFY it ===//
+#if (defined GPLIB_PPU_EN) && (GPLIB_PPU_EN == 1) //
+
 const INT16U ALIGN4 TEXT_Platform_verification_2_0_ImageSize[]={
 	1024,	512	
 };
@@ -3083,3 +3086,5 @@ const INT16U ALIGN4 _Text002_IMG0000_CellData[]={
 	0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
 	0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
+
+#endif

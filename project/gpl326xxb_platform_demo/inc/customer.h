@@ -270,7 +270,7 @@
 #define DEVICE_SD               4                                          //
 //choice one                                                               //
 #define BOOT_MODE               DEVICE_NAND                                 //
-#define RESOURCE_DEV_TYPE       DEVICE_NAND                           	   //
+#define RESOURCE_DEV_TYPE       DEVICE_SD                           	   //
 //---------------------------------------------------------------------------
 
 /*=== DEBUG Devices ===*/

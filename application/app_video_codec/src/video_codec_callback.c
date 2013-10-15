@@ -4,6 +4,7 @@ static INT8U sensor_frame_end_action = SENSOR_FEA_VIDEO_ENCODE;
 INT32U video_codec_show_buffer;
 INT32U video_codec_display_flag;
 #if VIDEO_DISPALY_WITH_PPU == 1
+#include "Sprite_demo.h"
 PPU_REGISTER_SETS turnkey_ppu_register_structure_1;
 PPU_REGISTER_SETS *video_ppu_register_set;
 #endif
@@ -171,12 +172,39 @@ INT32S video_encode_display_frame_ready(INT32U frame_buffer)
 	video_codec_display_flag = 1;
   	video_codec_show_buffer = frame_buffer;
 #else	//display with ppu
+	{
 	INT16U width, height;
+	INT32U	sp_num_addr, i;
+	SpN_ptr	sp_ptr;
+
 	video_encode_get_display_size(&width, &height);	
 	gplib_ppu_text_calculate_number_array(video_ppu_register_set, C_PPU_TEXT1, width, height, frame_buffer);	// Calculate Number array
+
+	Get_sprite_image_info(0, (SpN_ptr *) &sp_ptr);
+	sp_num_addr = sp_ptr.nSPNum_ptr;
+	for (i=0; i<sp_ptr.nSP_CharNum; i++) {
+		gplib_ppu_sprite_attribute_flip_set((SpN_RAM *) sp_num_addr, 3);
+		sp_num_addr += sizeof(SpN_RAM);
+	}
+	Get_sprite_image_info(1, (SpN_ptr *) &sp_ptr);
+	sp_num_addr = sp_ptr.nSPNum_ptr;
+	for (i=0; i<sp_ptr.nSP_CharNum; i++) {
+		gplib_ppu_sprite_attribute_flip_set((SpN_RAM *) sp_num_addr, 3);
+		sp_num_addr += sizeof(SpN_RAM);
+	}
+	Get_sprite_image_info(2, (SpN_ptr *) &sp_ptr);
+	sp_num_addr = sp_ptr.nSPNum_ptr;
+	for (i=0; i<sp_ptr.nSP_CharNum; i++) {
+		gplib_ppu_sprite_attribute_flip_set((SpN_RAM *) sp_num_addr, 3);
+		sp_num_addr += sizeof(SpN_RAM);
+	}
+
 	gplib_ppu_go(video_ppu_register_set);
+	paint_ppu_spriteram(video_ppu_register_set, Sprite_Coordinate_320X240, LeftTop2Center_coordinate, 5);
+
 	//gplib_ppu_go_and_wait_done(video_ppu_register_set);
 	//gplib_ppu_go_without_wait(video_ppu_register_set);
+	}
 #endif
 
 #if FACE_DETECTION == 1
@@ -435,7 +463,9 @@ void user_defined_video_codec_entrance(void)
 	}
 	vic_irq_enable(VIC_PPU);
 #else
-	video_codec_ppu_configure();
+extern void fdosd_ppu_init(void);
+	fdosd_ppu_init();
+//	video_codec_ppu_configure();
 #endif
 
 #if (CSI_IRQ_MODE & CSI_IRQ_TG_IRQ)
@@ -611,10 +641,12 @@ void video_codec_show_image(INT32U TV_TFT, INT32U BUF, INT32U DISPLAY_MODE ,INT3
 #if VIDEO_DISPALY_WITH_PPU == 1
 #include "Sprite_demo.h"
 #include "Text_demo.h"
-#include "sprite_dataSP_HDR.h"
+//Text Cell data extern variables declaration
+extern const INT16U _Text012_IMG0000_CellData[];
 
 void video_codec_ppu_configure(void)
 {
+#if 0	// by T.C. 2013.10.03
 	INT16U ppu_frame_width, ppu_frame_height;
 	INT32S i, j;
 	INT32U frame_size, buffer_ptr;
@@ -634,69 +666,39 @@ void video_codec_ppu_configure(void)
 #endif	
 	gplib_ppu_fb_format_set(video_ppu_register_set, 1, 1);			            // Set PPU output frame buffer format to YUYV
    
-   	if(DISPLAY_DEVICE == DISPLAY_TV)	//TV
-   	{
-   		if(TV_TFT_MODE == QVGA_MODE)
-    	{
-    		ppu_frame_width = 320; 
-   			ppu_frame_height = 240;
-    		gplib_ppu_vga_mode_set(video_ppu_register_set, 0);						// Disable VGA mode
-    		gplib_ppu_resolution_set(video_ppu_register_set, C_TV_RESOLUTION_320X240);// Set display resolution to 320X240
-    	}
-   		else if(TV_TFT_MODE == VGA_MODE)
-   		{
-   			ppu_frame_width = 640; 
-   			ppu_frame_height = 480;
-    		gplib_ppu_vga_mode_set(video_ppu_register_set, 1);						// Enable VGA mode
-    		gplib_ppu_resolution_set(video_ppu_register_set, C_TV_RESOLUTION_640X480);// Set display resolution to 640X480
-    	}
-    	else
-		{
-			while(1);
-		}	
-    }
-    else if(DISPLAY_DEVICE == DISPLAY_TFT)//tft
-    {
-    	gplib_ppu_vga_mode_set(video_ppu_register_set, 0);							// Disable VGA mode
-    	if(TV_TFT_MODE == TFT_320x240_MODE)
-    	{
-    		ppu_frame_width = 320; 
-   			ppu_frame_height = 240;
-    		gplib_ppu_resolution_set(video_ppu_register_set, C_TFT_RESOLUTION_320X240);
-    	}
-    	else if(TV_TFT_MODE == TFT_640x480_MODE)
-    	{
-    		ppu_frame_width = 640; 
-   			ppu_frame_height = 480;
-    		gplib_ppu_resolution_set(video_ppu_register_set, C_TFT_RESOLUTION_640X480);
-    	}
-    	else if(TV_TFT_MODE == TFT_800x480_MODE)
-    	{
-    		ppu_frame_width = 800; 
-   			ppu_frame_height = 480;
-	    	gplib_ppu_resolution_set(video_ppu_register_set, C_TFT_RESOLUTION_800X480);	// Set display resolution to 800X480
-		}
-		else
-		{
-			while(1);
-		}   
-    }
-    
-    gplib_ppu_bottom_up_mode_set(video_ppu_register_set, 0);                    // Disable bottom to top
-    gplib_ppu_palette_type_set(video_ppu_register_set, 0, 1);                   // text and sprite palette mode
+	if(C_DISPLAY_DEVICE == C_TV_QVGA)
+	{
+		ppu_frame_width = 320; 
+		ppu_frame_height = 240;
+		gplib_ppu_vga_mode_set(video_ppu_register_set, 0);						// Disable VGA mode
+		gplib_ppu_resolution_set(video_ppu_register_set, C_TV_RESOLUTION_320X240);// Set display resolution to 320X240
+	}
+	else if(C_DISPLAY_DEVICE == C_TV_VGA)
+	{
+		ppu_frame_width = 640; 
+		ppu_frame_height = 480;
+		gplib_ppu_vga_mode_set(video_ppu_register_set, 1);						// Enable VGA mode
+		gplib_ppu_resolution_set(video_ppu_register_set, C_TV_RESOLUTION_640X480);// Set display resolution to 640X480
+	}
+	else
+	{
+		ppu_frame_width = 720; 
+		ppu_frame_height = 480;
+		gplib_ppu_vga_mode_set(video_ppu_register_set, 1);						// Enable VGA mode
+		gplib_ppu_resolution_set(video_ppu_register_set, C_TV_RESOLUTION_720X480);// Set display resolution to 640X480
+	}	
+
+    gplib_ppu_bottom_up_mode_set(video_ppu_register_set, 1);                    // Disable bottom to top
     gplib_ppu_text_direct_mode_set(video_ppu_register_set, 0);			        // Enable TEXT direct address mode
     
     gplib_ppu_long_burst_set(video_ppu_register_set, 0);						// Disable PPU long burst
-    if(DISPLAY_DEVICE == DISPLAY_TFT)//tft 	
+    if(C_DISPLAY_DEVICE > C_TV_QVGA)//tft 	
     	gplib_ppu_tft_long_burst_set(video_ppu_register_set, 1);    			// Enable TFT long burst
     
     gplib_ppu_deflicker_mode_set(0);			            					// Disable De-flicker is only valid under VGA + Interlace + Frame mode	
     gplib_ppu_yuv_type_set(video_ppu_register_set, 3);							// Set 32-bit color format to Y1UY0V
     
-    //palette ram init
-    gplib_ppu_palette_ram_ptr_set(video_ppu_register_set, 1, (INT32U)_sprite_dataSP_Palette0);
-    gplib_ppu_palette_ram_ptr_set(video_ppu_register_set, 3, (INT32U)_sprite_dataSP_Palette1);  
-    
+
     frame_size = ppu_frame_width * ppu_frame_height * 2; 
     for (i=0; i<PPU_FRAME_NO; i++) 
     {
@@ -726,30 +728,40 @@ void video_codec_ppu_configure(void)
 
 	gplib_ppu_text_enable_set(video_ppu_register_set, C_PPU_TEXT1, 1);	                // Enable TEXT
 	gplib_ppu_text_compress_disable_set(video_ppu_register_set, 1);	                    // Disable TEXT1/TEXT2 horizontal/vertical compress function
- 	gplib_ppu_text_direct_mode_set(video_ppu_register_set, 0);			                // Enable TEXT direct address mode
 	gplib_ppu_text_attribute_source_select(video_ppu_register_set, C_PPU_TEXT1, 1);	    // Get TEXT attribute from register
-	gplib_ppu_text_size_set(video_ppu_register_set, C_PPU_TEXT1, C_TXN_SIZE_1024X512);	// Set TEXT size to 1024x512
+	gplib_ppu_text_size_set(video_ppu_register_set, C_PPU_TEXT1, C_TXN_SIZE_512X256);	// Set TEXT size to 1024x512
 	gplib_ppu_text_segment_set(video_ppu_register_set, C_PPU_TEXT1, 0);				    // Set TEXT segment address	
 
 	gplib_ppu_text_number_array_ptr_set(video_ppu_register_set, C_PPU_TEXT1, buffer_ptr); // Set TEXT number array address
 	gplib_ppu_text_bitmap_mode_set(video_ppu_register_set, C_PPU_TEXT1, 1);			     // Enable bitmap mode
 	gplib_ppu_text_color_set(video_ppu_register_set, C_PPU_TEXT1, 1, 3);				     // Set TEXT color to YUYV 
 	
-	if(DISPLAY_DEVICE == DISPLAY_TV)	//TV
-	{
-		gplib_ppu_text_mode_set(video_ppu_register_set, C_PPU_TEXT1, 0);                    // TEXT 2D
-	}
-	else if(DISPLAY_DEVICE == DISPLAY_TFT)//tft
-	{
-		gplib_ppu_text_mode_set(video_ppu_register_set, C_PPU_TEXT1, 0);					// TEXT 2D
-		//gplib_ppu_text_mode_set(video_ppu_register_set, C_PPU_TEXT1, 1);                  // TEXT rotate
-		//gplib_ppu_text_rotate_zoom_set(video_ppu_register_set, C_PPU_TEXT1, 0, 1.25);
-	}
-	
 	gplib_ppu_text_position_set(video_ppu_register_set, C_PPU_TEXT1, 0, 0);
-	gplib_ppu_text_offset_set(video_ppu_register_set, C_PPU_TEXT1, 0, 0);		
+	gplib_ppu_text_offset_set(video_ppu_register_set, C_PPU_TEXT1, 0, 0);
+	
+	/* display at text1 or video decode at text1*/
+	buffer_ptr = (INT32U) gp_malloc(1024*4);	// 4K character number array is enough for char mode(Character 32x32) and bitmap mode(TEXT 1024x1024)
+	if (!buffer_ptr) 
+	{
+		DBG_PRINT("Photo display task failed to allocate character number array memory\r\n");
+		while(1);
+	}
+	gplib_ppu_text_enable_set(video_ppu_register_set, C_PPU_TEXT2, 1);	                // Enable TEXT
+	gplib_ppu_text_attribute_source_select(video_ppu_register_set, C_PPU_TEXT2, 1);	    // Get TEXT attribute from register
+	gplib_ppu_text_size_set(video_ppu_register_set, C_PPU_TEXT2, C_TXN_SIZE_512X256);	// Set TEXT size to 1024x512
+	gplib_ppu_text_segment_set(video_ppu_register_set, C_PPU_TEXT2, 0);				    // Set TEXT segment address		
+	
+	gplib_ppu_text_number_array_ptr_set(video_ppu_register_set, C_PPU_TEXT2, buffer_ptr); // Set TEXT number array address
+	gplib_ppu_text_bitmap_mode_set(video_ppu_register_set, C_PPU_TEXT2, 1);			     // Enable bitmap mode
+	gplib_ppu_text_color_set(video_ppu_register_set, C_PPU_TEXT2, 1, 0);				     // Set TEXT color to YUYV 
+	
+	gplib_ppu_text_position_set(video_ppu_register_set, C_PPU_TEXT2, 0, 0);
+	gplib_ppu_text_offset_set(video_ppu_register_set, C_PPU_TEXT2, 0, 0);			
+	gplib_ppu_text_calculate_number_array(video_ppu_register_set, C_PPU_TEXT2, 320, 240, (INT32U)_Text012_IMG0000_CellData);	
 	
 	gplib_ppu_sprite_init(video_ppu_register_set);
 	gplib_ppu_sprite_enable_set(video_ppu_register_set, 0);			                     	// Disable Sprite
+#endif	// by T.C. 2013.10.03
 }
 #endif
+

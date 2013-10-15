@@ -29,18 +29,26 @@
 
 #include "drv_l2_ad_key_scan.h"
 
+#include "Sprite_demo.h"
+#include "Text_demo.h"
+#include "SPRITE_fd_HDR.h"
+
 #include "fd.h"
+#include "fdmm.h"
+#include "fdosd.h"
 #include "frdbm.h"
 #include "serial.h"
-//#include "frio.h"
+
 //#include "key.h"
 
 
-/* for security level */
-static unsigned long	securityLevel;
+extern PPU_REGISTER_SETS	*video_ppu_register_set;
 
+/* for security level */
+static unsigned long		securityLevel;
 
 /* for face detection */
+#define FACE_IDENTIFY_EN	1
 #define WORKING_WIDTH		320
 #define WORKING_WIDTH_STEP	((WORKING_WIDTH + 7) >> 3 << 3)
 #define MAX_CONDIDATE		512
@@ -69,16 +77,18 @@ static void			*face_detect_end_q_stack[STKSZ_FACE_QUEUE];
 
 static gpImage			imgIn;
 static INT32U			face_count;
-static unsigned long		fdmode;
-static unsigned long		train_count;
-static unsigned long		ident_count;
 
-INT32U Face_Detect_Demo_En=0, drawFace_flag=0;
-
-INT32U *fiMem;
-INT32U *ownerULBP;
+FDMODE				fdmode;
+unsigned long			train_count;
+unsigned long			ident_count;
+INT32U				Face_Detect_Demo_En = 0;
+INT32U				drawFace_flag = 0;
+INT32U				*ownerULBP;
+INT32U				*fiMem;
 
 #define SZ_ULBP			1888
+
+unsigned char			face_color[4] = { 128, 128, 0, 0 };
 
 
 /*
@@ -123,14 +133,16 @@ INT32U *ownerULBP;
  *
  *****************************************************************************
  */
+#if FACE_IDENTIFY_EN == 0
 static INT32S scaler_image_start_once(gpImage *src, gpImage *dst)
-{
+{	
 	extern INT32S scaler_once(INT8U wait_done, gpImage *src, gpImage *dst);
 	return scaler_once(1, src, dst);
 }
+#endif
 
 static INT32S scaler_image_start(gpImage *src, gpImage *dst)
-{
+{	
 	extern INT32S scaler_once(INT8U wait_done, gpImage *src, gpImage *dst);
 	return scaler_once(0, src, dst);
 }
@@ -138,7 +150,7 @@ static INT32S scaler_image_start(gpImage *src, gpImage *dst)
 static INT32S scaler_image_clip(gpImage *srcImg, gpImage *dstImg, gpRect *clip)
 {
 	extern INT32S scaler_clip(INT8U wait_done, gpImage *src, gpImage *dst, gpRect *clip);
-
+	
 	return scaler_clip(0, srcImg, dstImg, clip);
 }
 
@@ -148,30 +160,231 @@ static INT32S scaler_image_wait_done(void)
 	return scaler_wait_done();
 }
 
-void image_color_set(gpImage *img,IMAGE_COLOR_FORMAT type)
+gpRect GPRect_utils(int _x, int _y, int _width, int _height)
 {
-		switch(type)
-		{
-			case IMAGE_COLOR_FORMAT_YUYV:
-			     img->format = IMG_FMT_UYVY;
-			     break;
-
-			case IMAGE_COLOR_FORMAT_UYVY:
-			     img->format = IMG_FMT_YUYV;
-			     break;
-
-			case IMAGE_COLOR_FORMAT_Y_ONLY:
-		         img->format = IMG_FMT_GRAY;
-			     break;
-
-			default :
-			     img->format = IMG_FMT_UYVY;
-			     break;
-		}
+	gpRect rect;
+	
+	rect.x = _x;
+	rect.y = _y;
+	rect.width = _width;
+	rect.height = _height;
+	return rect;
 }
 
 int faceRoiDetect(gpImage* gray, gpRect* detRect,int *Count)
-{
+{		
+#if FACE_IDENTIFY_EN == 1
+	gpRect* faceROI = &detRect[0];
+	gpRect* lEyeROI = &detRect[1];
+	gpRect* rEyeROI = &detRect[2];
+	
+	int HEIGHT = gray->height;
+	int WIDTH = gray->width;
+	
+	gpRect faceResult[MAX_RESULT];
+	gpRect rEyeResult[MAX_RESULT];
+	gpRect lEyeResult[MAX_RESULT];
+	int faceCount[MAX_RESULT];
+	int rEyeCount[MAX_RESULT];
+	int lEyeCount[MAX_RESULT];
+
+	// Initialization //
+	int ret, faceN, rEyeN, lEyeN, t, int_scale_face, int_scale_eye;
+	int xstep_face = 3;
+	int xstep_eye = 2;
+	int min_face_nbr_h = 5;
+	int min_face_nbr_l = 3;
+	int min_eye_nbr = 1;
+	//int flag_console = 2;
+	int min_face_wnd = 50;
+	int min_eye_wnd = 20; // 20 is minimum
+	int max_wnd = MIN(gray->width, gray->height);	
+	int maxFaceW = 0;
+	int maxFaceCount = min_face_nbr_l;
+	int best_face = 0;
+	void *WorkMem = 0;
+	gpRect Rect;	
+	int i;
+	int offset_x,offset_y;	
+	gpRect rFace;
+	gpRect lFace;
+	
+	int_scale_face = 75366; // 1.15
+	int_scale_eye = 72089; // 1.1, 65535 = 1
+	
+	Rect.x = 0;
+	Rect.y = 0;
+	Rect.width = gray->width;
+	Rect.height = gray->height;
+
+	t = MIN(Rect.width, Rect.height);
+	if(max_wnd>t) max_wnd = t;
+
+	t = FaceDetect_Config(0, 0, WIDTH, HEIGHT, 1, MAX_RESULT, 3, 2);
+
+	WorkMem = MALLOC(t);
+
+	//--------------------
+	//	Face Detection
+	//--------------------
+	ret = FaceDetect_Config(WorkMem, t, Rect.width, Rect.height, 1, MAX_RESULT, xstep_face, 2);
+
+	/* setting cascade type (face) */
+	FaceDetect_set_detect_obj(WorkMem, CASCADE_FACE);
+
+	FaceDetect_set_ScalerFn(WorkMem, scaler_image_start, scaler_image_wait_done, scaler_image_clip); 
+	ret = FaceDetect_SetScale(WorkMem, int_scale_face, min_face_wnd, max_wnd);
+
+	faceN = FaceDetect(WorkMem, gray, &Rect, MAX_RESULT, faceResult, faceCount);
+
+	if (!faceN)
+	{	
+		// release memory //
+		if(WorkMem) 
+		{
+			FREE(WorkMem);
+			WorkMem = 0;
+		}
+		return 0;
+	}
+
+	i = faceN-1;
+	do
+	{
+		if (faceCount[i] >= min_face_nbr_l)
+		{			
+			if ((maxFaceCount >= min_face_nbr_h) && (faceCount[i] >= min_face_nbr_h))
+			{
+				if (faceResult[i].width > maxFaceW)
+				{
+					maxFaceW = faceResult[i].width;
+					maxFaceCount = faceCount[i];
+					best_face = i;
+				}
+			}
+			else
+			{
+				if (faceCount[i] >= maxFaceCount)
+				{
+					maxFaceW = faceResult[i].width;
+					maxFaceCount = faceCount[i];
+					best_face = i;
+				}
+			}
+		}
+	} while (i--);
+
+	if (!maxFaceW)	
+	{
+		// release memory //
+		if(WorkMem) 
+		{
+			FREE(WorkMem);
+			WorkMem = 0;
+		}
+		return 0;
+	}
+
+	/* Face Position Determination */
+	offset_x = faceResult[best_face].width/7;	
+	offset_y = faceResult[best_face].height/7;
+	faceROI->x = faceResult[best_face].x + offset_x;
+	faceROI->y = faceResult[best_face].y + offset_y;
+	faceROI->width = (short)(faceResult[best_face].width*0.68);	
+	faceROI->height = faceResult[best_face].height - ((offset_y*49152)>>15);
+
+	//--------------------
+	//	Eyes Detection
+	//--------------------
+	ret = FaceDetect_Config(WorkMem, t, (faceResult[best_face].width>>1), faceResult[best_face].height, 1, MAX_RESULT, xstep_eye, 2);
+
+	// setting cascade type (right eye) //
+	FaceDetect_set_detect_obj(WorkMem, CASCADE_REYE);
+
+	FaceDetect_set_ScalerFn(WorkMem, scaler_image_start, scaler_image_wait_done, scaler_image_clip); 
+	ret = FaceDetect_SetScale(WorkMem, int_scale_eye, min_eye_wnd, max_wnd);
+
+	rFace = GPRect_utils(faceResult[best_face].x + (faceResult[best_face].width>>1), faceResult[best_face].y, (faceResult[best_face].width>>1), faceResult[best_face].height);
+	rEyeN = FaceDetect(WorkMem, gray, &rFace, MAX_RESULT, rEyeResult, rEyeCount);
+
+	// setting cascade type (left eye) //
+	FaceDetect_set_detect_obj(WorkMem, CASCADE_LEYE);
+
+	FaceDetect_set_ScalerFn(WorkMem, scaler_image_start, scaler_image_wait_done, scaler_image_clip); 
+	ret = FaceDetect_SetScale(WorkMem, int_scale_eye, min_eye_wnd, max_wnd);
+
+	lFace = GPRect_utils(faceResult[best_face].x, faceResult[best_face].y, (faceResult[best_face].width>>1), faceResult[best_face].height);
+	lEyeN = FaceDetect(WorkMem, gray, &lFace, MAX_RESULT, lEyeResult, lEyeCount);
+
+	// release memory //
+	if(WorkMem) 
+	{
+		FREE(WorkMem);
+		WorkMem = 0;
+	}
+
+	if (!rEyeN)
+		rEyeROI->width = 0;
+	else
+	{
+		int maxEyeCount = min_eye_nbr;
+		int most_possible_eye = 0;
+
+		int i = rEyeN - 1;
+		do
+		{
+			if (rEyeCount[i] > maxEyeCount)
+			{				
+				maxEyeCount = rEyeCount[i];
+				most_possible_eye = i;
+			}
+		} while (i--);
+
+		if (maxEyeCount == min_eye_nbr)
+		{	
+			rEyeROI->width = 0;
+		}
+		else
+		{
+			i = most_possible_eye;
+
+			// Face Position Determination //
+			*rEyeROI = rEyeResult[i];
+		}
+	}
+
+	if (!lEyeN)
+		lEyeROI->width = 0;
+	else
+	{
+		int maxEyeCount = min_eye_nbr;
+		int most_possible_eye = 0;
+
+		int i = lEyeN - 1;
+		do
+		{
+			if (lEyeCount[i] > maxEyeCount)			
+			{				
+				maxEyeCount = lEyeCount[i];
+				most_possible_eye = i;
+			}
+		} while (i--);
+
+		if (maxEyeCount == min_eye_nbr)
+		{	
+			lEyeROI->width = 0;
+		}
+		else
+		{
+			i = most_possible_eye;
+
+			// Face Position Determination //
+			*lEyeROI = lEyeResult[i];
+		}
+	}	
+
+	return 1;
+#else
     void *WorkMem = 0;
 	int ret;
 	int t;
@@ -183,7 +396,7 @@ int faceRoiDetect(gpImage* gray, gpRect* detRect,int *Count)
 	int *Count0 = 0;
 
 	int scale, min_width, max_wnd;
-
+	
 	imgWork.height = WORKING_WIDTH * gray->height / gray->width;
 
 	FullRect.x		= 0;
@@ -197,7 +410,7 @@ int faceRoiDetect(gpImage* gray, gpRect* detRect,int *Count)
 	if(WorkMem==0) RETURN(-1);
 	FaceDetect_Config(WorkMem, t, imgWork.width, imgWork.height, COLOR_CHANNEL, MAX_CONDIDATE,2,2);
 
-	FaceDetect_set_ScalerFn(WorkMem, scaler_image_start, scaler_image_wait_done, scaler_image_clip);
+	FaceDetect_set_ScalerFn(WorkMem, scaler_image_start, scaler_image_wait_done, scaler_image_clip); 
 	FaceDetect_set_angle(WorkMem, 0);
 	FaceDetect_set_detect_obj(WorkMem, CASCADE_FACE);
 
@@ -214,7 +427,7 @@ int faceRoiDetect(gpImage* gray, gpRect* detRect,int *Count)
 	dst2src[1] = dst2src[0] = (long)gray->width   * 65536 / imgWork.width;
 
 	scaler_image_start_once(gray, &imgWork);
-
+	
 	min_width = 30;
 	max_wnd = imgWork.height < imgWork.width ? imgWork.height : imgWork.width;
 	scale = (int)(1.1*65536+0.5);
@@ -244,6 +457,29 @@ int faceRoiDetect(gpImage* gray, gpRect* detRect,int *Count)
 	ret = N;
 Return:
 	return ret;
+#endif	
+}
+
+void image_color_set(gpImage *img,IMAGE_COLOR_FORMAT type)
+{    
+		switch(type)
+		{
+			case IMAGE_COLOR_FORMAT_YUYV:
+			     img->format = IMG_FMT_UYVY;
+			     break;
+			     
+			case IMAGE_COLOR_FORMAT_UYVY:
+			     img->format = IMG_FMT_YUYV;
+			     break;             
+     
+			case IMAGE_COLOR_FORMAT_Y_ONLY:
+		         img->format = IMG_FMT_GRAY;
+			     break;     
+
+			default :
+			     img->format = IMG_FMT_UYVY;
+			     break;
+		}
 }
 
 void DrawRect(gpImage *Image, gpRect *Rect, const unsigned char _color[4])
@@ -366,7 +602,7 @@ void drawFace(gpImage *Image, int N, gpRect *Face, int *Count)
 			if(Rect.x >= 0 && Rect.y >= 0 && Rect.x + Rect.width <= Image->width && Rect.y + Rect.height <= Image->height)
 			{
                 //comment out CPU draw face
-				DrawRect(Image, &Rect, 0);
+				DrawRect(Image, &Rect, face_color);
 			}
 		}
 
@@ -456,8 +692,11 @@ static INT32U face_detection(INT32U frame_buffer)
 	image_color_set((gpImage *) &imgIn, IMAGE_COLOR_FORMAT_YUYV);
 	imgIn.ptr	= (unsigned char *) frame_buffer;
 
+	fdio_lo(FDIO_GPIO2);
 	nRet = faceRoiDetect(&imgIn, Face, Count);
 	if (nRet) {
+		fdio_hi(FDIO_GPIO2);
+
 		/* draw rectangular on face */
 		drawFace_flag = 1;
 		face_count    = nRet;
@@ -473,32 +712,56 @@ static INT32U face_detection(INT32U frame_buffer)
 
 		switch (fdmode) {
 		/* recognition */
-		case 1:
+		case FDMODE_RECOG:
 			nRet = FaceIdentify_Verify(&imgIn, &Face[0], ownerULBP, securitylvl_get(), fiMem);
 			if (nRet) {
 				if (ident_count++ > 1) {
-					fdmode    = 0;
+					fdio_hi(FDIO_GPIO3);
+//					serial_send(STA_IDENT, (1 << frdb_get_curr()));
+
 					ownerULBP = (INT32U *) frdb_get_c_ident();
+//					fdmm_track();
+					fdmm_dummy(300);
 					_FD(DBG_PRINT("(Identify) OK...\r\n"));
 					_FD(DBG_PRINT("\033[1;36m(Identify)\033[0m End\r\n"));
 				}
 			} else {
 				ident_count = 0;
+				fdmm_err();
 				_FD(DBG_PRINT("(Identify) Fail...\r\n"));
 			}
 			break;
 
 		/* training */
-		case 2:
+		case FDMODE_TRAIN:
 			FaceIdentify_Train(&imgIn, &Face[0], ownerULBP, train_count, fiMem);
 			_FD(DBG_PRINT("(Training) Value : %d OK \r\n", train_count));
 			train_count++;
 			if (train_count >= 20) {
-				fdmode = 0;
+				fdio_hi(FDIO_GPIO3);
+//				serial_send(STA_TRAIN, (1 << frdb_get_curr()));
 				frdb_store(frdb_get_curr());
 				_FD(DBG_PRINT("(Training) frdb store\r\n"));
+
 				ownerULBP = (INT32U *) frdb_get_c_train();
+//				fdmm_track();
+				fdmm_dummy(300);
 				_FD(DBG_PRINT("\033[1;36m(Training)\033[0m Finish\r\n"));
+			}
+			break;
+
+		/* tracking */
+		case FDMODE_TRACK:
+			serial_send(STA_TRKH, Face[0].x / 10);
+			serial_send(STA_TRKV, Face[0].y / 8);
+			serial_send(STA_TRKAREA, Face[0].width / 5);
+			_FD(DBG_PRINT("(Tracking) x=%03d, y=%03d, width=%03d\r\n", Face[0].x, Face[0].y, Face[0].width));
+			break;
+
+		/* dummy */
+		case FDMODE_DUMMY:
+			if (fdmm_wait()) {
+				fdmm_track();
 			}
 			break;
 
@@ -585,6 +848,9 @@ void fd(unsigned char prio)
 	int		adkey5 = 0;
 
 
+	// initial GPIO & operation mode manager
+	fdmm(prio + 1, 0);
+
 	// Create a user-defined task
 	OSTaskCreate(fd_task, (void *) 0, &fdtask_stack[STKSZ_FDTASK - 1], prio);
 
@@ -628,11 +894,13 @@ void fd(unsigned char prio)
 
 	memSize	  = FaceIdentify_MemCalc();
 	fiMem	  = (INT32U *) gp_malloc_align((memSize), 8);
-//	ownerULBP = (INT32U *) gp_malloc_align((SZ_ULBP*20), 8);
+//	ownerULBP = (INT32U *) gp_malloc_align((LBP_SZ*LBP_NUM), 8);
 	ownerULBP = (INT32U *) frdb_get_valid();
 	securitylvl_init(3);
 	adc_key_scan_init();					// init key scan
 
+	fdmm_track();
+	fdosd_2digit_dec(38);
 
 	while (1) {
 		adc_key_scan();
@@ -642,16 +910,12 @@ void fd(unsigned char prio)
 			if (!adkey1) {
 				adkey1++;
 				train_count = 0;
-				if (fdmode == 2) {
-					fdmode = 0;
+				if (fdmode == FDMODE_TRAIN) {
+					fdmm_track();
 					_FD(DBG_PRINT("\033[1;36mCTraining)\033[0m Stop\r\n"));
 				} else {
-					fdmode = 2;
-//					gp_memset((INT8S *) ownerULBP, 0, (SZ_ULBP*20));
+					fdmm_train(-1);
 					_FD(DBG_PRINT("\033[1;36m(Training)\033[0m Start\r\n"));
-
-					frdb_set_c_train(-1);
-					ownerULBP = (INT32U *) frdb_get_c_train();
 				}
 			}
 		} else {
@@ -663,15 +927,13 @@ void fd(unsigned char prio)
 			if (!adkey2) {
 				adkey2++;
 				ident_count = 0;
-				if (fdmode == 1) {
-					fdmode = 0;
+				if (fdmode == FDMODE_RECOG) {
+					fdmm_track();
 					_FD(DBG_PRINT("\033[1;36m(Identify)\033[0m Stop\r\n"));
-				} else {
-					fdmode = 1;
-					_FD(DBG_PRINT("\033[1;36m(Identify)\033[0m Start\r\n"));
 
-					frdb_set_c_ident(-1);
-					ownerULBP = (INT32U *) frdb_get_c_ident();
+				} else {
+					fdmm_recog(-1);
+					_FD(DBG_PRINT("\033[1;36m(Identify)\033[0m Start\r\n"));
 				}
 			}
 		} else {
@@ -710,6 +972,7 @@ void fd(unsigned char prio)
 					}
 					s >>= 1;
 				}
+				fdmm_track();
 			}
 		} else {
 			adkey5 = 0;

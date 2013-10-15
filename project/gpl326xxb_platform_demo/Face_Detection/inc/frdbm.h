@@ -17,7 +17,7 @@
  * software without notice.
  *
  * History:
- *	2013.05.24	T.C. Chiu <tc.chiu@zealtek.com.tw>
+ *	2013.05.24	T.C. Chiu
  *
  ******************************************************************************
  */
@@ -31,6 +31,10 @@
 extern   "C" {
 #endif
 
+
+/*
+ * definition macros
+ */
 #define LBP_SZ			(1888)		/* the size   of Local Binary Pattern (LBP) */
 #define LBP_NUM			(20)		/* the number of Local Binary Pattern (LBP) */
 #define NAME_STRING_SZ		(256)		/* name string size */
@@ -43,6 +47,9 @@ extern   "C" {
 #define FRDB_ALIGN(addr)	(((addr) + (FRDB_CARRIER_ALIGN-1)) & ~(FRDB_CARRIER_ALIGN-1))
 
 
+/*
+ * definition data structure
+ */
 struct frdb {
 	unsigned char 	lbp[LBP_SZ*LBP_NUM];	/* point to LBP database */
 	unsigned char	name_s[NAME_STRING_SZ];
@@ -73,6 +80,9 @@ struct frdbm {
 };
 
 
+/*
+ * declaration extern function
+ */
 extern int		frdb_init(unsigned long addr);
 extern int		frdb_erase(unsigned long n);
 extern int		frdb_load(unsigned long n);

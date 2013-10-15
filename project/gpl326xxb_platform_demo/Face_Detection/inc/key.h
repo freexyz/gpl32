@@ -34,11 +34,18 @@
 extern   "C" {
 #endif
 
+
+/*
+ * definition macros
+ */
 #define MODE_STANDBY	0
 #define MODE_TRAIN	1
 #define MODE_IDENT	2
 
 
+/*
+ * declaration extern function
+ */
 extern void		fd_chg_mode(int mode);
 extern void		fd_demo(void);
 

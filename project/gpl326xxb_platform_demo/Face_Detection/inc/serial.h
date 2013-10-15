@@ -32,6 +32,10 @@
 extern   "C" {
 #endif
 
+
+/*
+ * definition macros
+ */
 #define CMD_MASK	(0x07)
 
 #define CMD_TRACK	(0x01)
@@ -48,6 +52,9 @@ extern   "C" {
 #define STA_IDENT	(0x06)
 
 
+/*
+ * declaration extern function
+ */
 extern void		serial_send(unsigned char status, unsigned long c);
 extern void		serial_init(unsigned char prio);
 

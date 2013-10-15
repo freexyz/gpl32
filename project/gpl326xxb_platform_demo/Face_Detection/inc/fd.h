@@ -17,11 +17,13 @@
  * software without notice.
  *
  * History:
- *	2013.05.23	T.C. Chiu <tc.chiu@zealtek.com.tw>
+ *	2013.05.23	T.C. Chiu
  *
  ******************************************************************************
  */
 #include "application.h"
+
+#include "fdmm.h"
 
 #ifndef __FD_H__
 #define __FD_H__
@@ -30,20 +32,26 @@
 extern   "C" {
 #endif
 
+
+/*
+ * declaration global variable
+ */
+extern FDMODE		fdmode;
+extern unsigned long	train_count;
+extern unsigned long	ident_count;
+
 extern INT32U		Face_Detect_Demo_En;
 extern INT32U		drawFace_flag;
-extern INT32U		*fiMem;
+
 extern INT32U		*ownerULBP;
 
-extern void		image_color_set(gpImage *img, IMAGE_COLOR_FORMAT type);
-extern int		faceRoiDetect(gpImage *gray, gpRect *detRect, int *Count);
-extern void		DrawRect(gpImage *Image, gpRect *Rect, const unsigned char _color[4]);
-extern void		drawFace(gpImage *Image, int N, gpRect *Face, int *Count);
-extern void		pic_face(INT32U frame_buffer);
+extern unsigned char	face_color[4];
 
-extern int		securitylvl_get(void);
+
+/*
+ * declaration extern function
+ */
 extern int		securitylvl_set(int set_value);
-extern int		securitylvl_init(int level);
 
 extern INT32U		face_detect_return(void);
 extern void		face_frame_set(INT32U frame);

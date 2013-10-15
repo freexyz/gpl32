@@ -7,7 +7,7 @@
 //IMAGE_OUTPUT_FORMAT_RGBG, IMAGE_OUTPUT_FORMAT_GRGB
 //IMAGE_OUTPUT_FORMAT_UYVY, IMAGE_OUTPUT_FORMAT_YUYV
 #define DISPLAY_OUTPUT_FORMAT			IMAGE_OUTPUT_FORMAT_YUYV
-#define VIDEO_DISPALY_WITH_PPU			0 	//0; disable, 1;enable
+#define VIDEO_DISPALY_WITH_PPU			1 	//0; disable, 1;enable
 #if (defined MCU_VERSION) && (MCU_VERSION == GPL326XXB)
 #define FACE_DETECTION                  1   //0; disable, 1;enable
 #else

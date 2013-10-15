@@ -17,7 +17,7 @@
  * software without notice.
  *
  * History:
- *	2013.05.24	T.C. Chiu <tc.chiu@zealtek.com.tw>
+ *	2013.05.24	T.C. Chiu
  *
  ******************************************************************************
  */
