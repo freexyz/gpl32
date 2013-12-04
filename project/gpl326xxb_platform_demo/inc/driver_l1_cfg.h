@@ -146,7 +146,7 @@
 	//#define	__HSB0357_DRV_C__
 	//#define	__OV6680_DRV_C__
 	//#define	__OV7680_DRV_C__
-	#define	__OV7670_DRV_C__
+	//#define	__OV7670_DRV_C__
 	//#define	__OV9655_DRV_C__
 	//#define	__OV9660_DRV_C__
 	//#define	__OV2655_DRV_C__ 
@@ -159,6 +159,8 @@
 	//#define	__BF3710_DRV_C__ 
 	//#define	__OV3640_MIPI_DRV_C__	
 	//#define	__MT9V112_DRV_C__
+	//#define	__MT9M114_DRV_C__
+	#define	__ZT3150_DRV_C__
 	//#define	__GC0308_DRV_C__
 
    	#if (defined MCU_VERSION) && (MCU_VERSION < GPL326XX)

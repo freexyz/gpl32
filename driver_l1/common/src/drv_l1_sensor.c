@@ -491,6 +491,26 @@ INT32S sccb_read_Reg16Data16(INT8U id,	INT16U addr, INT16U *data)
 	return ret;
 }
 
+INT32S sccb_write_Reg16Data32(INT8U id, INT16U addr, INT32U data) 
+{
+	INT32S ret;
+	
+	sccb_lock();
+	ret = sccb_write(id, 16, addr, 32, data);
+	sccb_unlock();
+	return ret;
+}
+
+INT32S sccb_read_Reg16Data32(INT8U id,	INT16U addr, INT32U *data) 
+{
+	INT32S ret;
+	
+	sccb_lock();
+	ret = sccb_read(id, 16, addr, 32, data);
+	sccb_unlock();
+	return ret;
+}
+
 #ifdef	__HSB0357_DRV_C__
 //====================================================================================================
 //	Description:	HSB0357 Initialization
@@ -8815,6 +8835,32 @@ OV3640_MIPI_Init(
 #include "mt9v112.c"
 #endif
 
+#ifdef __MT9M114_DRV_C__
+//====================================================================================================
+// Description:	MT9M114 Initialization
+// Syntax: void mt9m114_init(
+//			INT16S nWidthH,			// Active H Width
+//			INT16S nWidthV,			// Active V Width
+//			INT16U uFlag			// Flag Type
+//			);
+// Return: None
+//====================================================================================================
+#include "mt9m114.c"
+#endif
+
+#ifdef __ZT3150_DRV_C__
+//====================================================================================================
+// Description:	ZT3150 Initialization
+// Syntax: void zt3150_init(
+//			INT16S nWidthH,			// Active H Width
+//			INT16S nWidthV,			// Active V Width
+//			INT16U uFlag			// Flag Type
+//			);
+// Return: None
+//====================================================================================================
+#include "zt3150.c"
+#endif
+
 #ifdef __GC0308_DRV_C__
 //====================================================================================================
 // Description:	GC0308 Initialization
@@ -8918,6 +8964,12 @@ void CSI_Init (
 #endif
 #ifdef	__MT9V112_DRV_C__
 	mt9v112_init(nWidthH, nWidthV, uFlag);
+#endif
+#ifdef __MT9M114_DRV_C__
+	mt9m114_init(nWidthH, nWidthV, uFlag);
+#endif
+#ifdef __ZT3150_DRV_C__
+	zt3150_init(nWidthH, nWidthV, uFlag);
 #endif
 #ifdef	__GC0308_DRV_C__
 	gc0308_init(nWidthH, nWidthV, uFlag);

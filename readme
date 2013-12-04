@@ -18,4 +18,5 @@ xyz branch (*)
 					3. add default security level
 	v0.0.5	2013.07.26	T.C.	fixed tracking mode GPIO0,1 issue
 	v0.0.6	2013.09.23	T.C.	merge gpl32 platform code v1.0.5 patch v0.1 for ZT
+	v0.0.7	2013.12.04	T.C.	added MT9M114 & ZT3150 sensor
 
